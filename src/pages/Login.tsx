@@ -20,7 +20,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full relative overflow-hidden">
+    <div className="h-screen w-full relative overflow-hidden">
       {/* Fondo */}
       <BgFull className="absolute inset-0 w-full h-full" />
       
@@ -30,7 +30,7 @@ const Login: React.FC = () => {
       </div>
       
       {/* Contenido principal centrado */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4">
+      <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 -mt-8">
         <LoginForm 
           onSubmit={handleEmailSubmit}
           onBiometricAuth={handleBiometricAuth}

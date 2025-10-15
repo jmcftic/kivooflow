@@ -6,6 +6,8 @@ import {
   useLocation,
 } from "react-router-dom";
 import Home from "./pages/Home";
+import Home2 from "./pages/Home2";
+import Home3 from "./pages/Home3";
 import Login from "./pages/Login";
 
 function App() {
@@ -27,6 +29,14 @@ function App() {
       case "/":
         title = "Kivoo Web - Home";
         metaDescription = "Plataforma de gestión de tarjetas recargables";
+        break;
+      case "/home2":
+        title = "Kivoo Web - Home2";
+        metaDescription = "Página de recreación con vectores";
+        break;
+      case "/home3":
+        title = "Kivoo Web - Home3";
+        metaDescription = "Página de recreación con SVG";
         break;
       case "/login":
         title = "Kivoo Web - Login";
@@ -51,6 +61,8 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/home2" element={<Home2 />} />
+      <Route path="/home3" element={<Home3 />} />
       <Route path="/login" element={<Login />} />
     </Routes>
   );
