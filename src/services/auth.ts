@@ -16,15 +16,24 @@ class AuthService {
       credentials
     );
     
+    // Handle different response structures
+    let loginData: LoginResponse;
+    
     if (response.success && response.data) {
-      // Store tokens
-      apiService.setToken(response.data.access_token);
-      localStorage.setItem("refresh_token", response.data.refresh_token);
-      
-      return response.data;
+      // Response has wrapper structure: { success: true, data: LoginResponse }
+      loginData = response.data;
+    } else if (response.access_token) {
+      // Response is direct LoginResponse structure
+      loginData = response as LoginResponse;
+    } else {
+      throw new Error(response.message || "Login failed");
     }
     
-    throw new Error(response.message || "Login failed");
+    // Store tokens
+    apiService.setToken(loginData.access_token);
+    localStorage.setItem("refresh_token", loginData.refresh_token);
+    
+    return loginData;
   }
 
   // Register user
