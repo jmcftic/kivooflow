@@ -80,8 +80,23 @@ class ApiService {
         await this.handleError(response);
       }
 
-      const data = await response.json();
-      return data;
+      // Manejar respuestas sin contenido (204) o sin JSON
+      if (response.status === 204) {
+        return { success: true } as unknown as ApiResponse<T>;
+      }
+
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        return { success: true } as unknown as ApiResponse<T>;
+      }
+
+      try {
+        const data = await response.json();
+        return data;
+      } catch {
+        // Si no se puede parsear JSON, asumir éxito genérico
+        return { success: true } as unknown as ApiResponse<T>;
+      }
     } catch (error) {
       if (error instanceof Error && error.name === "TypeError") {
         throw {

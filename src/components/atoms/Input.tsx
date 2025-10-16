@@ -25,7 +25,7 @@ const Input: React.FC<InputProps> = ({
   
   const baseInputClasses = "block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500";
   
-  const backdropBlurClasses = `backdrop-blur-[30px] ${KIVOO_COLORS.glass.background} ${KIVOO_COLORS.glass.border} ${KIVOO_COLORS.glass.text} ${KIVOO_COLORS.glass.placeholder} focus:ring-yellow-400 focus:border-yellow-400 h-14 text-center ${KIVOO_DIAGONAL_CLASSES.complete}`;
+  const backdropBlurClasses = `backdrop-blur-[30px] ${KIVOO_COLORS.glass.background} ${KIVOO_COLORS.glass.border} ${KIVOO_COLORS.glass.text} ${KIVOO_COLORS.glass.placeholder} focus:ring-yellow-400 focus:border-yellow-400 h-14 text-center transition-all duration-500 ease-out ${KIVOO_DIAGONAL_CLASSES.complete}`;
   
   const getInputClasses = () => {
     if (variant === "glass" || variant === "kivoo-glass") {

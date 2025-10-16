@@ -10,7 +10,7 @@ export interface BiometricOptionProps {
 const BiometricOption: React.FC<BiometricOptionProps> = ({
   onClick,
   className = "",
-  text = "Face ID / Touch ID"
+  text = ""
 }) => {
   return (
     <button

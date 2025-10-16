@@ -5,9 +5,12 @@ import reportWebVitals from "./reportWebVitals";
 import { BrowserRouter } from "react-router-dom";
 import "./global.css";
 
-const container = document.getElementById("root");
+const container = document.getElementById("root") as Element | DocumentFragment | null;
+if (!container) {
+  throw new Error("Root container #root not found in index.html");
+}
 
-const root = createRoot(container);
+const root = createRoot(container as Element);
 root.render(
   <BrowserRouter>
     <App />

@@ -15,11 +15,11 @@ export const KIVOO_DIAGONAL_CLASSES = {
   // Clip-path para el estado hover (sin diagonal, esquina redondeada)
   hover: "hover:[clip-path:polygon(0_0,100%_0,100%_100%,100%_100%,0_100%)] hover:rounded-br-xl",
   
-  // Transición suave
-  transition: "transition-all duration-300 ease-in-out",
+  // Transición suave sincronizada
+  transition: "transition-all duration-500 ease-out",
   
-  // Clase completa para aplicar a elementos
-  complete: "w-full rounded-tl-xl rounded-tr-xl rounded-bl-xl [clip-path:polygon(0_0,100%_0,100%_62%,calc(100%_-_5.4%)_100%,0_100%)] hover:[clip-path:polygon(0_0,100%_0,100%_100%,100%_100%,0_100%)] hover:rounded-br-xl transition-all duration-300 ease-in-out"
+  // Clase completa para aplicar a elementos con transición sincronizada
+  complete: "w-full rounded-tl-xl rounded-tr-xl rounded-bl-xl [clip-path:polygon(0_0,100%_0,100%_62%,calc(100%_-_5.4%)_100%,0_100%)] hover:[clip-path:polygon(0_0,100%_0,100%_100%,100%_100%,0_100%)] hover:rounded-br-xl transition-all duration-500 ease-out"
 };
 
 /**
