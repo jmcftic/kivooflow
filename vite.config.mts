@@ -7,4 +7,14 @@ export default defineConfig({
     outDir: "dist",
   },
   plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://kivoo.kivooapp.co',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      }
+    }
+  }
 });

@@ -29,6 +29,8 @@ class ApiService {
   private getHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      "Accept": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
     };
 
     const token = this.getToken();
@@ -67,6 +69,8 @@ class ApiService {
     
     const config: RequestInit = {
       ...options,
+      mode: 'cors',
+      credentials: 'include',
       headers: {
         ...this.getHeaders(),
         ...options.headers,
