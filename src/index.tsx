@@ -6,8 +6,11 @@ import { BrowserRouter } from "react-router-dom";
 import "./global.css";
 
 const container = document.getElementById("root");
+if (!container) {
+  throw new Error("Root container #root not found in index.html");
+}
 
-const root = createRoot(container);
+const root = createRoot(container as HTMLElement);
 root.render(
   <BrowserRouter>
     <App />
