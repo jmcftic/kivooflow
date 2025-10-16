@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import VectorPattern from '../components/atoms/VectorPattern';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
+import VectorGradient from '../components/atoms/VectorGradient';
 import Logo from '../components/atoms/Logo';
 import Button from '../components/atoms/Button';
 import LoginForm from '../components/organisms/LoginForm';
@@ -71,6 +72,9 @@ const Home: React.FC = () => {
 
       {/* Patrón de vectores SVG (encima de la esquina) */}
       <VectorPattern className="z-10" />
+      
+      {/* Vector Gradient en esquina superior izquierda */}
+      <VectorGradient className="z-15" />
     </div>
   );
 };

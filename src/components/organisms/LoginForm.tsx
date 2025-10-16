@@ -114,10 +114,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
             </Button>
           </form>
           
-          {/* Opción biométrica */}
-          <div className="mt-8 flex justify-center">
+          {/* Opción biométrica - OCULTA */}
+          {/* <div className="mt-8 flex justify-center">
             <BiometricOption onClick={onBiometricAuth} />
-          </div>
+          </div> */}
         </>
       ) : (
         <>
