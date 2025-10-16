@@ -2,7 +2,7 @@ import React from 'react';
 import VectorPattern from '../components/atoms/VectorPattern';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import Logo from '../components/atoms/Logo';
-import Button from '../components/atoms/Button';
+import LogoutButton from '../components/atoms/LogoutButton';
 
 const Dashboard: React.FC = () => {
   const handleLogout = () => {
@@ -19,14 +19,7 @@ const Dashboard: React.FC = () => {
         <div className="flex-1"></div> {/* Espaciador izquierdo */}
         <Logo width={212} height={29} />
         <div className="flex-1 flex justify-end"> {/* Espaciador derecho con botón */}
-          <Button
-            onClick={handleLogout}
-            variant="yellow"
-            size="md"
-            className="rounded-xl font-semibold w-[120px] h-[35px] text-lg"
-          >
-            Logout
-          </Button>
+          <LogoutButton />
         </div>
       </div>
       

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import VectorPattern from '../components/atoms/VectorPattern';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import Logo from '../components/atoms/Logo';
@@ -7,6 +7,7 @@ import Button from '../components/atoms/Button';
 import LoginForm from '../components/organisms/LoginForm';
 
 const Home: React.FC = () => {
+  const navigate = useNavigate();
   const handleLoginSubmit = (email: string, password?: string) => {
     if (password) {
       console.log("Login completed:", { email, password });
@@ -23,8 +24,7 @@ const Home: React.FC = () => {
   };
 
   const handleForgotPassword = () => {
-    console.log("Forgot password requested");
-    // Aquí iría la lógica para recuperar contraseña
+    navigate('/forgot-password');
   };
 
   return (

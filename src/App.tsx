@@ -12,6 +12,12 @@ import Home3 from "./pages/Home3";
 import Example from "./pages/Example";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import ForgotPassword from "./pages/ForgotPassword";
+import VerificationCode from "./pages/VerificationCode";
+import VerificationSent from "./pages/VerificationSent";
+import ResetPassword from "./pages/ResetPassword";
+import ResetPasswordSuccess from "./pages/ResetPasswordSuccess";
+import ProtectedRoute from "./components/atoms/ProtectedRoute";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -63,6 +69,26 @@ function App() {
         title = "Kivoo Web - Dashboard";
         metaDescription = "Panel de control de tu cuenta Kivoo";
         break;
+      case "/forgot-password":
+        title = "Kivoo Web - Restablecer contraseña";
+        metaDescription = "Recupera el acceso a tu cuenta";
+        break;
+      case "/verification-code":
+        title = "Kivoo Web - Código de verificación";
+        metaDescription = "Verifica tu identidad con el código enviado";
+        break;
+      case "/verification-sent":
+        title = "Kivoo Web - Código enviado";
+        metaDescription = "Te enviamos un código de verificación";
+        break;
+      case "/reset-password":
+        title = "Kivoo Web - Crear nueva contraseña";
+        metaDescription = "Define una nueva contraseña segura";
+        break;
+      case "/reset-password/success":
+        title = "Kivoo Web - Contraseña actualizada";
+        metaDescription = "Tu contraseña fue actualizada exitosamente";
+        break;
     }
 
     if (title) {
@@ -87,7 +113,19 @@ function App() {
         <Route path="/home2" element={<Home2 />} />
         <Route path="/home3" element={<Home3 />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verification-code" element={<VerificationCode />} />
+        <Route path="/verification-sent" element={<VerificationSent />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/reset-password/success" element={<ResetPasswordSuccess />} />
       </Routes>
     </QueryClientProvider>
   );
