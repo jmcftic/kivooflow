@@ -90,7 +90,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         <>
           {/* Título para email */}
           <h1 className="text-2xl md:text-3xl font-bold text-[#FFF100] text-center mb-8 uppercase tracking-wide">
-            INGRESA O REGISTRARSE
+            INGRESA O REGISTRATE
           </h1>
           
           {/* Formulario de email */}

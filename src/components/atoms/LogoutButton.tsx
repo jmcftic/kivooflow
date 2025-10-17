@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { authService } from "../../services/auth";
-import { KIVOO_DIAGONAL_CLASSES } from "../../styles/kivoo-animations";
+import { KIVOO_DIAGONAL_COMPACT } from "../../styles/kivoo-animations";
 
 export interface LogoutButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children?: React.ReactNode;
@@ -17,8 +17,17 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({ onLoggedOut, compact = true
     try {
       await authService.logout();
       if (onLoggedOut) onLoggedOut();
+      // Clear any remaining tokens manually
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
       window.location.href = "/";
-    } catch {
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Clear tokens even if API call fails
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
       window.location.href = "/";
     } finally {
       setLoading(false);
@@ -26,8 +35,8 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({ onLoggedOut, compact = true
   };
 
   const buttonClasses = compact 
-    ? `bg-[#FFF100] text-gray-900 hover:bg-[#E6D900] focus:ring-[#FFF100] ${KIVOO_DIAGONAL_CLASSES.complete} rounded-xl font-semibold h-8 px-3 text-xs whitespace-nowrap flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300 max-w-fit min-w-fit w-fit`
-    : `bg-[#FFF100] text-gray-900 hover:bg-[#E6D900] focus:ring-[#FFF100] ${KIVOO_DIAGONAL_CLASSES.complete} rounded-xl font-semibold px-4 py-2 text-base h-12 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300 max-w-fit min-w-fit w-fit`;
+    ? `bg-[#FFF100] text-gray-900 hover:bg-[#E6D900] focus:ring-[#FFF100] ${KIVOO_DIAGONAL_COMPACT.complete} font-semibold h-6 px-4 text-base whitespace-nowrap flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed min-w-fit max-w-xs relative z-50`
+    : `bg-[#FFF100] text-gray-900 hover:bg-[#E6D900] focus:ring-[#FFF100] ${KIVOO_DIAGONAL_COMPACT.complete} font-semibold h-6 px-4 text-base flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed min-w-fit max-w-xs relative z-50`;
 
   return (
     <button
