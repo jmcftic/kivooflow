@@ -23,3 +23,79 @@ html, body, #root {
     border-width: 0;
   }
 }
+
+/* Estilos personalizados para inputs de Kivoo */
+@layer components {
+  /* Variables CSS para el input de Kivoo */
+  .kivoo-input-focus {
+    --kivoo-border-color: transparent;
+    border-color: var(--kivoo-border-color);
+    border-width: 1px;
+    transition: border-color 0.7s ease-in-out;
+  }
+  
+  .kivoo-input-focus:hover {
+    --kivoo-border-color: rgba(255, 255, 255, 0.3);
+    border-color: var(--kivoo-border-color) !important;
+  }
+  
+  .kivoo-input-focus:focus {
+    --kivoo-border-color: #ffffff;
+    border-color: var(--kivoo-border-color) !important;
+    border-width: 1px !important;
+    outline: none !important;
+    box-shadow: none !important;
+    --tw-ring-shadow: none !important;
+    --tw-ring-opacity: 0 !important;
+    --tw-ring-offset-shadow: none !important;
+    /* Aplicar clip-path desplegado cuando está enfocado con transición sincronizada */
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 100% 100%, 0 100%) !important;
+    border-radius: 0.75rem !important; /* rounded-xl */
+    transition: border-color 0.7s ease-in-out, clip-path 0.7s ease-in-out, border-radius 0.7s ease-in-out !important;
+  }
+  
+  /* Selector específico para inputs con backdrop-blur */
+  input.backdrop-blur-\[30px\] {
+    --kivoo-border-color: transparent;
+    border-color: var(--kivoo-border-color);
+    border-width: 1px;
+    transition: border-color 0.7s ease-in-out;
+  }
+  
+  input.backdrop-blur-\[30px\]:hover {
+    --kivoo-border-color: rgba(255, 255, 255, 0.3);
+    border-color: var(--kivoo-border-color) !important;
+  }
+  
+  input.backdrop-blur-\[30px\]:focus {
+    --kivoo-border-color: #ffffff;
+    border-color: var(--kivoo-border-color) !important;
+    border-width: 1px !important;
+    outline: none !important;
+    box-shadow: none !important;
+    --tw-ring-shadow: none !important;
+    --tw-ring-opacity: 0 !important;
+    --tw-ring-offset-shadow: none !important;
+    /* Aplicar clip-path desplegado cuando está enfocado con transición sincronizada */
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 100% 100%, 0 100%) !important;
+    border-radius: 0.75rem !important; /* rounded-xl */
+    transition: border-color 0.7s ease-in-out, clip-path 0.7s ease-in-out, border-radius 0.7s ease-in-out !important;
+  }
+
+  /* Estilos adicionales para asegurar que el border blanco se aplique correctamente */
+  input[type="email"].kivoo-input-focus:focus,
+  input[type="password"].kivoo-input-focus:focus,
+  input[type="text"].kivoo-input-focus:focus {
+    border-color: #ffffff !important;
+    border-width: 1px !important;
+    outline: none !important;
+    box-shadow: none !important;
+    --tw-ring-shadow: none !important;
+    --tw-ring-opacity: 0 !important;
+    --tw-ring-offset-shadow: none !important;
+    /* Aplicar clip-path desplegado cuando está enfocado con transición sincronizada */
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 100% 100%, 0 100%) !important;
+    border-radius: 0.75rem !important; /* rounded-xl */
+    transition: border-color 0.7s ease-in-out, clip-path 0.7s ease-in-out, border-radius 0.7s ease-in-out !important;
+  }
+}

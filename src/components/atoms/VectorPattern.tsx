@@ -66,7 +66,7 @@ const VectorPattern: FunctionComponent<VectorPatternProps> = ({
   }
 
   return (
-    <div className={`absolute inset-0 pointer-events-none ${className}`}>
+    <div className={`absolute inset-0 pointer-events-none ${className}`} style={{ transform: 'rotate(90deg)', transformOrigin: 'center' }}>
       {vectors}
     </div>
   );

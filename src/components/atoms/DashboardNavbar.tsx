@@ -1,0 +1,28 @@
+import React from 'react';
+import LogoutButton from './LogoutButton';
+
+interface DashboardNavbarProps {
+  className?: string;
+}
+
+const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ className = "" }) => {
+  return (
+    <nav className={`w-full bg-transparent relative z-50 ${className}`}>
+      <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
+        {/* Dashboard Label - Left */}
+        <div className="flex-shrink-0">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#FFF100]">
+            Dashboard
+          </h1>
+        </div>
+        
+        {/* Logout Button - Right */}
+        <div className="flex-shrink-0">
+          <LogoutButton />
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+export default DashboardNavbar;

@@ -90,7 +90,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         <>
           {/* Título para email */}
           <h1 className="text-2xl md:text-3xl font-bold text-[#FFF100] text-center mb-8 uppercase tracking-wide">
-            INGRESA O REGISTRARSE
+            INGRESA O REGISTRATE
           </h1>
           
           {/* Formulario de email */}
@@ -114,10 +114,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
             </Button>
           </form>
           
-          {/* Opción biométrica */}
-          <div className="mt-8 flex justify-center">
+          {/* Opción biométrica - OCULTA */}
+          {/* <div className="mt-8 flex justify-center">
             <BiometricOption onClick={onBiometricAuth} />
-          </div>
+          </div> */}
         </>
       ) : (
         <>
