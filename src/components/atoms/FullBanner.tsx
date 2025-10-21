@@ -2,6 +2,7 @@ import React, { FunctionComponent } from "react";
 import ReferredLinkGap from "./ReferredLinkGap";
 import ActionButton from "./ActionButton";
 import FoldedCard from "./FoldedCard";
+import { cn } from "@/lib/utils";
 
 export type FullBannerType = {
   className?: string;
@@ -24,7 +25,7 @@ const FullBanner: FunctionComponent<FullBannerType> = ({
   ...props 
 }) => (
   <FoldedCard 
-    className={className}
+    className={cn("h-[220px] md:h-40", className)}
     gradientColor="#FFF100"
     backgroundColor="#212020"
     variant="xl"
@@ -38,9 +39,9 @@ const FullBanner: FunctionComponent<FullBannerType> = ({
       {/* Contenido en la parte inferior - Button Group */}
       <div className="flex-1 flex items-center">
         {/* Button Group - Elementos pegados con ancho máximo */}
-        <div className="flex items-center w-full max-w-[1200px]">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center w-full max-w-[1200px] gap-2 md:gap-0">
           {/* ReferredLinkGap - Elemento principal */}
-          <div className="flex-1">
+          <div className="flex-1 md:flex-1">
             <ReferredLinkGap className="w-full">
               <div className="flex items-center space-x-2 w-full">
                 <div className="flex-shrink-0">
@@ -63,12 +64,12 @@ const FullBanner: FunctionComponent<FullBannerType> = ({
           </div>
           
           {/* Iconos pegados al ReferredLinkGap */}
-          <div className="flex items-center">
+          <div className="flex items-center justify-center md:justify-start gap-2 md:gap-0">
             <button
               onClick={onCopyClick}
-              className="flex items-center justify-center hover:opacity-80 transition-opacity ml-1"
+              className="flex items-center justify-center hover:opacity-80 transition-opacity md:ml-1"
             >
-              <svg width="49" height="49" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-10 h-10 md:w-[49px] md:h-[49px]" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="0.5" y="0.5" width="48" height="48" rx="12" fill="#FEF100" fillOpacity="0.05"/>
                 <rect x="0.5" y="0.5" width="48" height="48" rx="12" stroke="#FEF100" strokeDasharray="2 2"/>
                 <path fillRule="evenodd" clipRule="evenodd" d="M22.0489 13.75H21.9511C20.3488 13.75 19.0795 13.75 18.0753 13.8687C17.0443 13.9905 16.1956 14.2464 15.4866 14.8282C15.2461 15.0256 15.0256 15.2461 14.8282 15.4866C14.2464 16.1956 13.9905 17.0443 13.8687 18.0753C13.75 19.0795 13.75 20.3488 13.75 21.9511V22.0489C13.75 23.6512 13.75 24.9205 13.8687 25.9247C13.9905 26.9557 14.2464 27.8044 14.8282 28.5134C15.0256 28.7539 15.2461 28.9744 15.4866 29.1718C16.1585 29.7232 16.9559 29.9818 17.9154 30.1111C18.6943 30.2161 19.6318 30.2415 20.7607 30.2479C20.7737 30.8699 20.8026 31.4162 20.8665 31.8918C20.9875 32.7919 21.2464 33.5497 21.8484 34.1516C22.4503 34.7536 23.2081 35.0125 24.1082 35.1335C24.9752 35.25 26.0775 35.25 27.4451 35.25H28.5549C29.9225 35.25 31.0248 35.25 31.8918 35.1335C32.7919 35.0125 33.5497 34.7536 34.1517 34.1516C34.7536 33.5497 35.0125 32.7919 35.1335 31.8918C35.25 31.0248 35.25 29.9225 35.25 28.5549V27.4451C35.25 26.0775 35.25 24.9752 35.1335 24.1083C35.0125 23.2081 34.7536 22.4503 34.1517 21.8484C33.5497 21.2464 32.7919 20.9875 31.8918 20.8665C31.4162 20.8026 30.8699 20.7737 30.2479 20.7607C30.2415 19.6318 30.2161 18.6943 30.1111 17.9154C29.9818 16.9559 29.7232 16.1585 29.1718 15.4866C28.9744 15.2461 28.7539 15.0256 28.5134 14.8282C27.8044 14.2464 26.9557 13.9905 25.9248 13.8687C24.9205 13.75 23.6512 13.75 22.0489 13.75ZM28.7477 20.75C28.7411 19.6398 28.7161 18.7948 28.6246 18.1158C28.5157 17.308 28.3216 16.8151 28.0123 16.4382C27.8772 16.2737 27.7263 16.1228 27.5618 15.9877C27.1644 15.6616 26.638 15.4634 25.7487 15.3583C24.8428 15.2512 23.6621 15.25 22 15.25C20.3379 15.25 19.1572 15.2512 18.2513 15.3583C17.362 15.4634 16.8356 15.6616 16.4382 15.9877C16.2737 16.1228 16.1228 16.2737 15.9877 16.4382C15.6616 16.8356 15.4634 17.362 15.3583 18.2513C15.2512 19.1572 15.25 20.3379 15.25 22C15.25 23.6621 15.2512 24.8428 15.3583 25.7487C15.4634 26.638 15.6616 27.1644 15.9877 27.5618C16.1228 27.7263 16.2737 27.8772 16.4382 28.0123C16.8151 28.3216 17.308 28.5157 18.1158 28.6246C18.7948 28.7161 19.6398 28.7411 20.75 28.7477C20.75 28.684 20.75 28.6197 20.75 28.5549V27.4451C20.75 26.0775 20.75 24.9752 20.8665 24.1082C20.9875 23.2081 21.2464 22.4503 21.8484 21.8484C22.4503 21.2464 23.2081 20.9875 24.1083 20.8665C24.9752 20.75 26.0775 20.75 27.4451 20.75H28.5549C28.6197 20.75 28.684 20.75 28.7477 20.75ZM22.909 22.909C23.1858 22.6322 23.5743 22.4518 24.3081 22.3531C25.0635 22.2516 26.0646 22.25 27.5 22.25H28.5C29.9354 22.25 30.9365 22.2516 31.6919 22.3531C32.4257 22.4518 32.8142 22.6322 33.091 22.909C33.3678 23.1858 33.5482 23.5743 33.6469 24.3081C33.7484 25.0635 33.75 26.0646 33.75 27.5V28.5C33.75 29.9354 33.7484 30.9365 33.6469 31.6919C33.5482 32.4257 33.3678 32.8142 33.091 33.091C32.8142 33.3678 32.4257 33.5482 31.6919 33.6469C30.9365 33.7484 29.9354 33.75 28.5 33.75H27.5C26.0646 33.75 25.0635 33.7484 24.3081 33.6469C23.5743 33.5482 23.1858 33.3678 22.909 33.091C22.6322 32.8142 22.4518 32.4257 22.3531 31.6919C22.2516 30.9365 22.25 29.9354 22.25 28.5V27.5C22.25 26.0646 22.2516 25.0635 22.3531 24.3081C22.4518 23.5743 22.6322 23.1858 22.909 22.909Z" fill="#FFF000"/>
@@ -76,9 +77,9 @@ const FullBanner: FunctionComponent<FullBannerType> = ({
             </button>
             <button
               onClick={onShareClick}
-              className="flex items-center justify-center hover:opacity-80 transition-opacity ml-1"
+              className="flex items-center justify-center hover:opacity-80 transition-opacity md:ml-1"
             >
-              <svg width="49" height="49" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-10 h-10 md:w-[49px] md:h-[49px]" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="0.5" y="0.5" width="48" height="48" rx="12" fill="#FEF100" fillOpacity="0.05"/>
                 <rect x="0.5" y="0.5" width="48" height="48" rx="12" stroke="#FEF100" strokeDasharray="2 2"/>
                 <path d="M24.4983 27.25H24.5002L24.5012 27.249C24.9142 27.249 25.2502 26.915 25.2512 26.501L25.2772 16.04C26.0207 16.8261 26.8207 17.7831 26.9151 17.8961C26.9205 17.9025 26.9236 17.9062 26.9242 17.907C27.1882 18.226 27.6612 18.27 27.9802 18.005C28.2982 17.741 28.3422 17.268 28.0782 16.949C28.0092 16.865 26.3752 14.9 25.4352 14.101C25.1862 13.89 24.8792 13.766 24.5712 13.751H24.5572C24.2062 13.738 23.8662 13.857 23.5752 14.095C23.5722 14.097 23.5682 14.1 23.5652 14.103C22.6262 14.902 20.9922 16.867 20.9233 16.95C20.6583 17.269 20.7022 17.742 21.0212 18.006C21.3402 18.271 21.8122 18.227 22.0772 17.908C22.0892 17.893 22.9762 16.826 23.7762 15.985L23.7502 26.498C23.7492 26.912 24.0843 27.249 24.4983 27.25Z" fill="#FFF000"/>

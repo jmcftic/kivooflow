@@ -10,7 +10,7 @@ const ReferredLinkGap: FunctionComponent<ReferredLinkGapType> = ({
   children,
   ...props 
 }) => (
-  <div className={`relative w-full h-[49px] ${className}`}>
+  <div className={`relative w-full h-10 md:h-[49px] ${className}`}>
     <svg 
       width="100%" 
       height="49" 

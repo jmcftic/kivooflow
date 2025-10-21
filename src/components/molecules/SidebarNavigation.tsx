@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import SidebarItem from '../atoms/SidebarItem';
 import DashboardIcon from '../atoms/DashboardIcon';
 import ClaimsIcon from '../atoms/ClaimsIcon';
@@ -15,12 +16,15 @@ interface SidebarNavigationProps {
 }
 
 const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", isCollapsed = false }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const handleDashboardClick = () => {
-    // Aquí se puede agregar la lógica de navegación
-    console.log('Navegando a Dashboard');
+    navigate('/dashboard');
   };
+  
   const handleClaimsClick = () => {
-    console.log('Navegando a Claims');
+    navigate('/claims');
   };
 
   const handleCardAcquisitionClick = () => {
@@ -48,14 +52,14 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
       <SidebarItem
         icon={<DashboardIcon />}
         label="Dashboard"
-        isActive={true} // Por ahora marcamos Dashboard como activo
+        isActive={location.pathname === '/dashboard'}
         isCollapsed={isCollapsed}
         onClick={handleDashboardClick}
       />
       <SidebarItem
         icon={<ClaimsIcon />}
         label="Claims"
-        isActive={false}
+        isActive={location.pathname === '/claims'}
         isCollapsed={isCollapsed}
         onClick={handleClaimsClick}
       />

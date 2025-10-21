@@ -1,7 +1,7 @@
 import React from 'react';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import Logo from '../components/atoms/Logo';
-import Sidebar from '../components/atoms/Sidebar';
+import SidebarApp from '../components/organisms/SidebarApp';
 import DashboardNavbar from '../components/atoms/DashboardNavbar';
 import InfoBanner from '../components/atoms/InfoBanner';
 import MiniBaner from '../components/atoms/MiniBaner';
@@ -24,13 +24,11 @@ const Dashboard: React.FC = () => {
       {/* Nuevo fondo SVG */}
       <KivoMainBg className="absolute inset-0 z-0" />
 
-      {/* Sidebar - Hidden on mobile, visible on desktop */}
-      <div className="hidden lg:block">
-        <Sidebar />
-      </div>
+      {/* Sidebar - Mobile drawer + Desktop collapsible */}
+      <SidebarApp />
 
       {/* Contenido principal */}
-      <div className="flex-1 relative flex flex-col pl-6 pr-6 overflow-y-auto pb-8">
+      <div className="flex-1 relative flex flex-col pl-6 pr-6 overflow-y-auto pb-8 pt-16 lg:pt-0">
         {/* Navbar responsivo */}
         <DashboardNavbar />
 
@@ -67,7 +65,6 @@ const Dashboard: React.FC = () => {
         {/* Full Banner - Debajo de los Mini Banners */}
         <div className="relative z-20 mt-6 mb-2">
           <FullBanner
-            className="h-[136px]"
             title="Link de referido"
             linkText="https://kivo.com/referral/abc123"
             onLinkClick={() => {

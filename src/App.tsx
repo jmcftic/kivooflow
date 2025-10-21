@@ -12,6 +12,7 @@ import Home3 from "./pages/Home3";
 import Example from "./pages/Example";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Claims from "./pages/Claims";
 import ForgotPassword from "./pages/ForgotPassword";
 import VerificationCode from "./pages/VerificationCode";
 import VerificationSent from "./pages/VerificationSent";
@@ -70,6 +71,10 @@ function App() {
         title = "Kivoo Web - Dashboard";
         metaDescription = "Panel de control de tu cuenta Kivoo";
         break;
+      case "/claims":
+        title = "Kivoo Web - Claims";
+        metaDescription = "Gestiona tus claims en Kivoo";
+        break;
       case "/forgot-password":
         title = "Kivoo Web - Restablecer contraseña";
         metaDescription = "Recupera el acceso a tu cuenta";
@@ -123,6 +128,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/claims"
+          element={
+            <ProtectedRoute>
+              <Claims />
             </ProtectedRoute>
           }
         />

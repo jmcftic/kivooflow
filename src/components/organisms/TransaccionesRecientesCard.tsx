@@ -161,9 +161,9 @@ const TransaccionesRecientesCard: React.FC<TransaccionesRecientesCardProps> = ({
               {hasNextPage && (
                 <div className="flex items-center justify-center py-4">
                   {isFetchingNextPage ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <Spinner className="size-5 text-[#FFF000]" />
-                      <span className="text-xs text-[#aaa]">Cargando más transacciones...</span>
+                    <div className="flex items-center gap-2">
+                      <Spinner className="size-4 text-[#FFF000]" />
+                      <span className="text-sm text-[#aaa]">Cargando más transacciones...</span>
                     </div>
                   ) : (
                     <button

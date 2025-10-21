@@ -1,0 +1,145 @@
+{
+  "comisiones": [
+    {
+      "id": "CLM-001",
+      "fecha": "2025-10-21",
+      "tarjeta": "**** 4532",
+      "estado": "Pendiente",
+      "monto": 150.50
+    },
+    {
+      "id": "CLM-002",
+      "fecha": "2025-10-20",
+      "tarjeta": "**** 8976",
+      "estado": "Aprobado",
+      "monto": 250.00
+    },
+    {
+      "id": "CLM-003",
+      "fecha": "2025-10-20",
+      "tarjeta": "**** 3421",
+      "estado": "Pendiente",
+      "monto": 85.75
+    },
+    {
+      "id": "CLM-004",
+      "fecha": "2025-10-19",
+      "tarjeta": "**** 7654",
+      "estado": "Rechazado",
+      "monto": 320.00
+    },
+    {
+      "id": "CLM-005",
+      "fecha": "2025-10-19",
+      "tarjeta": "**** 2109",
+      "estado": "Aprobado",
+      "monto": 425.30
+    },
+    {
+      "id": "CLM-006",
+      "fecha": "2025-10-18",
+      "tarjeta": "**** 5678",
+      "estado": "Pendiente",
+      "monto": 195.00
+    },
+    {
+      "id": "CLM-007",
+      "fecha": "2025-10-18",
+      "tarjeta": "**** 9012",
+      "estado": "Aprobado",
+      "monto": 560.25
+    },
+    {
+      "id": "CLM-008",
+      "fecha": "2025-10-17",
+      "tarjeta": "**** 3456",
+      "estado": "Pendiente",
+      "monto": 275.80
+    },
+    {
+      "id": "CLM-009",
+      "fecha": "2025-10-17",
+      "tarjeta": "**** 7890",
+      "estado": "Aprobado",
+      "monto": 390.50
+    },
+    {
+      "id": "CLM-010",
+      "fecha": "2025-10-16",
+      "tarjeta": "**** 1234",
+      "estado": "Rechazado",
+      "monto": 125.00
+    },
+    {
+      "id": "CLM-011",
+      "fecha": "2025-10-16",
+      "tarjeta": "**** 5678",
+      "estado": "Pendiente",
+      "monto": 680.90
+    },
+    {
+      "id": "CLM-012",
+      "fecha": "2025-10-15",
+      "tarjeta": "**** 9876",
+      "estado": "Aprobado",
+      "monto": 215.40
+    },
+    {
+      "id": "CLM-013",
+      "fecha": "2025-10-15",
+      "tarjeta": "**** 5432",
+      "estado": "Pendiente",
+      "monto": 340.00
+    },
+    {
+      "id": "CLM-014",
+      "fecha": "2025-10-14",
+      "tarjeta": "**** 1098",
+      "estado": "Aprobado",
+      "monto": 475.60
+    },
+    {
+      "id": "CLM-015",
+      "fecha": "2025-10-14",
+      "tarjeta": "**** 6543",
+      "estado": "Rechazado",
+      "monto": 180.25
+    },
+    {
+      "id": "CLM-016",
+      "fecha": "2025-10-13",
+      "tarjeta": "**** 2109",
+      "estado": "Pendiente",
+      "monto": 520.00
+    },
+    {
+      "id": "CLM-017",
+      "fecha": "2025-10-13",
+      "tarjeta": "**** 8765",
+      "estado": "Aprobado",
+      "monto": 295.75
+    },
+    {
+      "id": "CLM-018",
+      "fecha": "2025-10-12",
+      "tarjeta": "**** 4321",
+      "estado": "Pendiente",
+      "monto": 410.50
+    },
+    {
+      "id": "CLM-019",
+      "fecha": "2025-10-12",
+      "tarjeta": "**** 9870",
+      "estado": "Aprobado",
+      "monto": 355.00
+    },
+    {
+      "id": "CLM-020",
+      "fecha": "2025-10-11",
+      "tarjeta": "**** 6549",
+      "estado": "Rechazado",
+      "monto": 220.80
+    }
+  ]
+}
+
