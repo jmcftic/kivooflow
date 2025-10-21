@@ -46,12 +46,12 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
 
   return (
     <FoldedCard 
-      className={`min-h-[92px] ${className}`}
+      className={`min-h-[180px] md:min-h-[92px] ${className}`}
       gradientColor="#FFF100"
       backgroundColor="#212020"
       variant="md"
     >
-    <div className="grid grid-cols-2 md:grid-cols-6 gap-4 md:gap-4 lg:gap-6 w-full">
+    <div className="grid grid-cols-2 md:grid-cols-6 gap-4 md:gap-4 lg:gap-6 w-full py-4 md:py-0">
       {/* ID */}
       <div className="flex flex-col">
         <span className="text-white text-sm font-medium mb-1">{id}</span>
@@ -83,10 +83,10 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
       </div>
 
       {/* Ver detalle */}
-      <div className="flex flex-col col-span-2 md:col-span-1">
+      <div className="flex flex-col col-span-2 md:col-span-1 justify-start">
         <button
           onClick={onVerDetalle}
-          className="action-text text-left mb-1"
+          className="action-text text-left mb-1 py-1"
         >
           Ver detalle
         </button>
