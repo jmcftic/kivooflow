@@ -6,6 +6,7 @@ import Logo from "../components/atoms/Logo";
 import Button from "../components/atoms/Button";
 import PasswordInput from "../components/atoms/PasswordInput";
 import Spinner from "../components/atoms/Spinner";
+import KivoMainBg from "../components/atoms/KivoMainBg";
 import { authService } from "../services/auth";
 import { Alert, AlertDescription, AlertTitle } from "../components/atoms/Alert";
 
@@ -53,6 +54,9 @@ const ResetPassword: React.FC = () => {
 
   return (
     <div className="h-screen w-full bg-[#2a2a2a] relative">
+      {/* Nuevo fondo SVG */}
+      <KivoMainBg className="absolute inset-0 z-0" />
+      
       <div className="relative z-20 pt-8 flex justify-center">
         <Logo width={212} height={40} />
       </div>

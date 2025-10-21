@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import VectorPattern from '../components/atoms/VectorPattern';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
-import VectorGradient from '../components/atoms/VectorGradient';
 import Logo from '../components/atoms/Logo';
 import Button from '../components/atoms/Button';
 import LoginForm from '../components/organisms/LoginForm';
+import KivoMainBg from '../components/atoms/KivoMainBg';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -30,6 +30,9 @@ const Home: React.FC = () => {
 
   return (
     <div className="h-screen w-full bg-[#2a2a2a] relative">
+      {/* Nuevo fondo SVG */}
+      <KivoMainBg className="absolute inset-0 z-0" />
+      
       {/* Header con logo y botón de iniciar sesión */}
       <div className="relative z-20 pt-8 px-8 flex justify-between items-center">
         <div className="flex-1"></div> {/* Espaciador izquierdo */}
@@ -72,9 +75,6 @@ const Home: React.FC = () => {
 
       {/* Patrón de vectores SVG (encima de la esquina) */}
       <VectorPattern className="z-10" />
-      
-      {/* Vector Gradient en esquina superior izquierda */}
-      <VectorGradient className="z-15" />
     </div>
   );
 };

@@ -1,9 +1,15 @@
 import React from 'react';
-import VectorPattern from '../components/atoms/VectorPattern';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import Logo from '../components/atoms/Logo';
 import Sidebar from '../components/atoms/Sidebar';
 import DashboardNavbar from '../components/atoms/DashboardNavbar';
+import InfoBanner from '../components/atoms/InfoBanner';
+import MiniBaner from '../components/atoms/MiniBaner';
+import FullBanner from '../components/atoms/FullBanner';
+import FoldedCard from '../components/atoms/FoldedCard';
+import ResumenCard from '../components/organisms/ResumenCard';
+import TransaccionesRecientesCard from '../components/organisms/TransaccionesRecientesCard';
+import KivoMainBg from '../components/atoms/KivoMainBg';
 
 const Dashboard: React.FC = () => {
   const handleLogout = () => {
@@ -14,49 +20,112 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#2a2a2a] relative flex flex-col lg:flex-row">
+    <div className="h-screen w-full bg-[#2a2a2a] relative flex flex-col lg:flex-row overflow-hidden">
+      {/* Nuevo fondo SVG */}
+      <KivoMainBg className="absolute inset-0 z-0" />
+
       {/* Sidebar - Hidden on mobile, visible on desktop */}
       <div className="hidden lg:block">
         <Sidebar />
       </div>
-      
+
       {/* Contenido principal */}
-      <div className="flex-1 relative flex flex-col">
+      <div className="flex-1 relative flex flex-col pl-6 pr-6 overflow-y-auto pb-8">
         {/* Navbar responsivo */}
         <DashboardNavbar />
-        
-        {/* Contenido principal centrado */}
-        <div className="flex flex-col items-center justify-center flex-1 relative z-20 px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-4xl w-full">
-            <p className="text-xl sm:text-2xl text-gray-300 mb-8">
-              ¡Bienvenido a Kivoo!
-            </p>
-            <div className="bg-gray-800 rounded-lg p-4 sm:p-6 max-w-md mx-auto">
-              <h2 className="text-lg font-semibold text-[#FFF100] mb-4">
-                Funcionalidades disponibles:
-              </h2>
-              <ul className="text-gray-300 space-y-2 text-sm sm:text-base">
-                <li>• Gestión de tarjetas</li>
-                <li>• Historial de transacciones</li>
-                <li>• Configuración de perfil</li>
-                <li>• Sistema de referidos</li>
-              </ul>
-            </div>
-          </div>
+
+        {/* Info Banner - Justo debajo del navbar */}
+        <div className="relative z-20">
+          <InfoBanner>
+            <h2 className="text-black text-xl  text-center">
+              Banner informativo
+            </h2>
+          </InfoBanner>
         </div>
-        
-        {/* SVG de esquina en inferior derecha (debajo del patrón) */}
-        <div className="absolute bottom-0 right-0 pointer-events-none overflow-hidden z-0">
-          <Ki6SvgIcon 
-            width={2850.92} 
-            height={940.08} 
-            rotation={0}
-            className="w-[80vw] sm:w-[60vw] lg:w-[50vw] h-auto border-0 outline-none" 
+
+        {/* Mini Banners - Debajo del Info Banner */}
+        <div className="relative z-20 grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 mt-6">
+          <MiniBaner 
+            className="h-[90px] md:h-[100px] lg:h-[110px]"
+            detail="0.00"
+            subtitle="Total acomulado histórico"
+          />
+          <MiniBaner 
+            className="h-[90px] md:h-[100px] lg:h-[110px]"
+            detail="0.00"
+            subtitle="Saldo disponible"
+            actionButton={{
+              text: "Solicitar pago",
+              onClick: () => {
+                // Aquí puedes agregar la lógica para abrir un modal o cambiar de página
+                console.log("Solicitar pago clickeado");
+              }
+            }}
           />
         </div>
 
-        {/* Patrón de vectores SVG (encima de la esquina) */}
-        <VectorPattern className="z-10" />
+        {/* Full Banner - Debajo de los Mini Banners */}
+        <div className="relative z-20 mt-6 mb-2">
+          <FullBanner
+            className="h-[136px]"
+            title="Link de referido"
+            linkText="https://kivo.com/referral/abc123"
+            onLinkClick={() => {
+              console.log("Enlace clickeado");
+            }}
+            onCopyClick={() => {
+              console.log("Copiar clickeado");
+            }}
+            onShareClick={() => {
+              console.log("Compartir clickeado");
+            }}
+          />
+        </div>
+
+        {/* Mini Banners adicionales - Debajo del Full Banner */}
+        <div className="relative z-20 grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mt-6">
+          <MiniBaner 
+            className="h-[90px] md:h-[100px] lg:h-[110px]"
+            detail="0"
+            subtitle="Referidos Activos"
+            showDollarSign={false}
+          />
+          <MiniBaner 
+            className="h-[90px] md:h-[100px] lg:h-[110px]"
+            detail="0.00"
+            subtitle="Comisiones último mes"
+          />
+          <MiniBaner 
+            className="h-[90px] md:h-[100px] lg:h-[110px]"
+            detail="0.00"
+            subtitle="Claims pendientes"
+          />
+        </div>
+
+        {/* Resumen Card - Gráfico de barras */}
+        <div className="relative z-20 mt-6 mb-6">
+          <ResumenCard />
+        </div>
+
+        {/* Transacciones Recientes Card */}
+        <div className="relative z-20 mb-8">
+          <TransaccionesRecientesCard />
+        </div>
+
+        {/* Contenido principal centrado */}
+        <div className="flex flex-col items-center justify-center flex-1 relative z-20">
+         
+        </div>
+
+        {/* SVG de esquina en inferior derecha (debajo del patrón) */}
+        <div className="absolute bottom-0 right-0 pointer-events-none overflow-hidden z-0">
+          <Ki6SvgIcon
+            width={2850.92}
+            height={940.08}
+            rotation={0}
+            className="w-[80vw] sm:w-[60vw] lg:w-[50vw] h-auto border-0 outline-none"
+          />
+        </div>
       </div>
     </div>
   );

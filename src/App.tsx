@@ -17,6 +17,7 @@ import VerificationCode from "./pages/VerificationCode";
 import VerificationSent from "./pages/VerificationSent";
 import ResetPassword from "./pages/ResetPassword";
 import ResetPasswordSuccess from "./pages/ResetPasswordSuccess";
+import TestBg from "./pages/TestBg";
 import ProtectedRoute from "./components/atoms/ProtectedRoute";
 
 // Create a client
@@ -89,6 +90,10 @@ function App() {
         title = "Kivoo Web - Contraseña actualizada";
         metaDescription = "Tu contraseña fue actualizada exitosamente";
         break;
+      case "/test-bg":
+        title = "Kivoo Web - Test Background";
+        metaDescription = "Página de prueba del nuevo fondo KivoMainBg";
+        break;
     }
 
     if (title) {
@@ -126,6 +131,7 @@ function App() {
         <Route path="/verification-sent" element={<VerificationSent />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/reset-password/success" element={<ResetPasswordSuccess />} />
+        <Route path="/test-bg" element={<TestBg />} />
       </Routes>
     </QueryClientProvider>
   );

@@ -98,4 +98,26 @@ html, body, #root {
     border-radius: 0.75rem !important; /* rounded-xl */
     transition: border-color 0.7s ease-in-out, clip-path 0.7s ease-in-out, border-radius 0.7s ease-in-out !important;
   }
+
+  /* Estilos para ActionButton */
+  .action-text {
+    @apply text-sm font-medium transition-all duration-200 cursor-pointer;
+    color: #FFF000;
+  }
+  
+  .action-text:hover {
+    color: #E6D900;
+  }
+  
+  .action-text:active {
+    color: #CCBF00;
+  }
+  
+  .action-text:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+  
+  .action-text:disabled:hover {
+    color: #FFF000;
+  }
 }

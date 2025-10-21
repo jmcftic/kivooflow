@@ -1,10 +1,14 @@
 import React from 'react';
 import VectorPattern from '../components/atoms/VectorPattern';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
+import KivoMainBg from '../components/atoms/KivoMainBg';
 
 const Home3: React.FC = () => {
   return (
     <div className="h-screen w-full bg-[#2a2a2a] relative">
+      {/* Nuevo fondo SVG */}
+      <KivoMainBg className="absolute inset-0 z-0" />
+      
       {/* Contenedor principal centrado */}
       <div className="flex flex-col items-center justify-center h-full relative z-20">
         {/* Texto de ejemplo */}

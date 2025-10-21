@@ -3,6 +3,7 @@ import VectorPattern from "../components/atoms/VectorPattern";
 import Ki6SvgIcon from "../components/atoms/Ki6SvgIcon";
 import Logo from "../components/atoms/Logo";
 import LoginForm from "../components/organisms/LoginForm";
+import KivoMainBg from "../components/atoms/KivoMainBg";
 import { useNavigate } from "react-router-dom";
 
 const Login: React.FC = () => {
@@ -26,6 +27,9 @@ const Login: React.FC = () => {
 
   return (
     <div className="h-screen w-full bg-[#2a2a2a] relative">
+      {/* Nuevo fondo SVG */}
+      <KivoMainBg className="absolute inset-0 z-0" />
+      
       {/* Logo en la parte superior */}
       <div className="relative z-20 pt-8 flex justify-center">
         <Logo width={212} height={40} />

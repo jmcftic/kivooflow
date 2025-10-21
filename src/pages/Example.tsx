@@ -1,11 +1,11 @@
 import React from "react";
-import BgFull from "../components/atoms/BgFull";
+import KivoMainBg from "../components/atoms/KivoMainBg";
 import Logo from "../components/atoms/Logo";
 
 const Example: React.FC = () => {
   return (
     <div className="min-h-screen w-full relative overflow-hidden">
-      <BgFull className="absolute inset-0 w-full h-full" />
+      <KivoMainBg className="absolute inset-0 w-full h-full" />
       
       {/* Logo en la parte superior */}
       <div className="relative z-10 pt-8 flex justify-center">
