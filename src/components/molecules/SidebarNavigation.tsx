@@ -36,7 +36,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
   };
 
   const handleNetworkClick = () => {
-    console.log('Navegando a Red');
+    navigate('/network');
   };
 
   const handleActivityClick = () => {
@@ -80,7 +80,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
       <SidebarItem
         icon={<NetworkIcon />}
         label="Red"
-        isActive={false}
+        isActive={location.pathname === '/network'}
         isCollapsed={isCollapsed}
         onClick={handleNetworkClick}
       />

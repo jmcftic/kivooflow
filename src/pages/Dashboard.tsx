@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import Logo from '../components/atoms/Logo';
 import SidebarApp from '../components/organisms/SidebarApp';
@@ -10,13 +10,65 @@ import FoldedCard from '../components/atoms/FoldedCard';
 import ResumenCard from '../components/organisms/ResumenCard';
 import TransaccionesRecientesCard from '../components/organisms/TransaccionesRecientesCard';
 import KivoMainBg from '../components/atoms/KivoMainBg';
+import { User } from '../types/auth';
 
 const Dashboard: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [referralLink, setReferralLink] = useState<string>('');
+
+  useEffect(() => {
+    // Cargar información del usuario del localStorage
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const userData: User = JSON.parse(userStr);
+        setUser(userData);
+        
+        // Construir el link de referido
+        if (userData.referral_code) {
+          const link = `https://kivooapp.com/register?ref=${userData.referral_code}`;
+          setReferralLink(link);
+        }
+      } catch (error) {
+        console.error('Error al cargar usuario:', error);
+      }
+    }
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     window.location.href = '/';
+  };
+
+  const handleCopyReferralLink = async () => {
+    if (referralLink) {
+      try {
+        await navigator.clipboard.writeText(referralLink);
+        console.log('Link copiado al portapapeles');
+        // Aquí puedes agregar una notificación de éxito si tienes un sistema de notificaciones
+      } catch (error) {
+        console.error('Error al copiar link:', error);
+      }
+    }
+  };
+
+  const handleShareReferralLink = async () => {
+    if (referralLink && navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Únete a Kivoo',
+          text: 'Únete a Kivoo usando mi link de referido',
+          url: referralLink,
+        });
+      } catch (error) {
+        console.error('Error al compartir:', error);
+      }
+    } else {
+      // Fallback: copiar al portapapeles
+      handleCopyReferralLink();
+    }
   };
 
   return (
@@ -66,16 +118,15 @@ const Dashboard: React.FC = () => {
         <div className="relative z-20 mt-6 mb-2">
           <FullBanner
             title="Link de referido"
-            linkText="https://kivo.com/referral/abc123"
+            linkText={referralLink || 'Cargando...'}
+            linkHref={referralLink}
             onLinkClick={() => {
-              console.log("Enlace clickeado");
+              if (referralLink) {
+                window.open(referralLink, '_blank');
+              }
             }}
-            onCopyClick={() => {
-              console.log("Copiar clickeado");
-            }}
-            onShareClick={() => {
-              console.log("Compartir clickeado");
-            }}
+            onCopyClick={handleCopyReferralLink}
+            onShareClick={handleShareReferralLink}
           />
         </div>
 

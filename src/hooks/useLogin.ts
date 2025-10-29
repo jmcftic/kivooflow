@@ -9,8 +9,8 @@ export const useLogin = () => {
     },
     onSuccess: (data: LoginResponse) => {
       console.log('Login successful:', data);
-      // Store user data in localStorage
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // User data is already stored in authService.login()
+      // Additional logic can be added here if needed
     },
     onError: (error: Error) => {
       console.error('Login failed:', error);

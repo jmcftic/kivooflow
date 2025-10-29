@@ -26,6 +26,13 @@ class AuthService {
     } else if (respAny?.access_token) {
       // Response is direct LoginResponse structure
       loginData = respAny as unknown as LoginResponse;
+    } else if (respAny?.statusCode === 200 && respAny?.user) {
+      // Response has structure: { statusCode, message, user, access_token, refresh_token, expires_in }
+      loginData = {
+        access_token: respAny.access_token,
+        refresh_token: respAny.refresh_token,
+        user: respAny.user,
+      } as LoginResponse;
     } else {
       throw new Error(respAny?.message || "Login failed");
     }
@@ -33,6 +40,9 @@ class AuthService {
     // Store tokens
     apiService.setToken(loginData.access_token);
     localStorage.setItem("refresh_token", loginData.refresh_token);
+    
+    // Store user data with all important information
+    localStorage.setItem("user", JSON.stringify(loginData.user));
     
     return loginData;
   }
