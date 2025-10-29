@@ -1,5 +1,4 @@
 import React from 'react';
-import LogoutButton from './LogoutButton';
 
 interface DashboardNavbarProps {
   className?: string;
@@ -15,11 +14,6 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ className = "", title
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#FFF100]">
             {title}
           </h1>
-        </div>
-        
-        {/* Logout Button - Right */}
-        <div className="flex-shrink-0">
-          <LogoutButton />
         </div>
       </div>
     </nav>

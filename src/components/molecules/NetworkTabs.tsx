@@ -18,14 +18,14 @@ const NetworkTabs: React.FC<NetworkTabsProps> = ({ activeTab, onTabChange }) => 
     <div className="flex items-start">
       <div className="flex" style={{ gap: '1px' }}>
         {tabs.map((tab) => (
-          <div key={tab.id} onClick={() => onTabChange(tab.id)} className="cursor-pointer">
+          <div key={tab.id} onClick={() => onTabChange(tab.id)} className="cursor-pointer" style={{ width: '158px' }}>
             <FoldedTabCard
               height={52}
-              gradientColor={activeTab === tab.id ? '#FFF100' : '#fff000'}
+              gradientColor={activeTab === tab.id ? '#FFF100' : '#333333'}
               backgroundColor={activeTab === tab.id ? '#FFF100' : '#2d2d2d'}
             >
               <span className={cn(
-                "text-sm font-medium",
+                "text-sm text-center",
                 activeTab === tab.id ? 'text-black' : 'text-white'
               )}>
                 {tab.label}

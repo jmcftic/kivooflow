@@ -16,43 +16,36 @@ export function FoldedTabCard({
   backgroundColor = "#2d2d2d",
   height = 52,
 }: FoldedTabCardProps) {
-  const foldSize = 30
-
+  // Ajustar foldSize proporcional a la altura - 30% de la altura
+  const foldSize = Math.floor(height * 0.3)
+  
+  // Reducir padding para tabs pequeños (menos de 35px de altura)
+  const paddingX = height < 35 ? 'px-2' : 'px-6'
+  
   return (
-    <div className={cn("relative w-full overflow-hidden isolate", className)} style={{ height: `${height}px` }}>
-      <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="foldGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-            <stop offset="0%" stopColor={`${gradientColor}00`} />
-            <stop offset="100%" stopColor={`${gradientColor}47`} stopOpacity="0.1" />
-          </linearGradient>
-        </defs>
-        {/* Main shape with rounded fold corners */}
-        <path
-          d={`M 0 0 
-              L calc(100% - ${foldSize}px) 0  
-              Q calc(100% - ${foldSize - 16}px) ${foldSize - 16}px, calc(100% - ${foldSize - 32}px) ${foldSize}px
-              L 100% ${foldSize}px 
-              L 100% 100% 
-              L 0 100% 
-              Z`}
-          fill={backgroundColor}
-        />
+    <div 
+      className={cn("relative w-full overflow-hidden isolate", className)} 
+      style={{ height: `${height}px` }}
+    >
+      {/* Background with clip-path */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundColor: backgroundColor,
+          clipPath: `polygon(0 0, calc(100% - ${foldSize}px) 0, 100% ${foldSize}px, 100% 100%, 0 100%)`,
+        }}
+      >
         {/* Gradient overlay */}
-        <path
-          d={`M 0 0 
-              L calc(100% - ${foldSize}px) 0 
-              Q calc(100% - ${foldSize - 12}px) ${foldSize - 12}px, calc(100% - ${foldSize - 24}px) ${foldSize}px
-              L 100% ${foldSize}px 
-              L 100% 100% 
-              L 0 100% 
-              Z`}
-          fill="url(#foldGradient)"
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            background: `linear-gradient(to top, ${gradientColor}00 0%, ${gradientColor}47 100%)`,
+          }}
         />
-      </svg>
+      </div>
 
       {/* Content container */}
-      <div className="relative z-10 h-full flex items-center px-6">{children}</div>
+      <div className={cn("relative z-10 h-full flex items-center justify-center whitespace-nowrap", paddingX)}>{children}</div>
     </div>
   )
 }

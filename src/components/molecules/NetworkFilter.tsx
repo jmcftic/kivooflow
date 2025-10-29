@@ -24,7 +24,7 @@ const NetworkFilter: React.FC<NetworkFilterProps> = ({
           placeholder="Buscar..."
           value={searchFilter}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="bg-[#212020] border-[#333] text-white placeholder:text-gray-500 focus-visible:ring-[#FFF100]"
+          className="bg-[#212020] border-[#333] text-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-[#333]"
         />
       </div>
 

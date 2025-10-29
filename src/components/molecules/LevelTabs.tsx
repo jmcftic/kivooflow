@@ -17,14 +17,14 @@ const LevelTabs: React.FC<LevelTabsProps> = ({ activeLevel, onLevelChange }) => 
   return (
     <div className="flex" style={{ gap: '3px' }}>
       {levels.map((level) => (
-        <div key={level.id} onClick={() => onLevelChange(level.id)} className="cursor-pointer">
+        <div key={level.id} onClick={() => onLevelChange(level.id)} className="cursor-pointer" style={{ width: '74.27px' }}>
           <FoldedTabCard
-            height={40}
-            gradientColor={activeLevel === level.id ? '#FFF100' : '#fff000'}
+            height={33.14}
+            gradientColor={activeLevel === level.id ? '#FFF100' : '#333333'}
             backgroundColor={activeLevel === level.id ? '#FFF100' : '#2d2d2d'}
           >
             <span className={cn(
-              "text-xs font-medium",
+              "text-xs text-center",
               activeLevel === level.id ? 'text-black' : 'text-white'
             )}>
               {level.label}

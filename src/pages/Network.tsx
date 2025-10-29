@@ -6,6 +6,7 @@ import KivoMainBg from '../components/atoms/KivoMainBg';
 import NetworkTabs from '../components/molecules/NetworkTabs';
 import NetworkFilter from '../components/molecules/NetworkFilter';
 import NetworkTable from '../components/organisms/NetworkTable';
+import NetworkTableHeader from '../components/organisms/NetworkTableHeader';
 
 const Network: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'b2c' | 'b2b' | 'b2t'>('b2c');
@@ -56,6 +57,9 @@ const Network: React.FC = () => {
               onLevelChange={setActiveLevel}
             />
           </div>
+
+          {/* Header de columnas */}
+          <NetworkTableHeader />
 
           {/* Tabla con filas */}
           <NetworkTable 

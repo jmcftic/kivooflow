@@ -15,15 +15,15 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
   return (
     <div className="space-y-4">
       {items.map((item) => (
-        <InfoBanner key={item.id} className="w-full">
-          <div className="w-full flex items-center justify-between px-6 py-4">
-            <div className="flex-1">
-              <h3 className="text-black text-lg font-semibold mb-1">
-                {item.name}
-              </h3>
-              <p className="text-black/80 text-sm">
-                {item.info} - {activeTab.toUpperCase()} - Nivel {activeLevel}
-              </p>
+        <InfoBanner key={item.id} className="w-full h-16" backgroundColor="#212020">
+          <div className="w-full flex items-center px-6 py-2">
+            <div className="flex-1 grid grid-cols-6 gap-4">
+              <div className="text-white text-sm">{item.name}@email.com</div>
+              <div className="text-white text-sm">2024-01-15</div>
+              <div className="text-white text-sm">{activeLevel}</div>
+              <div className="text-white text-sm">Resumen</div>
+              <div className="text-white text-sm">$0.00</div>
+              <div className="text-white text-sm">Ver más</div>
             </div>
           </div>
         </InfoBanner>

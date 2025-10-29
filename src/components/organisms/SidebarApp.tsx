@@ -65,8 +65,10 @@ const SidebarApp: React.FC<SidebarAppProps> = ({ className = "" }) => {
       </div>
       
       {/* Contenido del sidebar */}
-      <div className="mt-8 px-6 relative z-60 flex-1">
-        <SidebarNavigation isCollapsed={isCollapsed && !isMobile} />
+      <div className="mt-8 px-6 relative z-60 flex-1 flex flex-col">
+        <div className="flex-1">
+          <SidebarNavigation isCollapsed={isCollapsed && !isMobile} />
+        </div>
       </div>
     </div>
   );
