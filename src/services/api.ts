@@ -1,5 +1,6 @@
 import { API_BASE_URL, API_ENDPOINTS, HTTP_STATUS } from "../constants/api";
 import { ApiResponse, ApiError } from "../types";
+import authService from "./auth";
 
 class ApiService {
   private baseURL: string;
@@ -78,7 +79,25 @@ class ApiService {
     };
 
     try {
-      const response = await fetch(url, config);
+      let response = await fetch(url, config);
+
+      // Si el token expiró, intentar refrescar y reintentar UNA vez
+      if (response.status === 401 && !(options as any)._retry) {
+        try {
+          const refreshed = await authService.refreshToken();
+          // authService.refreshToken ya setea el token en apiService
+          const retryConfig: RequestInit = {
+            ...config,
+            headers: {
+              ...this.getHeaders(),
+              ...(options.headers || {}),
+            },
+          };
+          response = await fetch(url, { ...(retryConfig as any), _retry: true } as any);
+        } catch (_e) {
+          // Si no se puede refrescar, propagar el 401 original
+        }
+      }
 
       if (!response.ok) {
         await this.handleError(response);

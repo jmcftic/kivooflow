@@ -1,4 +1,5 @@
 // API Configuration
+//export const API_BASE_URL = "https://kivoo.kivooapp.co";
 export const API_BASE_URL = "http://localhost:3001";
 
 // API Endpoints
@@ -36,6 +37,9 @@ export const API_ENDPOINTS = {
     LIST: "/referrals",
     CREATE_CODE: "/referrals/code",
     CHECK_CODE: "/referrals/check/:code",
+  },
+  NETWORK: {
+    GET: "/Network",
   },
   CRYPTO: {
     WALLETS: "/crypto/wallets",

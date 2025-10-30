@@ -26,6 +26,13 @@ html, body, #root {
 
 /* Estilos personalizados para inputs de Kivoo */
 @layer components {
+  .PaginationTextColor {
+    color: #858585;
+  }
+
+  .PaginationSelectBorder {
+    border-color: #ebebeb !important;
+  }
   /* Variables CSS para el input de Kivoo */
   .kivoo-input-focus {
     --kivoo-border-color: transparent;
