@@ -4,17 +4,42 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 
 interface NetworkPaginationBarProps {
   totalItems: number;
-  currentPage?: number;
+  currentPage: number;
+  usersLimit: number;
+  onChangePage: (page: number) => void;
+  onChangeLimit: (limit: number) => void;
 }
 
-const NetworkPaginationBar: React.FC<NetworkPaginationBarProps> = ({ totalItems, currentPage = 1 }) => {
+const NetworkPaginationBar: React.FC<NetworkPaginationBarProps> = ({ totalItems, currentPage, usersLimit, onChangePage, onChangeLimit }) => {
+  const totalPages = Math.max(1, Math.ceil(totalItems / Math.max(1, usersLimit)));
+  const shownSoFar = (currentPage - 1) * usersLimit;
+  const remaining = Math.max(0, totalItems - shownSoFar);
+  const showingCount = Math.min(usersLimit, remaining);
+  const displayCount = Math.max(1, showingCount);
+  const canPrev = currentPage > 1;
+  const canNext = currentPage < totalPages;
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (canPrev) onChangePage(currentPage - 1);
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (canNext) onChangePage(currentPage + 1);
+  };
+
+  const handleLimit = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const v = parseInt(e.target.value, 10);
+    if (!Number.isNaN(v)) onChangeLimit(v);
+  };
   return (
     <div className="w-full h-[84px] flex items-center">
       <div className="h-9 flex items-center justify-between w-full">
         {/* Left: Showing select */}
         <div className="flex items-center gap-2 PaginationTextColor">
           <span>Showing</span>
-          <NativeSelect defaultValue="10">
+          <NativeSelect value={String(displayCount)} onChange={handleLimit}>
             {Array.from({ length: 10 }).map((_, i) => (
               <NativeSelectOption key={i + 1} value={`${i + 1}`}>{i + 1}</NativeSelectOption>
             ))}
@@ -26,24 +51,25 @@ const NetworkPaginationBar: React.FC<NetworkPaginationBarProps> = ({ totalItems,
         <Pagination>
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious href="#" />
+              <PaginationPrevious href="#" onClick={handlePrev} />
             </PaginationItem>
+            {Array.from({ length: totalPages }).map((_, idx) => {
+              const page = idx + 1;
+              const isActive = page === currentPage;
+              return (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    href="#"
+                    isActive={isActive}
+                    onClick={(e) => { e.preventDefault(); onChangePage(page); }}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
             <PaginationItem>
-              <PaginationLink href="#">1</PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#" isActive>
-                {currentPage}
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">3</PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationEllipsis />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext href="#" />
+              <PaginationNext href="#" onClick={handleNext} />
             </PaginationItem>
           </PaginationContent>
         </Pagination>

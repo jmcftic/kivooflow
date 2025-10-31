@@ -11,7 +11,7 @@ export const API_ENDPOINTS = {
     FORGOT_PASSWORD: "/auth/request-password-reset",
     VERIFY_RESET_CODE: "/auth/verify-reset-code",
     RESET_PASSWORD: "/auth/reset-password",
-    REFRESH_TOKEN: "/auth/refresh-token",
+    REFRESH_TOKEN: "/auth/refresh",
     LOGOUT: "/auth/logout",
   },
   USER: {
@@ -40,6 +40,7 @@ export const API_ENDPOINTS = {
   },
   NETWORK: {
     GET: "/Network",
+    SUBTREE: "/network/descendant/:descendantId/subtree",
   },
   CRYPTO: {
     WALLETS: "/crypto/wallets",

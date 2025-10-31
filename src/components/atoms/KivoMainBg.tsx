@@ -12,7 +12,7 @@ const KivoMainBg: FunctionComponent<KivoMainBgType> = ({ className = "" }) => {
       alt=""
       src="/KivoMainBg.svg"
       decoding="async"
-      fetchPriority="high"
+      fetchpriority="high"
     />
   );
 };

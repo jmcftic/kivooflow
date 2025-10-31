@@ -127,15 +127,35 @@ class AuthService {
       { refresh_token: refreshToken }
     );
     
-    if (response.success && response.data) {
-      // Update tokens
-      apiService.setToken(response.data.access_token);
-      localStorage.setItem("refresh_token", response.data.refresh_token);
-      
-      return response.data;
+    const anyResp: any = response;
+
+    // Backend may return one of:
+    // 1) { success: true, data: { access_token, refresh_token, expires_in } }
+    // 2) { statusCode: 200|201, message, access_token, refresh_token, expires_in }
+    // 3) Direct { access_token, refresh_token }
+
+    let accessToken: string | undefined;
+    let newRefresh: string | undefined;
+
+    if (anyResp?.success && anyResp?.data?.access_token) {
+      accessToken = anyResp.data.access_token;
+      newRefresh = anyResp.data.refresh_token;
+    } else if ((anyResp?.statusCode === 200 || anyResp?.statusCode === 201) && anyResp?.access_token) {
+      accessToken = anyResp.access_token;
+      newRefresh = anyResp.refresh_token;
+    } else if (anyResp?.access_token) {
+      accessToken = anyResp.access_token;
+      newRefresh = anyResp.refresh_token;
     }
-    
-    throw new Error(response.message || "Token refresh failed");
+
+    if (!accessToken || !newRefresh) {
+      throw new Error(anyResp?.message || "Token refresh failed");
+    }
+
+    apiService.setToken(accessToken);
+    localStorage.setItem("refresh_token", newRefresh);
+
+    return { access_token: accessToken, refresh_token: newRefresh } as LoginResponse;
   }
 
   // Logout

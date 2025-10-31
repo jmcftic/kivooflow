@@ -34,4 +34,29 @@ export interface NetworkResponse {
   }
 }
 
+export interface DescendantSubtreeUser {
+  userId: number;
+  email: string;
+  fullName: string;
+  phone: string;
+  status: string;
+  createdAt: string;
+  referralCode: string;
+  directParentId: number | null;
+  directParentEmail: string | null;
+  directParentFullName: string | null;
+  directParentReferralCode: string | null;
+  directReferrals: number;
+  totalDescendants: number;
+  levelInSubtree: number;
+}
+
+export interface DescendantSubtreeResponse {
+  isAuthorized: boolean;
+  requesterLevelToDescendant: number | null;
+  totalLevels: number;
+  totalDescendants: number;
+  users: DescendantSubtreeUser[];
+}
+
 
