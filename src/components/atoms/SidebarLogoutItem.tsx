@@ -52,13 +52,10 @@ const SidebarLogoutItem: React.FC<SidebarLogoutItemProps> = ({
         
         {/* Texto del elemento - con transición suave */}
         <span 
-          className={`text-sm font-medium transition-all duration-300 ${
+          className={`text-sm transition-all duration-300 ${
             isCollapsed ? 'opacity-0 scale-0 w-0' : 'opacity-100 scale-100'
           }`}
-          style={{ 
-            fontFamily: 'Brahma Rounded Medium, sans-serif',
-            color: '#c94740'
-          }}
+          style={{ color: '#c94740' }}
         >
           Cerrar sesión
         </span>

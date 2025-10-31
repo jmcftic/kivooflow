@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import Logo from '../atoms/Logo';
-import LogoMini from '../atoms/LogoMini';
+import SidebarLogoOpen from '../atoms/SidebarLogoOpen';
+import SidebarLogoClosed from '../atoms/SidebarLogoClosed';
 import SidebarNavigation from '../molecules/SidebarNavigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -58,9 +58,13 @@ const SidebarApp: React.FC<SidebarAppProps> = ({ className = "" }) => {
       {/* Logo Kivoo */}
       <div className="pt-6.5 px-6 flex justify-center relative z-60">
         {isCollapsed && !isMobile ? (
-          <LogoMini />
+          <div style={{ width: '48px', height: '32px' }}>
+            <SidebarLogoClosed />
+          </div>
         ) : (
-          <Logo width={180} height={25} />
+          <div style={{ width: '180px', height: '25px' }}>
+            <SidebarLogoOpen />
+          </div>
         )}
       </div>
       

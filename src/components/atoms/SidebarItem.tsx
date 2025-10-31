@@ -56,9 +56,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
         
         {/* Texto del elemento - solo visible cuando no está colapsado */}
         {!isCollapsed && (
-          <span className={`text-sm font-medium transition-colors duration-200 ${
+          <span className={`text-sm transition-colors duration-200 ${
             isActive ? 'text-black' : 'text-white group-hover:text-black'
-          }`} style={{ fontFamily: 'Brahma Rounded Medium, sans-serif' }}>
+          }`}>
             {label}
           </span>
         )}

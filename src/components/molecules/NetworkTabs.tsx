@@ -9,16 +9,21 @@ interface NetworkTabsProps {
 
 const NetworkTabs: React.FC<NetworkTabsProps> = ({ activeTab, onTabChange }) => {
   const tabs = [
-    { id: 'b2c' as const, label: 'B2C' },
-    { id: 'b2b' as const, label: 'B2B' },
-    { id: 'b2t' as const, label: 'B2T' },
+    { id: 'b2c' as const, label: 'B2C', disabled: false },
+    { id: 'b2b' as const, label: 'B2B', disabled: true },
+    { id: 'b2t' as const, label: 'B2T', disabled: true },
   ];
 
   return (
     <div className="flex items-start">
       <div className="flex" style={{ gap: '1px' }}>
         {tabs.map((tab) => (
-          <div key={tab.id} onClick={() => onTabChange(tab.id)} className="cursor-pointer" style={{ width: '158px' }}>
+          <div 
+            key={tab.id} 
+            onClick={() => !tab.disabled && onTabChange(tab.id)} 
+            className={tab.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} 
+            style={{ width: '158px' }}
+          >
             <FoldedTabCard
               height={52}
               gradientColor={activeTab === tab.id ? '#FFF100' : '#333333'}
