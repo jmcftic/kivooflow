@@ -317,7 +317,7 @@ const Network: React.FC = () => {
       if (status === 403) {
         setParentHasMore(prev => ({ ...prev, [parentId]: false }));
         setParentExhausted(prev => ({ ...prev, [parentId]: true }));
-        setParentErrors(prev => ({ ...prev, [parentId]: 'No tienes permiso para ver más usuarios en este nivel.' }));
+        setParentErrors(prev => ({ ...prev, [parentId]: 'No hay más usuarios por mostrar.' }));
       } else {
         setParentErrors(prev => ({ ...prev, [parentId]: 'Error al cargar más usuarios. Intenta nuevamente.' }));
       }
