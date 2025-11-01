@@ -32,8 +32,6 @@ interface NetworkTableProps {
   parentErrors?: Record<number, string>;
 }
 
-
-
 const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLevel, onToggleExpand, childrenByParent = {}, childIndentPx = 30, onViewTree, disableExpand = false, onLoadMoreChildren, parentHasMore = {}, parentLoading = {}, loadingTreeUserId = null, parentExhausted = {}, parentErrors = {} }) => {
   return (
     <div className="space-y-4">
@@ -51,8 +49,8 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
           {/** Determinar si el padre está expandido para resaltar su red */}
           <InfoBanner className="w-full h-16" backgroundColor={isExpanded ? "#3c3c3c" : "#212020"}>
             <div className="w-full flex items-center px-6 py-2">
-              <div className="flex-1 grid grid-cols-6 gap-4">
-                <div className="text-white text-sm relative flex items-center justify-center pl-6">
+              <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm text-white">
+                <div className="relative flex items-center justify-center pl-6">
                   {canExpand && (
                     <DropDownTringle 
                       className="absolute left-0 cursor-pointer" 
@@ -63,9 +61,16 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                       }}
                     />
                   )}
-                  <span className="block w-full text-center">{item.email || `${item.name}@email.com`}</span>
+                  <span
+                    className="block w-full text-center truncate"
+                    title={item.email || `${item.name}@email.com`}
+                  >
+                    {item.email || `${item.name}@email.com`}
+                  </span>
                 </div>
-                <div className="text-white text-sm text-center">{item.createdAt ? new Date(item.createdAt).toISOString().slice(0,10) : '—'}</div>
+                <div className="text-center">
+                  {item.createdAt ? new Date(item.createdAt).toISOString().slice(0,10) : '—'}
+                </div>
                 <div className="flex items-center justify-center">
                   {(() => {
                     if (authLevel === 1) return <LevelOneTag />;
@@ -73,13 +78,13 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                     return <LevelThreeTag />;
                   })()}
                 </div>
-                <div className="text-white text-sm text-center">Resumen</div>
-                <div className="text-white text-sm text-center">$0.00</div>
-                <div className="text-sm text-right">
+                <div className="text-center">Resumen</div>
+                <div className="text-center">$0.00</div>
+                <div className="text-right pr-6">
                   {canViewTree ? (
                     <div className="flex items-center justify-end gap-2">
                       <span className={`text-[#FFF100] ${isLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !isLoading && onViewTree && onViewTree(item.id)}>
-                        Ver red
+                        Ver árbol
                       </span>
                       {isLoading && <Spinner className="size-4 text-[#FFF100]" />}
                     </div>
@@ -103,8 +108,8 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                 <div key={child.id} className="space-y-2">
                   <InfoBanner className="w-full h-16" backgroundColor="#3c3c3c">
                     <div className="w-full flex items-center px-6 py-2">
-                      <div className="flex-1 grid grid-cols-6 gap-4">
-                        <div className="text-white text-sm relative flex items-center justify-center pl-6">
+                      <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm text-white">
+                        <div className="relative flex items-center justify-center pl-6">
                           {childCanExpand && (
                             <DropDownTringle 
                               className="absolute left-0 cursor-pointer" 
@@ -115,21 +120,26 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                               }}
                             />
                           )}
-                          <span className="block w-full text-center">{child.email || `${child.name}@email.com`}</span>
+                          <span
+                            className="block w-full text-center truncate"
+                            title={child.email || `${child.name}@email.com`}
+                          >
+                            {child.email || `${child.name}@email.com`}
+                          </span>
                         </div>
-                        <div className="text-white text-sm text-center">{child.createdAt ? new Date(child.createdAt).toISOString().slice(0,10) : '—'}</div>
+                        <div className="text-center">{child.createdAt ? new Date(child.createdAt).toISOString().slice(0,10) : '—'}</div>
                         <div className="flex items-center justify-center">
                           {childAuthLevel === 1 && <LevelOneTag />}
                           {childAuthLevel === 2 && <LevelTwoTag />}
                           {childAuthLevel === 3 && <LevelThreeTag />}
                         </div>
-                        <div className="text-white text-sm text-center">Resumen</div>
-                        <div className="text-white text-sm text-center">$0.00</div>
-                        <div className="text-sm text-right">
+                        <div className="text-center">Resumen</div>
+                        <div className="text-center">$0.00</div>
+                        <div className="text-right pr-6">
                           {childCanViewTree ? (
                             <div className="flex items-center justify-end gap-2">
                               <span className={`text-[#FFF100] ${childIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !childIsLoading && onViewTree && onViewTree(child.id)}>
-                                Ver red
+                                Ver árbol
                               </span>
                               {childIsLoading && <Spinner className="size-4 text-[#FFF100]" />}
                             </div>
@@ -143,15 +153,15 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                       {childrenByParent[child.id].map(grand => (
                         <InfoBanner key={grand.id} className="w-full h-16" backgroundColor="#3c3c3c">
                           <div className="w-full flex items-center px-6 py-2">
-                            <div className="flex-1 grid grid-cols-6 gap-4">
-                              <div className="text-white text-sm relative pl-10 text-left">{grand.email || `${grand.name}@email.com`}</div>
-                              <div className="text-white text-sm text-center">{grand.createdAt ? new Date(grand.createdAt).toISOString().slice(0,10) : '—'}</div>
+                            <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm text-white">
+                              <div className="relative pl-10 text-left truncate" title={grand.email || `${grand.name}@email.com`}>{grand.email || `${grand.name}@email.com`}</div>
+                              <div className="text-center">{grand.createdAt ? new Date(grand.createdAt).toISOString().slice(0,10) : '—'}</div>
                               <div className="flex items-center justify-center">
                                 <LevelThreeTag />
                               </div>
-                              <div className="text-white text-sm text-center">Resumen</div>
-                              <div className="text-white text-sm text-center">$0.00</div>
-                              <div className="text-sm text-right">{/* Nivel 3 no tiene "Ver red" */}</div>
+                              <div className="text-center">Resumen</div>
+                              <div className="text-center">$0.00</div>
+                              <div className="text-right">{/* Nivel 3 no tiene "Ver red" */}</div>
                             </div>
                           </div>
                         </InfoBanner>
