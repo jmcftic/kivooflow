@@ -8,6 +8,7 @@ interface NetworkFilterProps {
   activeLevel: 1 | 2 | 3;
   onSearchChange: (value: string) => void;
   onLevelChange: (level: 1 | 2 | 3) => void;
+  showLevelTabs?: boolean;
 }
 
 const NetworkFilter: React.FC<NetworkFilterProps> = ({
@@ -15,9 +16,10 @@ const NetworkFilter: React.FC<NetworkFilterProps> = ({
   activeLevel,
   onSearchChange,
   onLevelChange,
+  showLevelTabs = true,
 }) => {
   return (
-    <div className="flex items-center justify-between">
+    <div className={`flex items-center ${showLevelTabs ? 'justify-between' : 'justify-start'}`}>
       {/* Input de filtro a la izquierda */}
       <div className="flex-1 max-w-md">
         <div className="relative">
@@ -33,7 +35,9 @@ const NetworkFilter: React.FC<NetworkFilterProps> = ({
       </div>
 
       {/* Tabs de nivel a la derecha */}
-      <LevelTabs activeLevel={activeLevel} onLevelChange={onLevelChange} />
+      {showLevelTabs && (
+        <LevelTabs activeLevel={activeLevel} onLevelChange={onLevelChange} />
+      )}
     </div>
   );
 };

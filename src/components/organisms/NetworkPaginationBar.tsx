@@ -10,12 +10,11 @@ interface NetworkPaginationBarProps {
   onChangeLimit: (limit: number) => void;
 }
 
+const allowedLimits = [10, 20, 50] as const;
+
 const NetworkPaginationBar: React.FC<NetworkPaginationBarProps> = ({ totalItems, currentPage, usersLimit, onChangePage, onChangeLimit }) => {
-  const totalPages = Math.max(1, Math.ceil(totalItems / Math.max(1, usersLimit)));
-  const shownSoFar = (currentPage - 1) * usersLimit;
-  const remaining = Math.max(0, totalItems - shownSoFar);
-  const showingCount = Math.min(usersLimit, remaining);
-  const displayCount = Math.max(1, showingCount);
+  const effectiveLimit = allowedLimits.includes(usersLimit as (typeof allowedLimits)[number]) ? usersLimit : allowedLimits[0];
+  const totalPages = Math.max(1, Math.ceil(totalItems / Math.max(1, effectiveLimit)));
   const canPrev = currentPage > 1;
   const canNext = currentPage < totalPages;
 
@@ -31,20 +30,22 @@ const NetworkPaginationBar: React.FC<NetworkPaginationBarProps> = ({ totalItems,
 
   const handleLimit = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const v = parseInt(e.target.value, 10);
-    if (!Number.isNaN(v)) onChangeLimit(v);
+    if (!Number.isNaN(v) && allowedLimits.includes(v as (typeof allowedLimits)[number])) {
+      onChangeLimit(v);
+    }
   };
   return (
     <div className="w-full h-[84px] flex items-center">
       <div className="h-9 flex items-center justify-between w-full">
         {/* Left: Showing select */}
-        <div className="flex items-center gap-2 PaginationTextColor">
-          <span>Showing</span>
-          <NativeSelect value={String(displayCount)} onChange={handleLimit}>
-            {Array.from({ length: 10 }).map((_, i) => (
-              <NativeSelectOption key={i + 1} value={`${i + 1}`}>{i + 1}</NativeSelectOption>
+        <div className="flex items-center PaginationTextColor">
+          <NativeSelect value={String(effectiveLimit)} onChange={handleLimit}>
+            {allowedLimits.map((option) => (
+              <NativeSelectOption key={option} value={`${option}`}>
+                {option}
+              </NativeSelectOption>
             ))}
           </NativeSelect>
-          <span>out of {totalItems}</span>
         </div>
 
         {/* Right: Pagination */}

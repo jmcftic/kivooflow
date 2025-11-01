@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import SidebarApp from '../components/organisms/SidebarApp';
 import DashboardNavbar from '../components/atoms/DashboardNavbar';
@@ -27,7 +27,7 @@ const Network: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [childrenByParent, setChildrenByParent] = useState<Record<number, any[]>>({});
   const [subtreeMode, setSubtreeMode] = useState(false);
-  const [subtreeUsers, setSubtreeUsers] = useState<Array<{ id: number; name: string; email?: string; createdAt?: string; levelInSubtree: number }>>([]);
+  const [subtreeUsers, setSubtreeUsers] = useState<Array<{ id: number; name: string; email?: string; createdAt?: string; levelInSubtree: number; authLevel: number; totalDescendants: number }>>([]);
   const [subtreeRootId, setSubtreeRootId] = useState<number | null>(null);
   const [subtreeTotal, setSubtreeTotal] = useState(0);
   const [subtreePage, setSubtreePage] = useState(1);
@@ -36,7 +36,13 @@ const Network: React.FC = () => {
   const [parentOffsets, setParentOffsets] = useState<Record<number, number>>({});
   const [parentHasMore, setParentHasMore] = useState<Record<number, boolean>>({});
   const [parentLoading, setParentLoading] = useState<Record<number, boolean>>({});
+  const [parentExhausted, setParentExhausted] = useState<Record<number, boolean>>({});
+  const [parentErrors, setParentErrors] = useState<Record<number, string>>({});
   const [loadingTreeUserId, setLoadingTreeUserId] = useState<number | null>(null);
+  const [pendingTreeUserId, setPendingTreeUserId] = useState<number | null>(null);
+  const historyReadyRef = useRef(false);
+  const suppressHistoryPushRef = useRef(false);
+  const skipNextSubtreeFetchRef = useRef(false);
 
   useEffect(() => {
     setUsersOffset((currentPage - 1) * usersLimit);
@@ -48,6 +54,8 @@ const Network: React.FC = () => {
       setParentOffsets({});
       setParentHasMore({});
       setParentLoading({});
+      setParentExhausted({});
+      setParentErrors({});
     }
   }, [searchFilter, subtreeMode]);
 
@@ -69,6 +77,8 @@ const Network: React.FC = () => {
           setSubtreeRootId(null);
           setSubtreeTotal(0);
           setSubtreePage(1);
+          setParentExhausted({});
+          setParentErrors({});
         }
       } catch (e) {
         console.error('Error cargando red', e);
@@ -83,18 +93,27 @@ const Network: React.FC = () => {
   useEffect(() => {
     const loadSubtree = async () => {
       if (!subtreeMode || !subtreeRootId) return;
+      if (skipNextSubtreeFetchRef.current) {
+        skipNextSubtreeFetchRef.current = false;
+        return;
+      }
       try {
         const offset = (subtreePage - 1) * usersLimit;
         const res = await getDescendantSubtree({ descendantId: subtreeRootId, maxDepth: 3, limit: usersLimit, offset });
         const sdata: any = (res as any)?.data ?? res;
-        const users = (sdata?.users || []).map((u: any) => ({
-          id: u.userId,
-          name: u.fullName || u.email,
-          email: u.email,
-          createdAt: u.createdAt,
-          levelInSubtree: u.levelInSubtree,
-          totalDescendants: u.totalDescendants || 0
-        }));
+        const users = (sdata?.users || []).map((u: any) => {
+          const levelInSubtree = u.levelInSubtree ?? 1;
+          const authLevel = Math.min(3, subtreeRootLevel + levelInSubtree - 1);
+          return {
+            id: u.userId,
+            name: u.fullName || u.email,
+            email: u.email,
+            createdAt: u.createdAt,
+            levelInSubtree,
+            authLevel,
+            totalDescendants: u.totalDescendants || 0,
+          };
+        });
         setSubtreeUsers(users);
         setSubtreeTotal(sdata?.totalDescendants || users.length || 0);
       } catch (e) {
@@ -103,7 +122,7 @@ const Network: React.FC = () => {
       }
     };
     loadSubtree();
-  }, [subtreeMode, subtreeRootId, subtreePage, usersLimit]);
+  }, [subtreeMode, subtreeRootId, subtreePage, usersLimit, subtreeRootLevel]);
 
   const allLevelItems = useMemo(() => {
     return levels.flatMap((levelGroup) =>
@@ -113,6 +132,7 @@ const Network: React.FC = () => {
         email: u.user_email,
         createdAt: u.user_created_at,
         level: levelGroup.level,
+        authLevel: levelGroup.level,
         totalDescendants: u.total_descendants_of_user || 0,
       }))
     );
@@ -127,7 +147,8 @@ const Network: React.FC = () => {
         createdAt: u.createdAt,
         levelInSubtree: u.levelInSubtree,
         level: u.levelInSubtree,
-        totalDescendants: (u as any).totalDescendants || 0,
+        authLevel: u.authLevel,
+        totalDescendants: u.totalDescendants || 0,
       }));
     }
 
@@ -157,6 +178,11 @@ const Network: React.FC = () => {
         delete next[parentUserId];
         return next;
       });
+      setParentExhausted(prev => {
+        const next = { ...prev };
+        delete next[parentUserId];
+        return next;
+      });
       return;
     }
     // Encontrar siguiente nivel ya cargado y filtrar por direct_parent_id
@@ -171,14 +197,25 @@ const Network: React.FC = () => {
           email: u.user_email, 
           createdAt: u.user_created_at,
           level: nextLevelNum,
+          authLevel: nextLevelNum,
           totalDescendants: u.total_descendants_of_user || 0
         }));
       setChildrenByParent(prev => ({ ...prev, [parentUserId]: users }));
       // No consultar subtree en la primera expansión para optimizar
       // Heurística: si alcanzó el límite por página o el nivel reporta más, mostrar "Cargar más"
       const levelHasMore = !!nextLevelData?.has_more_users_in_level;
+      const initialOffset = Math.floor((users.length || 0) / usersLimit) * usersLimit;
       setParentHasMore(prev => ({ ...prev, [parentUserId]: levelHasMore || users.length >= usersLimit }));
-      setParentOffsets(prev => ({ ...prev, [parentUserId]: prev[parentUserId] ?? users.length }));
+      setParentOffsets(prev => {
+        if (prev[parentUserId] !== undefined) return prev;
+        return { ...prev, [parentUserId]: initialOffset };
+      });
+      setParentExhausted(prev => ({ ...prev, [parentUserId]: false }));
+      setParentErrors(prev => {
+        const next = { ...prev };
+        delete next[parentUserId];
+        return next;
+      });
       return;
     }
     // Si no está cargado el siguiente nivel, solicitarlo
@@ -195,33 +232,59 @@ const Network: React.FC = () => {
           email: u.user_email, 
           createdAt: u.user_created_at,
           level: nextLevelNum,
+          authLevel: nextLevelNum,
           totalDescendants: u.total_descendants_of_user || 0
         }));
       setChildrenByParent(prev => ({ ...prev, [parentUserId]: users }));
       const levelHasMore = !!lvl?.has_more_users_in_level;
+      const initialOffset = Math.floor((users.length || 0) / usersLimit) * usersLimit;
       setParentHasMore(prev => ({ ...prev, [parentUserId]: levelHasMore || users.length >= usersLimit }));
-      setParentOffsets(prev => ({ ...prev, [parentUserId]: users.length }));
+      setParentOffsets(prev => {
+        if (prev[parentUserId] !== undefined) return prev;
+        return { ...prev, [parentUserId]: initialOffset };
+      });
+      setParentExhausted(prev => ({ ...prev, [parentUserId]: false }));
+      setParentErrors(prev => {
+        const next = { ...prev };
+        delete next[parentUserId];
+        return next;
+      });
     } catch (e) {
       console.error('Error cargando hijos', e);
       setChildrenByParent(prev => ({ ...prev, [parentUserId]: [] }));
+      setParentExhausted(prev => {
+        const next = { ...prev };
+        delete next[parentUserId];
+        return next;
+      });
+      setParentErrors(prev => {
+        const next = { ...prev };
+        next[parentUserId] = 'No se pudieron cargar los usuarios de este nivel.';
+        return next;
+      });
     }
   };
 
   const handleLoadMoreChildren = async (parentId: number, parentLevel: number) => {
     try {
-      const nextOffset = (parentOffsets[parentId] ?? 0);
+      const currentOffset = parentOffsets[parentId] ?? 0;
       setParentLoading(prev => ({ ...prev, [parentId]: true }));
-      const subtree = await getDescendantSubtree({ descendantId: parentId, maxDepth: 1, limit: usersLimit, offset: nextOffset });
+      const subtree = await getDescendantSubtree({ descendantId: parentId, maxDepth: 1, limit: usersLimit, offset: currentOffset });
       const sdata = (subtree as any)?.data ?? subtree;
-      const newChildren = (sdata?.users || []).map((u: any) => ({ 
-        id: u.userId, 
-        name: u.fullName || u.email, 
-        email: u.email, 
-        createdAt: u.createdAt,
-        levelInSubtree: u.levelInSubtree,
-        level: parentLevel,
-        totalDescendants: u.totalDescendants || 0
-      }));
+      const newChildren = (sdata?.users || []).map((u: any) => {
+        const relativeLevel = u.levelInSubtree ?? 1;
+        const authLevel = Math.min(3, parentLevel + relativeLevel);
+        return {
+          id: u.userId,
+          name: u.fullName || u.email,
+          email: u.email,
+          createdAt: u.createdAt,
+          levelInSubtree: relativeLevel,
+          level: authLevel,
+          authLevel,
+          totalDescendants: u.totalDescendants || 0,
+        };
+      });
       setChildrenByParent(prev => {
         const existing = prev[parentId] || [];
         const existingIds = new Set(existing.map((c: any) => c.id));
@@ -230,51 +293,92 @@ const Network: React.FC = () => {
         return { ...prev, [parentId]: merged };
       });
       const totalDirect = sdata?.totalDescendants ?? 0;
-      const newOffset = nextOffset + newChildren.length;
-      setParentOffsets(prev => ({ ...prev, [parentId]: newOffset }));
-      setParentHasMore(prev => ({ ...prev, [parentId]: newOffset < totalDirect }));
+      const noNewUsers = newChildren.length === 0;
+      const nextOffset = currentOffset + usersLimit;
+      setParentOffsets(prev => ({ ...prev, [parentId]: nextOffset }));
+      setParentHasMore(prev => ({ ...prev, [parentId]: !noNewUsers && nextOffset < totalDirect }));
+      setParentExhausted(prev => ({ ...prev, [parentId]: noNewUsers }));
+      if (noNewUsers) {
+        setParentErrors(prev => {
+          const next = { ...prev };
+          delete next[parentId];
+          return next;
+        });
+      } else {
+        setParentErrors(prev => {
+          const next = { ...prev };
+          delete next[parentId];
+          return next;
+        });
+      }
     } catch (e) {
       console.error('Error cargando más hijos', e);
+      const status = (e as any)?.status;
+      if (status === 403) {
+        setParentHasMore(prev => ({ ...prev, [parentId]: false }));
+        setParentExhausted(prev => ({ ...prev, [parentId]: true }));
+        setParentErrors(prev => ({ ...prev, [parentId]: 'No tienes permiso para ver más usuarios en este nivel.' }));
+      } else {
+        setParentErrors(prev => ({ ...prev, [parentId]: 'Error al cargar más usuarios. Intenta nuevamente.' }));
+      }
     } finally {
       setParentLoading(prev => ({ ...prev, [parentId]: false }));
     }
   };
 
-  const handleViewTree = async (userId: number) => {
+  const loadTreeForUser = useCallback(async (userId: number) => {
     setLoadingTreeUserId(userId);
     try {
       // Buscar el usuario en la lista actual para obtener su información
       const lookupDataset = subtreeMode ? baseItems : allLevelItems;
       const userItem = lookupDataset.find(item => item.id === userId);
-      const userLevel = (userItem as any)?.levelInSubtree ?? (userItem as any)?.level ?? activeLevel;
+      if (!userItem) {
+        return;
+      }
+      const userLevel = (userItem as any)?.authLevel ?? (userItem as any)?.level ?? activeLevel;
       const userName = userItem?.name || 'Usuario';
+
+      if (userLevel >= 3) {
+        return;
+      }
       
       const res = await getDescendantSubtree({ descendantId: userId, maxDepth: 3, limit: usersLimit, offset: 0 });
       const data: any = (res as any)?.data ?? res;
-      const users = (data?.users || []).map((u: any) => ({
-        id: u.userId,
-        name: u.fullName || u.email,
-        email: u.email,
-        createdAt: u.createdAt,
-        levelInSubtree: u.levelInSubtree,
-        totalDescendants: u.totalDescendants || 0
-      }));
+      const requesterLevel = typeof data?.requesterLevelToDescendant === 'number' && data.requesterLevelToDescendant > 0
+        ? data.requesterLevelToDescendant
+        : userLevel;
+      const rootLevel = Math.min(3, requesterLevel);
+      const users = (data?.users || []).map((u: any) => {
+        const levelInSubtree = u.levelInSubtree ?? 1;
+        const authLevel = Math.min(3, rootLevel + levelInSubtree);
+        return {
+          id: u.userId,
+          name: u.fullName || u.email,
+          email: u.email,
+          createdAt: u.createdAt,
+          levelInSubtree,
+          authLevel,
+          totalDescendants: u.totalDescendants || 0,
+        };
+      });
+      skipNextSubtreeFetchRef.current = true;
       setSubtreeMode(true);
       setSubtreeRootId(userId);
       setSubtreeRootName(userName);
-      setSubtreeRootLevel(userLevel);
+      setSubtreeRootLevel(rootLevel);
       setSubtreeUsers(users);
       setSubtreeTotal(data?.totalDescendants || users.length || 0);
       setSubtreePage(1);
       setChildrenByParent({});
+      setParentExhausted({});
     } catch (e) {
       console.error('Error cargando sub-árbol', e);
-      const lookupDataset = subtreeMode ? baseItems : allLevelItems;
-      const userItem = lookupDataset.find(item => item.id === userId);
+      const lookupDatasetFallback = subtreeMode ? baseItems : allLevelItems;
+      const userItem = lookupDatasetFallback.find(item => item.id === userId);
       setSubtreeMode(true);
       setSubtreeRootId(userId);
       setSubtreeRootName(userItem?.name || 'Usuario');
-      setSubtreeRootLevel((userItem as any)?.levelInSubtree ?? (userItem as any)?.level ?? activeLevel);
+      setSubtreeRootLevel((userItem as any)?.authLevel ?? (userItem as any)?.level ?? activeLevel);
       setSubtreeUsers([]);
       setSubtreeTotal(0);
       setSubtreePage(1);
@@ -282,9 +386,68 @@ const Network: React.FC = () => {
     } finally {
       setLoadingTreeUserId(null);
     }
+  }, [activeLevel, allLevelItems, baseItems, subtreeMode, usersLimit]);
+
+  const handleViewTree = (userId: number) => {
+    const lookupDataset = subtreeMode ? baseItems : allLevelItems;
+    const userItem = lookupDataset.find(item => item.id === userId);
+    if (!userItem) {
+      return;
+    }
+    const userLevel = (userItem as any)?.authLevel ?? (userItem as any)?.level ?? activeLevel;
+
+    if (userLevel >= 3) {
+      return;
+    }
+
+    if (searchFilter.trim()) {
+      setSearchFilter('');
+      setPendingTreeUserId(userId);
+      return;
+    }
+
+    void loadTreeForUser(userId);
   };
 
-  const handleBackToNetwork = () => {
+  useEffect(() => {
+    if (pendingTreeUserId === null) return;
+    if (searchFilter.trim()) return;
+
+    const userId = pendingTreeUserId;
+    setPendingTreeUserId(null);
+    void loadTreeForUser(userId);
+  }, [pendingTreeUserId, searchFilter, loadTreeForUser]);
+
+  useEffect(() => {
+    const state = {
+      app: 'network',
+      tab: activeTab,
+      level: activeLevel,
+      mode: subtreeMode ? 'subtree' : 'list',
+      subtreeRootId,
+      subtreeRootName,
+      subtreeRootLevel,
+      subtreePage,
+    } as const;
+
+    if (!historyReadyRef.current) {
+      window.history.replaceState(state, '');
+      historyReadyRef.current = true;
+      return;
+    }
+
+    if (suppressHistoryPushRef.current) {
+      window.history.replaceState(state, '');
+      window.setTimeout(() => {
+        suppressHistoryPushRef.current = false;
+      }, 0);
+      return;
+    }
+
+    window.history.pushState(state, '');
+  }, [activeTab, activeLevel, subtreeMode, subtreeRootId, subtreeRootName, subtreeRootLevel, subtreePage]);
+
+  const handleBackToNetwork = useCallback(() => {
     setSubtreeMode(false);
     setSubtreeUsers([]);
     setSubtreeRootId(null);
@@ -293,7 +456,48 @@ const Network: React.FC = () => {
     setSubtreeTotal(0);
     setSubtreePage(1);
     setChildrenByParent({});
-  };
+    setParentExhausted({});
+    setParentErrors({});
+      setParentErrors({});
+  }, []);
+
+  useEffect(() => {
+    const onPopState = (event: PopStateEvent) => {
+      const state = event.state;
+      if (!state || state.app !== 'network') {
+        return;
+      }
+
+      suppressHistoryPushRef.current = true;
+
+      const targetLevel = state.level ?? 1;
+      const targetTab = state.tab ?? 'b2c';
+      const mode = state.mode ?? 'list';
+      const targetSubtreeId = state.subtreeRootId as number | null | undefined;
+
+      if (activeTab !== targetTab) {
+        setActiveTab(targetTab);
+      }
+
+      if (activeLevel !== targetLevel) {
+        setActiveLevel(targetLevel);
+      }
+
+      if (mode === 'subtree' && targetSubtreeId) {
+        setSearchFilter('');
+        setPendingTreeUserId(null);
+        void loadTreeForUser(targetSubtreeId);
+      } else {
+        setPendingTreeUserId(null);
+        if (subtreeMode) {
+          handleBackToNetwork();
+        }
+      }
+    };
+
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [activeLevel, activeTab, handleBackToNetwork, loadTreeForUser, subtreeMode]);
 
   const totalItemsLevel1 = useMemo(() => {
     const lvl1 = levels.find(l => l.level === 1);
@@ -390,17 +594,16 @@ const Network: React.FC = () => {
             </div>
           )}
 
-          {/* Sección de filtro y tabs de nivel - solo cuando NO está en modo subárbol */}
-          {!subtreeMode && (
-            <div className="mt-4 mb-3">
-              <NetworkFilter
-                searchFilter={searchFilter}
-                activeLevel={activeLevel}
-                onSearchChange={setSearchFilter}
-                onLevelChange={setActiveLevel}
-              />
-            </div>
-          )}
+          {/* Sección de filtro y tabs de nivel */}
+          <div className="mt-4 mb-3">
+            <NetworkFilter
+              searchFilter={searchFilter}
+              activeLevel={activeLevel}
+              onSearchChange={setSearchFilter}
+              onLevelChange={setActiveLevel}
+              showLevelTabs={!subtreeMode}
+            />
+          </div>
 
           {/* Contenido scrollable de la tabla */}
           <div className="flex-1 min-h-0 overflow-y-auto">
@@ -422,6 +625,8 @@ const Network: React.FC = () => {
                 parentHasMore={parentHasMore}
                 parentLoading={parentLoading}
                 loadingTreeUserId={loadingTreeUserId}
+                parentExhausted={parentExhausted}
+                parentErrors={parentErrors}
               />
             ) : (
               <div className="py-10 text-center text-sm text-white/60">

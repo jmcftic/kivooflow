@@ -11,9 +11,14 @@ import {
 class AuthService {
   // Login user
   async login(credentials: LoginRequest): Promise<LoginResponse> {
+    const payload: LoginRequest = {
+      ...credentials,
+      email: credentials.email.trim().toLowerCase(),
+    };
+
     const response = await apiService.post<LoginResponse>(
       API_ENDPOINTS.AUTH.LOGIN,
-      credentials
+      payload
     );
     
     // Handle different response structures
@@ -67,9 +72,14 @@ class AuthService {
 
   // Forgot password
   async forgotPassword(data: ForgotPasswordRequest): Promise<{ message: string }> {
+    const payload: ForgotPasswordRequest = {
+      ...data,
+      email: data.email.trim().toLowerCase(),
+    };
+
     const response = await apiService.post<{ message: string }>(
       API_ENDPOINTS.AUTH.FORGOT_PASSWORD,
-      data
+      payload
     );
     
     // Considerar éxito cuando la API retorna 200/204 sin payload estandar
@@ -82,9 +92,14 @@ class AuthService {
 
   // Verify reset code -> returns temp token on success
   async verifyResetCode(data: { email: string; code: string }): Promise<{ tempToken: string; message?: string; statusCode?: number }> {
+    const payload = {
+      ...data,
+      email: data.email.trim().toLowerCase(),
+    };
+
     const response = await apiService.post<{ tempToken: string; message?: string; statusCode?: number }>(
       API_ENDPOINTS.AUTH.VERIFY_RESET_CODE,
-      data
+      payload
     );
 
     // La API puede devolver 200/201 con estructura { statusCode, message, tempToken }
@@ -160,17 +175,10 @@ class AuthService {
 
   // Logout
   async logout(): Promise<void> {
-    try {
-      await apiService.post(API_ENDPOINTS.AUTH.LOGOUT);
-    } catch (error) {
-      // Continue with logout even if API call fails
-      console.warn("Logout API call failed:", error);
-    } finally {
-      // Clear local storage
-      apiService.setToken(null);
-      localStorage.removeItem("refresh_token");
-      localStorage.removeItem("user");
-    }
+    // Clear tokens and cached session data locally
+    apiService.setToken(null);
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user");
   }
 
   // Get current user profile
