@@ -185,65 +185,37 @@ const Network: React.FC = () => {
       });
       return;
     }
-    // Encontrar siguiente nivel ya cargado y filtrar por direct_parent_id
-    const nextLevelNum = (level + 1) as 1 | 2 | 3;
-    const nextLevelData = levels.find(l => l.level === nextLevelNum);
-    if (nextLevelData && nextLevelData.users?.length) {
-      const users = nextLevelData.users
-        .filter(u => u.direct_parent_id === parentUserId)
-        .map(u => ({ 
-          id: u.user_id, 
-          name: u.user_full_name || u.user_email, 
-          email: u.user_email, 
-          createdAt: u.user_created_at,
-          level: nextLevelNum,
-          authLevel: nextLevelNum,
-          totalDescendants: u.total_descendants_of_user || 0
-        }));
-      setChildrenByParent(prev => ({ ...prev, [parentUserId]: users }));
-      // No consultar subtree en la primera expansión para optimizar
-      // Heurística: si alcanzó el límite por página o el nivel reporta más, mostrar "Cargar más"
-      const levelHasMore = !!nextLevelData?.has_more_users_in_level;
-      const initialOffset = Math.floor((users.length || 0) / usersLimit) * usersLimit;
-      setParentHasMore(prev => ({ ...prev, [parentUserId]: levelHasMore || users.length >= usersLimit }));
-      setParentOffsets(prev => {
-        if (prev[parentUserId] !== undefined) return prev;
-        return { ...prev, [parentUserId]: initialOffset };
-      });
-      setParentExhausted(prev => ({ ...prev, [parentUserId]: false }));
-      setParentErrors(prev => {
-        const next = { ...prev };
-        delete next[parentUserId];
-        return next;
-      });
+    const parentDataset = subtreeMode ? baseItems : allLevelItems;
+    const parentItem = parentDataset.find(item => item.id === parentUserId);
+    const parentAuthLevel = (parentItem as any)?.authLevel ?? (parentItem as any)?.level ?? level;
+    if (parentAuthLevel >= 3) {
       return;
     }
-    // Si no está cargado el siguiente nivel, solicitarlo
+
+    setParentLoading(prev => ({ ...prev, [parentUserId]: true }));
     try {
-      // Optimizado: usar /network (nivel) para la primera carga cuando no existe el siguiente nivel aún
-      const res = await getNetwork({ levelStart: nextLevelNum, levelEnd: nextLevelNum, usersLimit, usersOffset: 0 });
-      const data = (res as any)?.data ?? res;
-      const lvl = data?.levels?.find((l: NetworkLevel) => l.level === nextLevelNum);
-      const users = (lvl?.users || [])
-        .filter((u: any) => u.direct_parent_id === parentUserId)
-        .map((u: any) => ({ 
-          id: u.user_id, 
-          name: u.user_full_name || u.user_email, 
-          email: u.user_email, 
-          createdAt: u.user_created_at,
-          level: nextLevelNum,
-          authLevel: nextLevelNum,
-          totalDescendants: u.total_descendants_of_user || 0
-        }));
-      setChildrenByParent(prev => ({ ...prev, [parentUserId]: users }));
-      const levelHasMore = !!lvl?.has_more_users_in_level;
-      const initialOffset = Math.floor((users.length || 0) / usersLimit) * usersLimit;
-      setParentHasMore(prev => ({ ...prev, [parentUserId]: levelHasMore || users.length >= usersLimit }));
-      setParentOffsets(prev => {
-        if (prev[parentUserId] !== undefined) return prev;
-        return { ...prev, [parentUserId]: initialOffset };
+      const subtree = await getDescendantSubtree({ descendantId: parentUserId, maxDepth: 1, limit: usersLimit, offset: 0 });
+      const sdata = (subtree as any)?.data ?? subtree;
+      const users = (sdata?.users || []).map((u: any) => {
+        const levelInSubtree = u.levelInSubtree ?? 1;
+        const authLevel = Math.min(3, parentAuthLevel + levelInSubtree);
+        return {
+          id: u.userId,
+          name: u.fullName || u.email,
+          email: u.email,
+          createdAt: u.createdAt,
+          levelInSubtree,
+          level: authLevel,
+          authLevel,
+          totalDescendants: u.totalDescendants || 0,
+        };
       });
-      setParentExhausted(prev => ({ ...prev, [parentUserId]: false }));
+      setChildrenByParent(prev => ({ ...prev, [parentUserId]: users }));
+      const totalDirect = sdata?.totalDescendants ?? users.length;
+      const hasMore = users.length < totalDirect;
+      setParentOffsets(prev => ({ ...prev, [parentUserId]: users.length }));
+      setParentHasMore(prev => ({ ...prev, [parentUserId]: hasMore }));
+      setParentExhausted(prev => ({ ...prev, [parentUserId]: users.length === 0 && !hasMore }));
       setParentErrors(prev => {
         const next = { ...prev };
         delete next[parentUserId];
@@ -252,16 +224,26 @@ const Network: React.FC = () => {
     } catch (e) {
       console.error('Error cargando hijos', e);
       setChildrenByParent(prev => ({ ...prev, [parentUserId]: [] }));
+      setParentOffsets(prev => {
+        const next = { ...prev };
+        delete next[parentUserId];
+        return next;
+      });
+      setParentHasMore(prev => ({ ...prev, [parentUserId]: false }));
       setParentExhausted(prev => {
         const next = { ...prev };
         delete next[parentUserId];
         return next;
       });
-      setParentErrors(prev => {
-        const next = { ...prev };
-        next[parentUserId] = 'No se pudieron cargar los usuarios de este nivel.';
-        return next;
-      });
+      const status = (e as any)?.status;
+      setParentErrors(prev => ({
+        ...prev,
+        [parentUserId]: status === 403
+          ? 'No hay más usuarios por mostrar.'
+          : 'No se pudieron cargar los usuarios de este nivel.'
+      }));
+    } finally {
+      setParentLoading(prev => ({ ...prev, [parentUserId]: false }));
     }
   };
 
