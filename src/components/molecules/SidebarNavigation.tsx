@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SidebarItem from '../atoms/SidebarItem';
 import DashboardIcon from '../atoms/DashboardIcon';
@@ -20,79 +20,74 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleDashboardClick = () => {
-    navigate('/dashboard');
-  };
-  
-  const handleClaimsClick = () => {
-    navigate('/claims');
-  };
+  const primaryNavItems = useMemo(() => ([
+    {
+      key: 'dashboard',
+      label: 'Dashboard',
+      icon: <DashboardIcon />,
+      path: '/dashboard',
+      disabled: false,
+    },
+    {
+      key: 'claims',
+      label: 'Claims',
+      icon: <ClaimsIcon />,
+      path: '/claims',
+      disabled: true,
+    },
+    {
+      key: 'card',
+      label: 'Adquisición de tarjeta',
+      icon: <CardAcquisitionIcon />,
+      path: '/card-acquisition',
+      disabled: true,
+    },
+    {
+      key: 'commissions',
+      label: 'Comisiones',
+      icon: <CommissionsIcon />,
+      path: '/commissions',
+      disabled: true,
+    },
+    {
+      key: 'network',
+      label: 'Red',
+      icon: <NetworkIcon />,
+      path: '/network',
+      disabled: false,
+    },
+    {
+      key: 'activity',
+      label: 'Actividad',
+      icon: <ActivityIcon />,
+      path: '/activity',
+      disabled: true,
+    },
+  ]), []);
 
-  const handleCardAcquisitionClick = () => {
-    console.log('Navegando a Adquisición de tarjeta');
-  };
-
-  const handleCommissionsClick = () => {
-    console.log('Navegando a Comisiones');
-  };
-
-  const handleNetworkClick = () => {
-    navigate('/network');
-  };
-
-  const handleActivityClick = () => {
-    console.log('Navegando a Actividad');
-  };
-
-  const handleHelpClick = () => {
-    console.log('Navegando a Ayuda');
-  };
+  const helpItem = useMemo(() => ({
+    key: 'help',
+    label: 'Ayuda',
+    icon: <HelpIcon />,
+    path: '/help',
+    disabled: true,
+  }), []);
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
       <div className="space-y-2 flex-1">
-      <SidebarItem
-        icon={<DashboardIcon />}
-        label="Dashboard"
-        isActive={location.pathname === '/dashboard'}
-        isCollapsed={isCollapsed}
-        onClick={handleDashboardClick}
-      />
-      <SidebarItem
-        icon={<ClaimsIcon />}
-        label="Claims"
-        isActive={location.pathname === '/claims'}
-        isCollapsed={isCollapsed}
-        onClick={handleClaimsClick}
-      />
-      <SidebarItem
-        icon={<CardAcquisitionIcon />}
-        label="Adquisición de tarjeta"
-        isActive={false}
-        isCollapsed={isCollapsed}
-        onClick={handleCardAcquisitionClick}
-      />
-      <SidebarItem
-        icon={<CommissionsIcon />}
-        label="Comisiones"
-        isActive={false}
-        isCollapsed={isCollapsed}
-        onClick={handleCommissionsClick}
-      />
-      <SidebarItem
-        icon={<NetworkIcon />}
-        label="Red"
-        isActive={location.pathname === '/network'}
-        isCollapsed={isCollapsed}
-        onClick={handleNetworkClick}
-      />
-      <SidebarItem
-        icon={<ActivityIcon />}
-        label="Actividad"
-        isActive={false}
-        isCollapsed={isCollapsed}
-        onClick={handleActivityClick}
-      />
+      {primaryNavItems.map((item) => (
+        <SidebarItem
+          key={item.key}
+          icon={item.icon}
+          label={item.label}
+          isActive={!item.disabled && location.pathname === item.path}
+          isCollapsed={isCollapsed}
+          onClick={!item.disabled ? () => navigate(item.path) : undefined}
+          disabled={item.disabled}
+          disabledMessage="El módulo estará próximamente disponible"
+        />
+      ))}
       
       {/* Línea divisoria */}
       {!isCollapsed && (
@@ -104,11 +99,14 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
       {/* Elemento Ayuda */}
       <div className="mt-4">
         <SidebarItem
-          icon={<HelpIcon />}
-          label="Ayuda"
+          key={helpItem.key}
+          icon={helpItem.icon}
+          label={helpItem.label}
           isActive={false}
           isCollapsed={isCollapsed}
-          onClick={handleHelpClick}
+          onClick={undefined}
+          disabled={helpItem.disabled}
+          disabledMessage="El módulo estará próximamente disponible"
         />
       </div>
       

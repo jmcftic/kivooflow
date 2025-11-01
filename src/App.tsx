@@ -14,6 +14,10 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Claims from "./pages/Claims";
 import Network from "./pages/Network";
+import CardAcquisition from "./pages/CardAcquisition";
+import Commissions from "./pages/Commissions";
+import Activity from "./pages/Activity";
+import Help from "./pages/Help";
 import ForgotPassword from "./pages/ForgotPassword";
 import VerificationCode from "./pages/VerificationCode";
 import VerificationSent from "./pages/VerificationSent";
@@ -139,7 +143,7 @@ function App() {
         <Route
           path="/claims"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowed={false}>
               <Claims />
             </ProtectedRoute>
           }
@@ -149,6 +153,38 @@ function App() {
           element={
             <ProtectedRoute>
               <Network />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/card-acquisition"
+          element={
+            <ProtectedRoute allowed={false}>
+              <CardAcquisition />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/commissions"
+          element={
+            <ProtectedRoute allowed={false}>
+              <Commissions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/activity"
+          element={
+            <ProtectedRoute allowed={false}>
+              <Activity />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/help"
+          element={
+            <ProtectedRoute allowed={false}>
+              <Help />
             </ProtectedRoute>
           }
         />

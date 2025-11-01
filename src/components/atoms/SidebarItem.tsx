@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import SidebarBackgroundItemPrimaryFull from './SidebarBackgroundItemPrimaryFull';
 import SidebarBackgroundItemPrimaryMini from './SidebarBackgroundItemPrimaryMini';
 import SidebarBackgroundItemSecondary from './SidebarBackgroundItemSecondary';
@@ -10,6 +10,8 @@ interface SidebarItemProps {
   isCollapsed?: boolean;
   onClick?: () => void;
   className?: string;
+  disabled?: boolean;
+  disabledMessage?: string;
 }
 
 const SidebarItem: React.FC<SidebarItemProps> = ({ 
@@ -18,24 +20,72 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   isActive = false, 
   isCollapsed = false,
   onClick,
-  className = "" 
+  className = "",
+  disabled = false,
+  disabledMessage = "El módulo estará próximamente disponible"
 }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const tooltipIdRef = useRef<string>(`${label}-${Math.random().toString(36).slice(2, 8)}`);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      window.removeEventListener('sidebar-tooltip-show', handleExternalTooltip);
+    };
+  }, []);
+
+  const handleExternalTooltip = (event: Event) => {
+    const detail = (event as CustomEvent<{ id: string }>).detail;
+    if (detail?.id !== tooltipIdRef.current) {
+      setShowTooltip(false);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    }
+  };
+
+  const handleClick = () => {
+    if (disabled) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      window.removeEventListener('sidebar-tooltip-show', handleExternalTooltip);
+      window.addEventListener('sidebar-tooltip-show', handleExternalTooltip, { once: true });
+      const event = new CustomEvent('sidebar-tooltip-show', {
+        detail: { id: tooltipIdRef.current },
+      });
+      window.dispatchEvent(event);
+      setShowTooltip(true);
+      timeoutRef.current = setTimeout(() => {
+        setShowTooltip(false);
+        timeoutRef.current = null;
+      }, 2000);
+      return;
+    }
+
+    onClick?.();
+  };
+
   return (
     <div 
-      className={`relative ${isCollapsed ? 'w-[48px]' : 'w-[252px]'} h-[32px] mx-auto mb-2 cursor-pointer group ${className}`}
-      onClick={onClick}
+      className={`relative ${isCollapsed ? 'w-[48px]' : 'w-[252px]'} h-[32px] mx-auto mb-2 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer group'} ${className}`}
+      onClick={handleClick}
     >
       {/* Fondo amarillo para hover y estado activo */}
       {isCollapsed ? (
         <SidebarBackgroundItemPrimaryMini 
           className={`${
-            isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            !disabled && isActive ? 'opacity-100' : !disabled ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'
           }`}
         />
       ) : (
         <SidebarBackgroundItemPrimaryFull 
           className={`${
-            isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            !disabled && isActive ? 'opacity-100' : !disabled ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'
           }`}
         />
       )}
@@ -57,12 +107,18 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
         {/* Texto del elemento - solo visible cuando no está colapsado */}
         {!isCollapsed && (
           <span className={`text-sm transition-colors duration-200 ${
-            isActive ? 'text-black' : 'text-white group-hover:text-black'
+            !disabled && isActive ? 'text-black' : disabled ? 'text-white/60' : 'text-white group-hover:text-black'
           }`}>
             {label}
           </span>
         )}
       </div>
+
+      {disabled && showTooltip && (
+        <div className={`absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-1 rounded-lg shadow-lg text-xs font-medium text-black bg-[#FFF100] animate-pulse whitespace-nowrap ${isCollapsed ? 'z-50' : ''}`}>
+          {disabledMessage}
+        </div>
+      )}
     </div>
   );
 };
