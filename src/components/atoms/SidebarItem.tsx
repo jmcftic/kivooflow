@@ -22,7 +22,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   onClick,
   className = "",
   disabled = false,
-  disabledMessage = "El módulo estará próximamente disponible"
+  disabledMessage = "El módulo estará disponible próximamente"
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);

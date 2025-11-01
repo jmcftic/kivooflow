@@ -206,6 +206,9 @@ const Network: React.FC = () => {
           createdAt: u.createdAt,
           levelInSubtree,
           level: authLevel,
+
+
+          
           authLevel,
           totalDescendants: u.totalDescendants || 0,
         };
