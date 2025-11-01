@@ -81,6 +81,7 @@ class ApiService {
     try {
       let response: Response;
       let attemptedRefresh = false;
+      let refreshFailed = false;
 
       while (true) {
         response = await fetch(url, config);
@@ -90,6 +91,7 @@ class ApiService {
           try {
             await authService.refreshToken();
           } catch (_e) {
+            refreshFailed = true;
             break;
           }
 
@@ -105,6 +107,17 @@ class ApiService {
         }
 
         break;
+      }
+
+      if (refreshFailed || (response.status === 401 && attemptedRefresh)) {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("session-expired"));
+        }
+        await authService.logout();
+        throw {
+          message: "Tu sesión expiró. Inicia sesión nuevamente.",
+          status: 401,
+        } as ApiError;
       }
 
       if (!response.ok) {

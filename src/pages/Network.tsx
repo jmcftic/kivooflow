@@ -22,7 +22,7 @@ const Network: React.FC = () => {
 
   const [levels, setLevels] = useState<NetworkLevel[]>([]);
   const [totalDescendants, setTotalDescendants] = useState(0);
-  const [usersLimit, setUsersLimit] = useState(5);
+  const [usersLimit, setUsersLimit] = useState(10);
   const [usersOffset, setUsersOffset] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [childrenByParent, setChildrenByParent] = useState<Record<number, any[]>>({});

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Routes,
   Route,
@@ -25,6 +25,7 @@ import ResetPassword from "./pages/ResetPassword";
 import ResetPasswordSuccess from "./pages/ResetPasswordSuccess";
 import TestBg from "./pages/TestBg";
 import ProtectedRoute from "./components/atoms/ProtectedRoute";
+import ErrorModal from "./components/atoms/ErrorModal";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -40,12 +41,27 @@ function App() {
   const action = useNavigationType();
   const location = useLocation();
   const pathname = location.pathname;
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
     if (action !== "POP") {
       window.scrollTo(0, 0);
     }
   }, [action, pathname]);
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setSessionExpired(true);
+    };
+
+    window.addEventListener("session-expired", handleSessionExpired);
+    return () => window.removeEventListener("session-expired", handleSessionExpired);
+  }, []);
+
+  const handleSessionModalClose = () => {
+    setSessionExpired(false);
+    window.location.href = "/login";
+  };
 
   useEffect(() => {
     let title = "";
@@ -126,6 +142,12 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ErrorModal
+        isOpen={sessionExpired}
+        onClose={handleSessionModalClose}
+        title="Sesión expirada"
+        message="Tu sesión caducó por inactividad. Inicia sesión nuevamente para continuar."
+      />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/example" element={<Example />} />
