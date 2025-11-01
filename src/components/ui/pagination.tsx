@@ -20,8 +20,10 @@ interface PaginationLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorEleme
 export const PaginationLink: React.FC<PaginationLinkProps> = ({ className, isActive, children, ...props }) => (
   <a
     className={cn(
-      "px-3 py-1 rounded-md text-sm PaginationTextColor",
-      isActive ? "bg-[#2e2d29] text-white" : "hover:bg-[#2e2d29] hover:text-white",
+      "h-9 w-9 rounded-md text-sm PaginationTextColor flex items-center justify-center transition-colors duration-200",
+      isActive
+        ? "bg-[#FFF100] text-black"
+        : "hover:bg-[#2e2d29] hover:text-white",
       className
     )}
     {...props}
@@ -31,17 +33,17 @@ export const PaginationLink: React.FC<PaginationLinkProps> = ({ className, isAct
 );
 
 export const PaginationPrevious: React.FC<React.AnchorHTMLAttributes<HTMLAnchorElement>> = ({ className, ...props }) => (
-  <a className={cn("p-2 rounded-md", className)} {...props}>
+  <a className={cn("h-9 w-9 rounded-md flex items-center justify-center transition-colors duration-200 hover:bg-[#2e2d29] text-[#F7F7F7]", className)} {...props}>
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M9.5 3.5L5 8l4.5 4.5" stroke="#858585" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path className="PaginationArrowColor" d="M9.5 3.5L5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   </a>
 );
 
 export const PaginationNext: React.FC<React.AnchorHTMLAttributes<HTMLAnchorElement>> = ({ className, ...props }) => (
-  <a className={cn("p-2 rounded-md", className)} {...props}>
+  <a className={cn("h-9 w-9 rounded-md flex items-center justify-center transition-colors duration-200 hover:bg-[#2e2d29] text-[#F7F7F7]", className)} {...props}>
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6.5 3.5L11 8l-4.5 4.5" stroke="#858585" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path className="PaginationArrowColor" d="M6.5 3.5L11 8l-4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   </a>
 );

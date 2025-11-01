@@ -34,6 +34,10 @@ html, body, #root {
   .PaginationSelectBorder {
     border-color: #ebebeb !important;
   }
+
+  .PaginationArrowColor {
+    stroke: #F7F7F7 !important;
+  }
   /* Variables CSS para el input de Kivoo */
   .kivoo-input-focus {
     --kivoo-border-color: transparent;
