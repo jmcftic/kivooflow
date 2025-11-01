@@ -194,21 +194,18 @@ const Network: React.FC = () => {
 
     setParentLoading(prev => ({ ...prev, [parentUserId]: true }));
     try {
-      const subtree = await getDescendantSubtree({ descendantId: parentUserId, maxDepth: 1, limit: usersLimit, offset: 0 });
+      const subtree = await getDescendantSubtree({ descendantId: parentUserId, maxDepth: 3, limit: usersLimit, offset: 0 });
       const sdata = (subtree as any)?.data ?? subtree;
-      const users = (sdata?.users || []).map((u: any) => {
-        const levelInSubtree = u.levelInSubtree ?? 1;
-        const authLevel = Math.min(3, parentAuthLevel + levelInSubtree);
+      const directUsers = (sdata?.users || []).filter((u: any) => (u.levelInSubtree ?? 1) === 1);
+      const users = directUsers.map((u: any) => {
+        const authLevel = Math.min(3, parentAuthLevel + 1);
         return {
           id: u.userId,
           name: u.fullName || u.email,
           email: u.email,
           createdAt: u.createdAt,
-          levelInSubtree,
+          levelInSubtree: 1,
           level: authLevel,
-
-
-          
           authLevel,
           totalDescendants: u.totalDescendants || 0,
         };
@@ -254,17 +251,17 @@ const Network: React.FC = () => {
     try {
       const currentOffset = parentOffsets[parentId] ?? 0;
       setParentLoading(prev => ({ ...prev, [parentId]: true }));
-      const subtree = await getDescendantSubtree({ descendantId: parentId, maxDepth: 1, limit: usersLimit, offset: currentOffset });
+      const subtree = await getDescendantSubtree({ descendantId: parentId, maxDepth: 3, limit: usersLimit, offset: currentOffset });
       const sdata = (subtree as any)?.data ?? subtree;
-      const newChildren = (sdata?.users || []).map((u: any) => {
-        const relativeLevel = u.levelInSubtree ?? 1;
-        const authLevel = Math.min(3, parentLevel + relativeLevel);
+      const directUsers = (sdata?.users || []).filter((u: any) => (u.levelInSubtree ?? 1) === 1);
+      const newChildren = directUsers.map((u: any) => {
+        const authLevel = Math.min(3, parentLevel + 1);
         return {
           id: u.userId,
           name: u.fullName || u.email,
           email: u.email,
           createdAt: u.createdAt,
-          levelInSubtree: relativeLevel,
+          levelInSubtree: 1,
           level: authLevel,
           authLevel,
           totalDescendants: u.totalDescendants || 0,

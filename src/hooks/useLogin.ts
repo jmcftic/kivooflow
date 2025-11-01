@@ -7,10 +7,9 @@ export const useLogin = () => {
     mutationFn: async (credentials: LoginRequest) => {
       return await authService.login(credentials);
     },
-    onSuccess: (data: LoginResponse) => {
-      console.log('Login successful:', data);
-      // User data is already stored in authService.login()
-      // Additional logic can be added here if needed
+    onSuccess: (_data: LoginResponse) => {
+      // User data is already almacenada en authService.login()
+  
     },
     onError: (error: Error) => {
       console.error('Login failed:', error);
