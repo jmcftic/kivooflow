@@ -98,10 +98,41 @@ const Network: React.FC = () => {
         return;
       }
       try {
-        const offset = (subtreePage - 1) * usersLimit;
-        const res = await getDescendantSubtree({ descendantId: subtreeRootId, maxDepth: 3, limit: usersLimit, offset });
-        const sdata: any = (res as any)?.data ?? res;
-        const users = (sdata?.users || []).map((u: any) => {
+        // Acumular usuarios de nivel 1 de múltiples páginas del backend si es necesario
+        const allDirectUsers: any[] = [];
+        let backendOffset = 0;
+        const backendLimit = usersLimit * 3; // Pedir más usuarios del backend para asegurar obtener suficientes de nivel 1
+        
+        // Calcular el rango de usuarios que necesitamos para esta página del frontend
+        const startIndex = (subtreePage - 1) * usersLimit;
+        const endIndex = startIndex + usersLimit;
+        
+        // Hacer llamadas al backend hasta que tengamos suficientes usuarios de nivel 1
+        while (allDirectUsers.length < endIndex) {
+          const res = await getDescendantSubtree({ 
+            descendantId: subtreeRootId, 
+            maxDepth: 3, 
+            limit: backendLimit, 
+            offset: backendOffset 
+          });
+          const sdata: any = (res as any)?.data ?? res;
+          const users = sdata?.users || [];
+          
+          if (users.length === 0) break; // No hay más usuarios en el backend
+          
+          // Filtrar solo usuarios de nivel 1 y agregar a la lista acumulada
+          const directUsers = users.filter((u: any) => (u.levelInSubtree ?? 1) === 1);
+          allDirectUsers.push(...directUsers);
+          
+          // Si recibimos menos usuarios que el límite solicitado, no hay más
+          if (users.length < backendLimit) break;
+          
+          backendOffset += backendLimit;
+        }
+        
+        // Extraer solo los usuarios de nivel 1 para esta página del frontend
+        const pageDirectUsers = allDirectUsers.slice(startIndex, endIndex);
+        const users = pageDirectUsers.map((u: any) => {
           const levelInSubtree = u.levelInSubtree ?? 1;
           const authLevel = Math.min(3, subtreeRootLevel + levelInSubtree - 1);
           return {
@@ -114,8 +145,10 @@ const Network: React.FC = () => {
             totalDescendants: u.totalDescendants || 0,
           };
         });
+        
         setSubtreeUsers(users);
-        setSubtreeTotal(sdata?.totalDescendants || users.length || 0);
+        // El total es el número real de usuarios de nivel 1 que encontramos
+        setSubtreeTotal(allDirectUsers.length);
       } catch (e) {
         console.error('Error cargando sub-árbol (paginación)', e);
         setSubtreeUsers([]);
@@ -324,13 +357,48 @@ const Network: React.FC = () => {
         return;
       }
       
-      const res = await getDescendantSubtree({ descendantId: userId, maxDepth: 3, limit: usersLimit, offset: 0 });
-      const data: any = (res as any)?.data ?? res;
-      const requesterLevel = typeof data?.requesterLevelToDescendant === 'number' && data.requesterLevelToDescendant > 0
-        ? data.requesterLevelToDescendant
+      // Acumular usuarios de nivel 1 de múltiples páginas del backend si es necesario
+      const allDirectUsers: any[] = [];
+      let backendOffset = 0;
+      const backendLimit = usersLimit * 3; // Pedir más usuarios del backend para asegurar obtener suficientes de nivel 1
+      let firstData: any = null;
+      
+      // Hacer llamadas al backend hasta que tengamos suficientes usuarios de nivel 1 para la primera página
+      while (allDirectUsers.length < usersLimit) {
+        const res = await getDescendantSubtree({ 
+          descendantId: userId, 
+          maxDepth: 3, 
+          limit: backendLimit, 
+          offset: backendOffset 
+        });
+        const data: any = (res as any)?.data ?? res;
+        const users = data?.users || [];
+        
+        // Guardar la primera respuesta para obtener información del nivel
+        if (!firstData) {
+          firstData = data;
+        }
+        
+        if (users.length === 0) break; // No hay más usuarios en el backend
+        
+        // Filtrar solo usuarios de nivel 1 y agregar a la lista acumulada
+        const directUsers = users.filter((u: any) => (u.levelInSubtree ?? 1) === 1);
+        allDirectUsers.push(...directUsers);
+        
+        // Si recibimos menos usuarios que el límite solicitado, no hay más
+        if (users.length < backendLimit) break;
+        
+        backendOffset += backendLimit;
+      }
+      
+      const requesterLevel = typeof firstData?.requesterLevelToDescendant === 'number' && firstData?.requesterLevelToDescendant > 0
+        ? firstData?.requesterLevelToDescendant
         : userLevel;
       const rootLevel = Math.min(3, requesterLevel);
-      const users = (data?.users || []).map((u: any) => {
+      
+      // Tomar solo los primeros usuarios de nivel 1 para la primera página
+      const pageUsers = allDirectUsers.slice(0, usersLimit);
+      const users = pageUsers.map((u: any) => {
         const levelInSubtree = u.levelInSubtree ?? 1;
         const authLevel = Math.min(3, rootLevel + levelInSubtree);
         return {
@@ -343,13 +411,15 @@ const Network: React.FC = () => {
           totalDescendants: u.totalDescendants || 0,
         };
       });
+      
       skipNextSubtreeFetchRef.current = true;
       setSubtreeMode(true);
       setSubtreeRootId(userId);
       setSubtreeRootName(userName);
       setSubtreeRootLevel(rootLevel);
       setSubtreeUsers(users);
-      setSubtreeTotal(data?.totalDescendants || users.length || 0);
+      // El total es el número real de usuarios de nivel 1 que encontramos
+      setSubtreeTotal(allDirectUsers.length);
       setSubtreePage(1);
       setChildrenByParent({});
       setParentExhausted({});
