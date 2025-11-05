@@ -41,6 +41,7 @@ export const API_ENDPOINTS = {
   NETWORK: {
     GET: "/Network",
     SUBTREE: "/network/descendant/:descendantId/subtree",
+    B2C: "/network/b2c",
   },
   CRYPTO: {
     WALLETS: "/crypto/wallets",

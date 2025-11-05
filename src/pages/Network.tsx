@@ -12,7 +12,7 @@ import MiniBaner from '../components/atoms/MiniBaner';
 import SingleArrowHistory from '../components/atoms/SingleArrowHistory';
 import MoneyIcon from '../components/atoms/MoneyIcon';
 import { Spinner } from '@/components/ui/spinner';
-import { getNetwork, getDescendantSubtree } from '@/services/network';
+import { getNetwork, getDescendantSubtree, getB2CNetwork } from '@/services/network';
 import { NetworkLevel } from '@/types/network';
 
 const Network: React.FC = () => {
@@ -26,6 +26,8 @@ const Network: React.FC = () => {
   const [usersOffset, setUsersOffset] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [childrenByParent, setChildrenByParent] = useState<Record<number, any[]>>({});
+  const [allChildrenByParent, setAllChildrenByParent] = useState<Record<number, any[]>>({});
+  const [allSubtreeUsers, setAllSubtreeUsers] = useState<any[]>([]); // Para B2C en modo subtree
   const [subtreeMode, setSubtreeMode] = useState(false);
   const [subtreeUsers, setSubtreeUsers] = useState<Array<{ id: number; name: string; email?: string; createdAt?: string; levelInSubtree: number; authLevel: number; totalDescendants: number }>>([]);
   const [subtreeRootId, setSubtreeRootId] = useState<number | null>(null);
@@ -40,6 +42,7 @@ const Network: React.FC = () => {
   const [parentErrors, setParentErrors] = useState<Record<number, string>>({});
   const [loadingTreeUserId, setLoadingTreeUserId] = useState<number | null>(null);
   const [pendingTreeUserId, setPendingTreeUserId] = useState<number | null>(null);
+  const [b2cPagination, setB2cPagination] = useState<{ totalPages: number; currentPage: number; totalUsers: number } | null>(null);
   const historyReadyRef = useRef(false);
   const suppressHistoryPushRef = useRef(false);
   const skipNextSubtreeFetchRef = useRef(false);
@@ -48,9 +51,16 @@ const Network: React.FC = () => {
     setUsersOffset((currentPage - 1) * usersLimit);
   }, [currentPage, usersLimit]);
 
+  // Resetear página cuando cambia el nivel o el tab
+  useEffect(() => {
+    setCurrentPage(1);
+    setB2cPagination(null);
+  }, [activeLevel, activeTab]);
+
   useEffect(() => {
     if (!subtreeMode && searchFilter.trim().length > 0) {
       setChildrenByParent({});
+      setAllChildrenByParent({});
       setParentOffsets({});
       setParentHasMore({});
       setParentLoading({});
@@ -61,33 +71,88 @@ const Network: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
+      // No cargar la red principal si estamos en modo subtree
+      if (subtreeMode) {
+        return;
+      }
       try {
-        const res = await getNetwork({
-          levelStart: 1,
-          levelEnd: 3,
-          usersLimit,
-          usersOffset,
-        });
-        const data = (res as any)?.data ?? res?.data; // compatibilidad apiService
-        if (data) {
-          setLevels(data.levels || []);
-          setTotalDescendants(data.total_descendants || 0);
-          setSubtreeMode(false);
-          setSubtreeUsers([]);
-          setSubtreeRootId(null);
-          setSubtreeTotal(0);
-          setSubtreePage(1);
-          setParentExhausted({});
-          setParentErrors({});
+        // Si estamos en el tab B2C y no en modo subtree, usar el nuevo endpoint B2C
+        if (activeTab === 'b2c') {
+          const res = await getB2CNetwork({
+            level: activeLevel,
+            limit: usersLimit,
+            offset: usersOffset,
+          });
+          const data = res?.data;
+          if (data) {
+            // Convertir la respuesta B2C al formato NetworkLevel[]
+            const b2cLevel: NetworkLevel = {
+              level: data.level.level,
+              total_users_in_level: data.level.totalUsers,
+              active_users_in_level: data.level.activeUsers,
+              has_more_users_in_level: data.pagination.hasNextPage,
+              users: data.users.map(u => ({
+                user_id: u.user_id,
+                user_email: u.user_email,
+                user_full_name: u.user_full_name,
+                user_phone: u.user_phone,
+                user_status: u.user_status,
+                user_created_at: u.user_created_at,
+                user_referral_code: u.user_referral_code,
+                direct_parent_id: u.direct_parent_id,
+                direct_parent_email: u.direct_parent_email,
+                direct_parent_full_name: u.direct_parent_full_name,
+                direct_parent_referral_code: u.direct_parent_referral_code,
+                direct_referrals: u.direct_referrals,
+                total_descendants_of_user: u.total_descendants_of_user,
+              })),
+            };
+            setLevels([b2cLevel]);
+            setTotalDescendants(data.summary.totalDescendants);
+            setB2cPagination({
+              totalPages: data.pagination.totalPages,
+              currentPage: data.pagination.currentPage,
+              totalUsers: data.level.totalUsers,
+            });
+            setSubtreeMode(false);
+            setSubtreeUsers([]);
+            setSubtreeRootId(null);
+            setSubtreeTotal(0);
+            setSubtreePage(1);
+            setParentExhausted({});
+            setParentErrors({});
+          }
+        } else {
+          // Usar el endpoint original para otros tabs (B2B, B2T)
+          const res = await getNetwork({
+            levelStart: 1,
+            levelEnd: 3,
+            usersLimit,
+            usersOffset,
+          });
+          const data = (res as any)?.data ?? res?.data; // compatibilidad apiService
+          if (data) {
+            setLevels(data.levels || []);
+            setTotalDescendants(data.total_descendants || 0);
+            setB2cPagination(null);
+            setSubtreeMode(false);
+            setSubtreeUsers([]);
+            setSubtreeRootId(null);
+            setSubtreeTotal(0);
+            setSubtreePage(1);
+            setParentExhausted({});
+            setParentErrors({});
+          }
         }
       } catch (e) {
         console.error('Error cargando red', e);
         setLevels([]);
         setTotalDescendants(0);
+        setB2cPagination(null);
       }
     };
     load();
-  }, [activeLevel, usersLimit, usersOffset]);
+  }, [activeTab, activeLevel, usersLimit, usersOffset, subtreeMode]);
 
   // Paginación del subárbol
   useEffect(() => {
@@ -98,64 +163,124 @@ const Network: React.FC = () => {
         return;
       }
       try {
-        // Acumular usuarios de nivel 1 de múltiples páginas del backend si es necesario
-        const allDirectUsers: any[] = [];
-        let backendOffset = 0;
-        const backendLimit = usersLimit * 3; // Pedir más usuarios del backend para asegurar obtener suficientes de nivel 1
-        
-        // Calcular el rango de usuarios que necesitamos para esta página del frontend
-        const startIndex = (subtreePage - 1) * usersLimit;
-        const endIndex = startIndex + usersLimit;
-        
-        // Hacer llamadas al backend hasta que tengamos suficientes usuarios de nivel 1
-        while (allDirectUsers.length < endIndex) {
-          const res = await getDescendantSubtree({ 
-            descendantId: subtreeRootId, 
-            maxDepth: 3, 
-            limit: backendLimit, 
-            offset: backendOffset 
+        // Si estamos en B2C, usar el endpoint B2C
+        if (activeTab === 'b2c') {
+          // subtreeRootLevel es el nivel del usuario cuya red estamos viendo
+          // Los hijos están en el nivel siguiente
+          const childrenLevel = subtreeRootLevel + 1;
+          if (childrenLevel > 3) {
+            setSubtreeUsers([]);
+            setAllSubtreeUsers([]);
+            return;
+          }
+          
+          // Si es la primera página o no tenemos todos los usuarios cargados, cargar todos
+          let allDirectUsers = allSubtreeUsers;
+          if (subtreePage === 1 || allSubtreeUsers.length === 0) {
+            allDirectUsers = [];
+            let offset = 0;
+            const limit = 100;
+            
+            // Cargar todas las páginas para obtener todos los hijos directos
+            while (true) {
+              const res = await getB2CNetwork({
+                level: childrenLevel,
+                limit,
+                offset,
+              });
+              const data = res?.data;
+              if (!data || data.users.length === 0) break;
+              
+              // Filtrar solo los hijos directos del usuario raíz
+              const directChildren = data.users.filter((u: any) => u.direct_parent_id === subtreeRootId);
+              allDirectUsers.push(...directChildren);
+              
+              if (!data.pagination.hasNextPage) break;
+              offset += limit;
+            }
+            
+            setAllSubtreeUsers(allDirectUsers);
+          }
+          
+          // Paginar client-side
+          const startIndex = (subtreePage - 1) * usersLimit;
+          const endIndex = startIndex + usersLimit;
+          const pageUsers = allDirectUsers.slice(startIndex, endIndex);
+          
+          const users = pageUsers.map((u: any) => ({
+            id: u.user_id,
+            name: u.user_full_name || u.user_email,
+            email: u.user_email,
+            createdAt: u.user_created_at,
+            levelInSubtree: 1,
+            level: childrenLevel,
+            authLevel: childrenLevel,
+            totalDescendants: u.total_descendants_of_user || 0,
+          }));
+          
+          setSubtreeUsers(users);
+          setSubtreeTotal(allDirectUsers.length);
+        } else {
+          // Para otros tabs, usar subtree
+          // Acumular usuarios de nivel 1 de múltiples páginas del backend si es necesario
+          const allDirectUsers: any[] = [];
+          let backendOffset = 0;
+          const backendLimit = usersLimit * 3; // Pedir más usuarios del backend para asegurar obtener suficientes de nivel 1
+          
+          // Calcular el rango de usuarios que necesitamos para esta página del frontend
+          const startIndex = (subtreePage - 1) * usersLimit;
+          const endIndex = startIndex + usersLimit;
+          
+          // Hacer llamadas al backend hasta que tengamos suficientes usuarios de nivel 1
+          while (allDirectUsers.length < endIndex) {
+            const res = await getDescendantSubtree({ 
+              descendantId: subtreeRootId, 
+              maxDepth: 3, 
+              limit: backendLimit, 
+              offset: backendOffset 
+            });
+            const sdata: any = (res as any)?.data ?? res;
+            const users = sdata?.users || [];
+            
+            if (users.length === 0) break; // No hay más usuarios en el backend
+            
+            // Filtrar solo usuarios de nivel 1 y agregar a la lista acumulada
+            const directUsers = users.filter((u: any) => (u.levelInSubtree ?? 1) === 1);
+            allDirectUsers.push(...directUsers);
+            
+            // Si recibimos menos usuarios que el límite solicitado, no hay más
+            if (users.length < backendLimit) break;
+            
+            backendOffset += backendLimit;
+          }
+          
+          // Extraer solo los usuarios de nivel 1 para esta página del frontend
+          const pageDirectUsers = allDirectUsers.slice(startIndex, endIndex);
+          const users = pageDirectUsers.map((u: any) => {
+            const levelInSubtree = u.levelInSubtree ?? 1;
+            const authLevel = Math.min(3, subtreeRootLevel + levelInSubtree - 1);
+            return {
+              id: u.userId,
+              name: u.fullName || u.email,
+              email: u.email,
+              createdAt: u.createdAt,
+              levelInSubtree,
+              authLevel,
+              totalDescendants: u.totalDescendants || 0,
+            };
           });
-          const sdata: any = (res as any)?.data ?? res;
-          const users = sdata?.users || [];
           
-          if (users.length === 0) break; // No hay más usuarios en el backend
-          
-          // Filtrar solo usuarios de nivel 1 y agregar a la lista acumulada
-          const directUsers = users.filter((u: any) => (u.levelInSubtree ?? 1) === 1);
-          allDirectUsers.push(...directUsers);
-          
-          // Si recibimos menos usuarios que el límite solicitado, no hay más
-          if (users.length < backendLimit) break;
-          
-          backendOffset += backendLimit;
+          setSubtreeUsers(users);
+          // El total es el número real de usuarios de nivel 1 que encontramos
+          setSubtreeTotal(allDirectUsers.length);
         }
-        
-        // Extraer solo los usuarios de nivel 1 para esta página del frontend
-        const pageDirectUsers = allDirectUsers.slice(startIndex, endIndex);
-        const users = pageDirectUsers.map((u: any) => {
-          const levelInSubtree = u.levelInSubtree ?? 1;
-          const authLevel = Math.min(3, subtreeRootLevel + levelInSubtree - 1);
-          return {
-            id: u.userId,
-            name: u.fullName || u.email,
-            email: u.email,
-            createdAt: u.createdAt,
-            levelInSubtree,
-            authLevel,
-            totalDescendants: u.totalDescendants || 0,
-          };
-        });
-        
-        setSubtreeUsers(users);
-        // El total es el número real de usuarios de nivel 1 que encontramos
-        setSubtreeTotal(allDirectUsers.length);
       } catch (e) {
         console.error('Error cargando sub-árbol (paginación)', e);
         setSubtreeUsers([]);
       }
     };
     loadSubtree();
-  }, [subtreeMode, subtreeRootId, subtreePage, usersLimit, subtreeRootLevel]);
+  }, [subtreeMode, subtreeRootId, subtreePage, usersLimit, subtreeRootLevel, activeTab]);
 
   const allLevelItems = useMemo(() => {
     return levels.flatMap((levelGroup) =>
@@ -211,6 +336,11 @@ const Network: React.FC = () => {
         delete next[parentUserId];
         return next;
       });
+      setAllChildrenByParent(prev => {
+        const next = { ...prev };
+        delete next[parentUserId];
+        return next;
+      });
       setParentExhausted(prev => {
         const next = { ...prev };
         delete next[parentUserId];
@@ -227,33 +357,94 @@ const Network: React.FC = () => {
 
     setParentLoading(prev => ({ ...prev, [parentUserId]: true }));
     try {
-      const subtree = await getDescendantSubtree({ descendantId: parentUserId, maxDepth: 3, limit: usersLimit, offset: 0 });
-      const sdata = (subtree as any)?.data ?? subtree;
-      const directUsers = (sdata?.users || []).filter((u: any) => (u.levelInSubtree ?? 1) === 1);
-      const users = directUsers.map((u: any) => {
-        const authLevel = Math.min(3, parentAuthLevel + 1);
-        return {
-          id: u.userId,
-          name: u.fullName || u.email,
-          email: u.email,
-          createdAt: u.createdAt,
+      // Si estamos en B2C, usar el endpoint B2C en lugar de subtree (tanto en modo normal como subtree)
+      if (activeTab === 'b2c') {
+        const nextLevel = parentAuthLevel + 1;
+        if (nextLevel > 3) {
+          return;
+        }
+        
+        // Cargar usuarios del nivel siguiente usando B2C
+        const allChildren: any[] = [];
+        let offset = 0;
+        const limit = 100; // Cargar en lotes grandes para encontrar todos los hijos
+        
+        // Hacer múltiples llamadas hasta encontrar todos los hijos o no haya más usuarios
+        while (true) {
+          const res = await getB2CNetwork({
+            level: nextLevel,
+            limit,
+            offset,
+          });
+          const data = res?.data;
+          if (!data || data.users.length === 0) break;
+          
+          // Filtrar solo los hijos directos del usuario padre
+          const directChildren = data.users.filter((u: any) => u.direct_parent_id === parentUserId);
+          allChildren.push(...directChildren);
+          
+          // Si no hay más páginas o ya encontramos suficientes, salir
+          if (!data.pagination.hasNextPage || allChildren.length >= usersLimit) break;
+          
+          offset += limit;
+        }
+        
+        // Guardar todos los hijos encontrados
+        setAllChildrenByParent(prev => ({ ...prev, [parentUserId]: allChildren }));
+        
+        // Tomar solo los primeros usuarios según el límite
+        const pageChildren = allChildren.slice(0, usersLimit);
+        const users = pageChildren.map((u: any) => ({
+          id: u.user_id,
+          name: u.user_full_name || u.user_email,
+          email: u.user_email,
+          createdAt: u.user_created_at,
           levelInSubtree: 1,
-          level: authLevel,
-          authLevel,
-          totalDescendants: u.totalDescendants || 0,
-        };
-      });
-      setChildrenByParent(prev => ({ ...prev, [parentUserId]: users }));
-      const totalDirect = sdata?.totalDescendants ?? users.length;
-      const hasMore = users.length < totalDirect;
-      setParentOffsets(prev => ({ ...prev, [parentUserId]: users.length }));
-      setParentHasMore(prev => ({ ...prev, [parentUserId]: hasMore }));
-      setParentExhausted(prev => ({ ...prev, [parentUserId]: users.length === 0 && !hasMore }));
-      setParentErrors(prev => {
-        const next = { ...prev };
-        delete next[parentUserId];
-        return next;
-      });
+          level: nextLevel,
+          authLevel: nextLevel,
+          totalDescendants: u.total_descendants_of_user || 0,
+        }));
+        
+        setChildrenByParent(prev => ({ ...prev, [parentUserId]: users }));
+        const hasMore = allChildren.length > usersLimit;
+        setParentOffsets(prev => ({ ...prev, [parentUserId]: users.length }));
+        setParentHasMore(prev => ({ ...prev, [parentUserId]: hasMore }));
+        setParentExhausted(prev => ({ ...prev, [parentUserId]: users.length === 0 && !hasMore }));
+        setParentErrors(prev => {
+          const next = { ...prev };
+          delete next[parentUserId];
+          return next;
+        });
+      } else {
+        // Usar subtree para otros tabs
+        const subtree = await getDescendantSubtree({ descendantId: parentUserId, maxDepth: 3, limit: usersLimit, offset: 0 });
+        const sdata = (subtree as any)?.data ?? subtree;
+        const directUsers = (sdata?.users || []).filter((u: any) => (u.levelInSubtree ?? 1) === 1);
+        const users = directUsers.map((u: any) => {
+          const authLevel = Math.min(3, parentAuthLevel + 1);
+          return {
+            id: u.userId,
+            name: u.fullName || u.email,
+            email: u.email,
+            createdAt: u.createdAt,
+            levelInSubtree: 1,
+            level: authLevel,
+            authLevel,
+            totalDescendants: u.totalDescendants || 0,
+          };
+        });
+        setChildrenByParent(prev => ({ ...prev, [parentUserId]: users }));
+        const totalDirect = sdata?.totalDescendants ?? users.length;
+        const hasMore = users.length < totalDirect;
+        setParentOffsets(prev => ({ ...prev, [parentUserId]: users.length }));
+        setParentHasMore(prev => ({ ...prev, [parentUserId]: hasMore }));
+        setParentExhausted(prev => ({ ...prev, [parentUserId]: users.length === 0 && !hasMore }));
+        setParentErrors(prev => {
+          const next = { ...prev };
+          delete next[parentUserId];
+          return next;
+        });
+      }
     } catch (e) {
       console.error('Error cargando hijos', e);
       setChildrenByParent(prev => ({ ...prev, [parentUserId]: [] }));
@@ -284,47 +475,160 @@ const Network: React.FC = () => {
     try {
       const currentOffset = parentOffsets[parentId] ?? 0;
       setParentLoading(prev => ({ ...prev, [parentId]: true }));
-      const subtree = await getDescendantSubtree({ descendantId: parentId, maxDepth: 3, limit: usersLimit, offset: currentOffset });
-      const sdata = (subtree as any)?.data ?? subtree;
-      const directUsers = (sdata?.users || []).filter((u: any) => (u.levelInSubtree ?? 1) === 1);
-      const newChildren = directUsers.map((u: any) => {
-        const authLevel = Math.min(3, parentLevel + 1);
-        return {
-          id: u.userId,
-          name: u.fullName || u.email,
-          email: u.email,
-          createdAt: u.createdAt,
-          levelInSubtree: 1,
-          level: authLevel,
-          authLevel,
-          totalDescendants: u.totalDescendants || 0,
-        };
-      });
-      setChildrenByParent(prev => {
-        const existing = prev[parentId] || [];
-        const existingIds = new Set(existing.map((c: any) => c.id));
-        const merged = [...existing];
-        newChildren.forEach((c: any) => { if (!existingIds.has(c.id)) merged.push(c); });
-        return { ...prev, [parentId]: merged };
-      });
-      const totalDirect = sdata?.totalDescendants ?? 0;
-      const noNewUsers = newChildren.length === 0;
-      const nextOffset = currentOffset + usersLimit;
-      setParentOffsets(prev => ({ ...prev, [parentId]: nextOffset }));
-      setParentHasMore(prev => ({ ...prev, [parentId]: !noNewUsers && nextOffset < totalDirect }));
-      setParentExhausted(prev => ({ ...prev, [parentId]: noNewUsers }));
-      if (noNewUsers) {
-        setParentErrors(prev => {
-          const next = { ...prev };
-          delete next[parentId];
-          return next;
-        });
+      
+      // Si estamos en B2C, usar el endpoint B2C en lugar de subtree (tanto en modo normal como subtree)
+      if (activeTab === 'b2c') {
+        const nextLevel = parentLevel + 1;
+        if (nextLevel > 3) {
+          return;
+        }
+        
+        // Verificar si ya tenemos todos los hijos cargados en caché
+        const cachedAllChildren = allChildrenByParent[parentId];
+        const existing = childrenByParent[parentId] || [];
+        
+        if (cachedAllChildren && cachedAllChildren.length > 0) {
+          // Ya tenemos todos los hijos cargados, solo mostrar más
+          const nextBatch = cachedAllChildren.slice(existing.length, existing.length + usersLimit);
+          const newChildren = nextBatch.map((u: any) => ({
+            id: u.user_id,
+            name: u.user_full_name || u.user_email,
+            email: u.user_email,
+            createdAt: u.user_created_at,
+            levelInSubtree: 1,
+            level: nextLevel,
+            authLevel: nextLevel,
+            totalDescendants: u.total_descendants_of_user || 0,
+          }));
+          
+          setChildrenByParent(prev => {
+            const existing = prev[parentId] || [];
+            const existingIds = new Set(existing.map((c: any) => c.id));
+            const merged = [...existing];
+            newChildren.forEach((c: any) => { if (!existingIds.has(c.id)) merged.push(c); });
+            return { ...prev, [parentId]: merged };
+          });
+          
+          const noNewUsers = newChildren.length === 0;
+          const hasMore = existing.length + newChildren.length < cachedAllChildren.length;
+          setParentOffsets(prev => ({ ...prev, [parentId]: existing.length + newChildren.length }));
+          setParentHasMore(prev => ({ ...prev, [parentId]: hasMore }));
+          setParentExhausted(prev => ({ ...prev, [parentId]: noNewUsers }));
+          setParentErrors(prev => {
+            const next = { ...prev };
+            delete next[parentId];
+            return next;
+          });
+        } else {
+          // Cargar usuarios del nivel siguiente usando B2C
+          const allChildren: any[] = [];
+          let offset = 0;
+          const limit = 100; // Cargar en lotes grandes para encontrar todos los hijos
+          
+          // Hacer múltiples llamadas hasta encontrar todos los hijos
+          while (true) {
+            const res = await getB2CNetwork({
+              level: nextLevel,
+              limit,
+              offset,
+            });
+            const data = res?.data;
+            if (!data || data.users.length === 0) break;
+            
+            // Filtrar solo los hijos directos del usuario padre
+            const directChildren = data.users.filter((u: any) => u.direct_parent_id === parentId);
+            allChildren.push(...directChildren);
+            
+            // Si no hay más páginas, salir
+            if (!data.pagination.hasNextPage) break;
+            
+            offset += limit;
+          }
+          
+          // Guardar todos los hijos encontrados en caché
+          setAllChildrenByParent(prev => ({ ...prev, [parentId]: allChildren }));
+          
+          // Tomar los siguientes usuarios que aún no están cargados
+          const remainingChildren = allChildren.filter((u: any) => {
+            const existingIds = new Set(existing.map((c: any) => c.id));
+            return !existingIds.has(u.user_id);
+          });
+          const pageChildren = remainingChildren.slice(0, usersLimit);
+          
+          const newChildren = pageChildren.map((u: any) => ({
+            id: u.user_id,
+            name: u.user_full_name || u.user_email,
+            email: u.user_email,
+            createdAt: u.user_created_at,
+            levelInSubtree: 1,
+            level: nextLevel,
+            authLevel: nextLevel,
+            totalDescendants: u.total_descendants_of_user || 0,
+          }));
+          
+          setChildrenByParent(prev => {
+            const existing = prev[parentId] || [];
+            const existingIds = new Set(existing.map((c: any) => c.id));
+            const merged = [...existing];
+            newChildren.forEach((c: any) => { if (!existingIds.has(c.id)) merged.push(c); });
+            return { ...prev, [parentId]: merged };
+          });
+          
+          const noNewUsers = newChildren.length === 0;
+          const hasMore = existing.length + newChildren.length < allChildren.length;
+          setParentOffsets(prev => ({ ...prev, [parentId]: existing.length + newChildren.length }));
+          setParentHasMore(prev => ({ ...prev, [parentId]: hasMore }));
+          setParentExhausted(prev => ({ ...prev, [parentId]: noNewUsers }));
+          setParentErrors(prev => {
+            const next = { ...prev };
+            delete next[parentId];
+            return next;
+          });
+        }
       } else {
-        setParentErrors(prev => {
-          const next = { ...prev };
-          delete next[parentId];
-          return next;
+        // Usar subtree para otros tabs
+        const subtree = await getDescendantSubtree({ descendantId: parentId, maxDepth: 3, limit: usersLimit, offset: currentOffset });
+        const sdata = (subtree as any)?.data ?? subtree;
+        const directUsers = (sdata?.users || []).filter((u: any) => (u.levelInSubtree ?? 1) === 1);
+        const newChildren = directUsers.map((u: any) => {
+          const authLevel = Math.min(3, parentLevel + 1);
+          return {
+            id: u.userId,
+            name: u.fullName || u.email,
+            email: u.email,
+            createdAt: u.createdAt,
+            levelInSubtree: 1,
+            level: authLevel,
+            authLevel,
+            totalDescendants: u.totalDescendants || 0,
+          };
         });
+        setChildrenByParent(prev => {
+          const existing = prev[parentId] || [];
+          const existingIds = new Set(existing.map((c: any) => c.id));
+          const merged = [...existing];
+          newChildren.forEach((c: any) => { if (!existingIds.has(c.id)) merged.push(c); });
+          return { ...prev, [parentId]: merged };
+        });
+        const totalDirect = sdata?.totalDescendants ?? 0;
+        const noNewUsers = newChildren.length === 0;
+        const nextOffset = currentOffset + usersLimit;
+        setParentOffsets(prev => ({ ...prev, [parentId]: nextOffset }));
+        setParentHasMore(prev => ({ ...prev, [parentId]: !noNewUsers && nextOffset < totalDirect }));
+        setParentExhausted(prev => ({ ...prev, [parentId]: noNewUsers }));
+        if (noNewUsers) {
+          setParentErrors(prev => {
+            const next = { ...prev };
+            delete next[parentId];
+            return next;
+          });
+        } else {
+          setParentErrors(prev => {
+            const next = { ...prev };
+            delete next[parentId];
+            return next;
+          });
+        }
       }
     } catch (e) {
       console.error('Error cargando más hijos', e);
@@ -357,72 +661,119 @@ const Network: React.FC = () => {
         return;
       }
       
-      // Acumular usuarios de nivel 1 de múltiples páginas del backend si es necesario
-      const allDirectUsers: any[] = [];
-      let backendOffset = 0;
-      const backendLimit = usersLimit * 3; // Pedir más usuarios del backend para asegurar obtener suficientes de nivel 1
-      let firstData: any = null;
-      
-      // Hacer llamadas al backend hasta que tengamos suficientes usuarios de nivel 1 para la primera página
-      while (allDirectUsers.length < usersLimit) {
-        const res = await getDescendantSubtree({ 
-          descendantId: userId, 
-          maxDepth: 3, 
-          limit: backendLimit, 
-          offset: backendOffset 
-        });
-        const data: any = (res as any)?.data ?? res;
-        const users = data?.users || [];
-        
-        // Guardar la primera respuesta para obtener información del nivel
-        if (!firstData) {
-          firstData = data;
+      // Si estamos en B2C, usar el endpoint B2C
+      if (activeTab === 'b2c') {
+        const nextLevel = userLevel + 1;
+        if (nextLevel > 3) {
+          return;
         }
         
-        if (users.length === 0) break; // No hay más usuarios en el backend
+        // Cargar usuarios del nivel siguiente usando B2C
+        const res = await getB2CNetwork({
+          level: nextLevel,
+          limit: usersLimit,
+          offset: 0,
+        });
+        const data = res?.data;
         
-        // Filtrar solo usuarios de nivel 1 y agregar a la lista acumulada
-        const directUsers = users.filter((u: any) => (u.levelInSubtree ?? 1) === 1);
-        allDirectUsers.push(...directUsers);
+        if (data) {
+          // Filtrar solo los hijos directos del usuario
+          const directUsers = data.users.filter((u: any) => u.direct_parent_id === userId);
+          
+          const users = directUsers.map((u: any) => ({
+            id: u.user_id,
+            name: u.user_full_name || u.user_email,
+            email: u.user_email,
+            createdAt: u.user_created_at,
+            levelInSubtree: 1,
+            level: nextLevel,
+            authLevel: nextLevel,
+            totalDescendants: u.total_descendants_of_user || 0,
+          }));
+          
+          skipNextSubtreeFetchRef.current = true;
+          setSubtreeMode(true);
+          setSubtreeRootId(userId);
+          setSubtreeRootName(userName);
+          setSubtreeRootLevel(userLevel); // Nivel del usuario cuya red estamos viendo
+          setSubtreeUsers(users);
+          setSubtreeTotal(directUsers.length);
+          setSubtreePage(1);
+          setAllSubtreeUsers(directUsers); // Guardar todos los usuarios para paginación
+          setChildrenByParent({});
+          setAllChildrenByParent({});
+          setParentExhausted({});
+        }
+      } else {
+        // Para otros tabs, usar subtree
+        // Acumular usuarios de nivel 1 de múltiples páginas del backend si es necesario
+        const allDirectUsers: any[] = [];
+        let backendOffset = 0;
+        const backendLimit = usersLimit * 3; // Pedir más usuarios del backend para asegurar obtener suficientes de nivel 1
+        let firstData: any = null;
         
-        // Si recibimos menos usuarios que el límite solicitado, no hay más
-        if (users.length < backendLimit) break;
+        // Hacer llamadas al backend hasta que tengamos suficientes usuarios de nivel 1 para la primera página
+        while (allDirectUsers.length < usersLimit) {
+          const res = await getDescendantSubtree({ 
+            descendantId: userId, 
+            maxDepth: 3, 
+            limit: backendLimit, 
+            offset: backendOffset 
+          });
+          const data: any = (res as any)?.data ?? res;
+          const users = data?.users || [];
+          
+          // Guardar la primera respuesta para obtener información del nivel
+          if (!firstData) {
+            firstData = data;
+          }
+          
+          if (users.length === 0) break; // No hay más usuarios en el backend
+          
+          // Filtrar solo usuarios de nivel 1 y agregar a la lista acumulada
+          const directUsers = users.filter((u: any) => (u.levelInSubtree ?? 1) === 1);
+          allDirectUsers.push(...directUsers);
+          
+          // Si recibimos menos usuarios que el límite solicitado, no hay más
+          if (users.length < backendLimit) break;
+          
+          backendOffset += backendLimit;
+        }
         
-        backendOffset += backendLimit;
+        const requesterLevel = typeof firstData?.requesterLevelToDescendant === 'number' && firstData?.requesterLevelToDescendant > 0
+          ? firstData?.requesterLevelToDescendant
+          : userLevel;
+        const rootLevel = Math.min(3, requesterLevel);
+        
+        // Tomar solo los primeros usuarios de nivel 1 para la primera página
+        const pageUsers = allDirectUsers.slice(0, usersLimit);
+        const users = pageUsers.map((u: any) => {
+          const levelInSubtree = u.levelInSubtree ?? 1;
+          const authLevel = Math.min(3, rootLevel + levelInSubtree);
+          return {
+            id: u.userId,
+            name: u.fullName || u.email,
+            email: u.email,
+            createdAt: u.createdAt,
+            levelInSubtree,
+            authLevel,
+            totalDescendants: u.totalDescendants || 0,
+          };
+        });
+        
+        skipNextSubtreeFetchRef.current = true;
+        setSubtreeMode(true);
+        setSubtreeRootId(userId);
+        setSubtreeRootName(userName);
+        setSubtreeRootLevel(rootLevel);
+        setSubtreeUsers(users);
+        // El total es el número real de usuarios de nivel 1 que encontramos
+        setSubtreeTotal(allDirectUsers.length);
+        setSubtreePage(1);
+        setChildrenByParent({});
+        setAllChildrenByParent({});
+        setParentExhausted({});
       }
-      
-      const requesterLevel = typeof firstData?.requesterLevelToDescendant === 'number' && firstData?.requesterLevelToDescendant > 0
-        ? firstData?.requesterLevelToDescendant
-        : userLevel;
-      const rootLevel = Math.min(3, requesterLevel);
-      
-      // Tomar solo los primeros usuarios de nivel 1 para la primera página
-      const pageUsers = allDirectUsers.slice(0, usersLimit);
-      const users = pageUsers.map((u: any) => {
-        const levelInSubtree = u.levelInSubtree ?? 1;
-        const authLevel = Math.min(3, rootLevel + levelInSubtree);
-        return {
-          id: u.userId,
-          name: u.fullName || u.email,
-          email: u.email,
-          createdAt: u.createdAt,
-          levelInSubtree,
-          authLevel,
-          totalDescendants: u.totalDescendants || 0,
-        };
-      });
-      
-      skipNextSubtreeFetchRef.current = true;
-      setSubtreeMode(true);
-      setSubtreeRootId(userId);
-      setSubtreeRootName(userName);
-      setSubtreeRootLevel(rootLevel);
-      setSubtreeUsers(users);
-      // El total es el número real de usuarios de nivel 1 que encontramos
-      setSubtreeTotal(allDirectUsers.length);
-      setSubtreePage(1);
-      setChildrenByParent({});
-      setParentExhausted({});
     } catch (e) {
       console.error('Error cargando sub-árbol', e);
       const lookupDatasetFallback = subtreeMode ? baseItems : allLevelItems;
@@ -434,11 +785,13 @@ const Network: React.FC = () => {
       setSubtreeUsers([]);
       setSubtreeTotal(0);
       setSubtreePage(1);
+      setAllSubtreeUsers([]);
       setChildrenByParent({});
+      setAllChildrenByParent({});
     } finally {
       setLoadingTreeUserId(null);
     }
-  }, [activeLevel, allLevelItems, baseItems, subtreeMode, usersLimit]);
+  }, [activeLevel, activeTab, allLevelItems, baseItems, subtreeMode, usersLimit]);
 
   const handleViewTree = (userId: number) => {
     const lookupDataset = subtreeMode ? baseItems : allLevelItems;
@@ -507,7 +860,9 @@ const Network: React.FC = () => {
     setSubtreeRootLevel(1);
     setSubtreeTotal(0);
     setSubtreePage(1);
+    setAllSubtreeUsers([]);
     setChildrenByParent({});
+    setAllChildrenByParent({});
     setParentExhausted({});
     setParentErrors({});
       setParentErrors({});
@@ -552,7 +907,13 @@ const Network: React.FC = () => {
   }, [activeLevel, activeTab, handleBackToNetwork, loadTreeForUser, subtreeMode]);
 
   const totalItemsLevel1 = useMemo(() => {
-    const lvl1 = levels.find(l => l.level === 1);
+    // Si estamos en B2C, usar la información de paginación B2C
+    if (activeTab === 'b2c' && b2cPagination) {
+      return b2cPagination.totalUsers;
+    }
+    
+    // Para otros tabs, usar la lógica original
+    const lvl1 = levels.find(l => l.level === activeLevel);
     if (!lvl1) return 0;
     
     // Si has_more es true, sabemos que hay más usuarios
@@ -575,7 +936,7 @@ const Network: React.FC = () => {
     
     // Si no hay más y no alcanzamos el límite, usamos el máximo entre usuarios mostrados y total reportado
     return Math.max(lvl1.users.length, lvl1.total_users_in_level || lvl1.users.length);
-  }, [levels, usersLimit]);
+  }, [levels, usersLimit, activeTab, activeLevel, b2cPagination]);
 
   return (
     <div className="h-screen w-full bg-[#2a2a2a] relative flex flex-col lg:flex-row overflow-hidden">
@@ -672,7 +1033,7 @@ const Network: React.FC = () => {
                 childrenByParent={hasSearch ? {} : childrenByParent}
                 childIndentPx={30}
                 onViewTree={handleViewTree}
-                disableExpand={subtreeMode || hasSearch}
+                disableExpand={hasSearch || (subtreeMode && activeTab !== 'b2c')}
                 onLoadMoreChildren={handleLoadMoreChildren}
                 parentHasMore={parentHasMore}
                 parentLoading={parentLoading}

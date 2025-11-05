@@ -1,6 +1,6 @@
 import { apiService } from './api';
 import { API_ENDPOINTS } from '@/constants/api';
-import { NetworkResponse, DescendantSubtreeResponse } from '@/types/network';
+import { NetworkResponse, DescendantSubtreeResponse, B2CNetworkResponse } from '@/types/network';
 
 export interface GetNetworkParams {
   levelStart: number;
@@ -32,6 +32,23 @@ export async function getDescendantSubtree({ descendantId, maxDepth = 3, limit =
   const endpoint = apiService.buildEndpoint(API_ENDPOINTS.NETWORK.SUBTREE, { descendantId });
   const res = await apiService.get<DescendantSubtreeResponse>(endpoint, { maxDepth, limit, offset });
   return res as unknown as DescendantSubtreeResponse;
+}
+
+export interface GetB2CNetworkParams {
+  level?: number; // default 1
+  limit?: number; // default 10
+  offset?: number; // default 0
+}
+
+export async function getB2CNetwork({ level = 1, limit = 10, offset = 0 }: GetB2CNetworkParams): Promise<B2CNetworkResponse> {
+  const query = {
+    level,
+    limit,
+    offset,
+  } as Record<string, string | number>;
+
+  const res = await apiService.get<B2CNetworkResponse>(API_ENDPOINTS.NETWORK.B2C, query);
+  return res as unknown as B2CNetworkResponse;
 }
 
 

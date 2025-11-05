@@ -59,4 +59,44 @@ export interface DescendantSubtreeResponse {
   users: DescendantSubtreeUser[];
 }
 
+export interface B2CNetworkUser {
+  user_id: number;
+  user_email: string;
+  user_full_name: string;
+  user_phone: string;
+  user_status: string;
+  user_created_at: string;
+  user_referral_code: string;
+  direct_parent_id: number;
+  direct_parent_email: string;
+  direct_parent_full_name: string;
+  direct_parent_referral_code: string;
+  direct_referrals: number;
+  total_descendants_of_user: number;
+  has_descendants: boolean;
+}
+
+export interface B2CNetworkResponse {
+  statusCode: number;
+  message: string;
+  data: {
+    summary: {
+      totalLevels: number;
+      totalDescendants: number;
+    };
+    level: {
+      level: number;
+      totalUsers: number;
+      activeUsers: number;
+    };
+    users: B2CNetworkUser[];
+    pagination: {
+      totalPages: number;
+      currentPage: number;
+      hasNextPage: boolean;
+      hasPreviousPage: boolean;
+    };
+  };
+}
+
 
