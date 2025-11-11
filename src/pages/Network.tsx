@@ -11,14 +11,22 @@ import NetworkTableHeader from '../components/organisms/NetworkTableHeader';
 import MiniBaner from '../components/atoms/MiniBaner';
 import SingleArrowHistory from '../components/atoms/SingleArrowHistory';
 import MoneyIcon from '../components/atoms/MoneyIcon';
-import { Spinner } from '@/components/ui/spinner';
-import { getNetwork, getDescendantSubtree, getB2CNetwork } from '@/services/network';
+import { getNetwork, getDescendantSubtree, getB2CNetwork, getAvailableMlmModels } from '@/services/network';
+import authService from '@/services/auth';
 import { NetworkLevel } from '@/types/network';
 
+type NetworkTabId = 'b2c' | 'b2b' | 'b2t';
+
 const Network: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'b2c' | 'b2b' | 'b2t'>('b2c');
+  const [activeTab, setActiveTab] = useState<NetworkTabId>('b2c');
   const [activeLevel, setActiveLevel] = useState<1 | 2 | 3>(1);
   const [searchFilter, setSearchFilter] = useState('');
+  const [tabAvailability, setTabAvailability] = useState<Record<NetworkTabId, boolean>>({
+    b2c: true,
+    b2b: false,
+    b2t: false,
+  });
+  const [userModel, setUserModel] = useState<NetworkTabId | null>(null);
 
   const [levels, setLevels] = useState<NetworkLevel[]>([]);
   const [totalDescendants, setTotalDescendants] = useState(0);
@@ -43,13 +51,91 @@ const Network: React.FC = () => {
   const [loadingTreeUserId, setLoadingTreeUserId] = useState<number | null>(null);
   const [pendingTreeUserId, setPendingTreeUserId] = useState<number | null>(null);
   const [b2cPagination, setB2cPagination] = useState<{ totalPages: number; currentPage: number; totalUsers: number } | null>(null);
+  const hasSetInitialTabRef = useRef(false);
+  const hasFetchedAvailableModelsRef = useRef(false);
   const historyReadyRef = useRef(false);
   const suppressHistoryPushRef = useRef(false);
   const skipNextSubtreeFetchRef = useRef(false);
 
   useEffect(() => {
+    const storedUser = authService.getStoredUser();
+    const rawModel = ((storedUser as any)?.mlm_model ??
+      (storedUser as any)?.mlmModel ??
+      (storedUser as any)?.network_model ??
+      (storedUser as any)?.networkModel ??
+      (storedUser as any)?.mlm?.data?.mlmCode) as string | undefined;
+
+    const normalized = typeof rawModel === 'string' ? rawModel.trim().toLowerCase() : undefined;
+
+    let resolvedModel: NetworkTabId | null = null;
+    if (normalized === 'b2c') {
+      resolvedModel = 'b2c';
+    } else if (normalized === 'b2b' || normalized === 'btb') {
+      resolvedModel = 'b2b';
+    } else if (normalized === 'b2t') {
+      resolvedModel = 'b2t';
+    }
+
+    if (resolvedModel) {
+      setUserModel(resolvedModel);
+      setTabAvailability(prev => ({
+        ...prev,
+        [resolvedModel as NetworkTabId]: true,
+      }));
+
+      if (!hasSetInitialTabRef.current && resolvedModel !== 'b2c') {
+        setActiveTab(resolvedModel);
+      }
+    }
+
+    hasSetInitialTabRef.current = true;
+  }, []);
+
+  useEffect(() => {
     setUsersOffset((currentPage - 1) * usersLimit);
   }, [currentPage, usersLimit]);
+
+  useEffect(() => {
+    if (userModel !== 'b2c') {
+      return;
+    }
+
+    if (hasFetchedAvailableModelsRef.current) {
+      return;
+    }
+
+    const fetchAvailableModels = async () => {
+      try {
+        const data = await getAvailableMlmModels();
+        setTabAvailability(prev => ({
+          ...prev,
+          b2b: data.has_b2b_descendants,
+          b2t: data.has_b2t_descendants,
+        }));
+      } catch (error) {
+        console.error('Error obteniendo modelos disponibles', error);
+      } finally {
+        hasFetchedAvailableModelsRef.current = true;
+      }
+    };
+
+    void fetchAvailableModels();
+  }, [userModel]);
+
+  useEffect(() => {
+    if (tabAvailability[activeTab]) {
+      return;
+    }
+
+    const fallbackTab = (tabAvailability.b2c && 'b2c') ||
+      (tabAvailability.b2b && 'b2b') ||
+      (tabAvailability.b2t && 'b2t') ||
+      null;
+
+    if (fallbackTab && fallbackTab !== activeTab) {
+      setActiveTab(fallbackTab);
+    }
+  }, [tabAvailability, activeTab]);
 
   // Resetear página cuando cambia el nivel o el tab
   useEffect(() => {
@@ -970,7 +1056,13 @@ const Network: React.FC = () => {
           )}
 
           {/* Navbar con tabs B2C, B2B, B2T - solo mostrar cuando NO está en modo subárbol */}
-          {!subtreeMode && <NetworkTabs activeTab={activeTab} onTabChange={setActiveTab} />}
+          {!subtreeMode && (
+            <NetworkTabs 
+              activeTab={activeTab} 
+              onTabChange={setActiveTab} 
+              availableTabs={tabAvailability} 
+            />
+          )}
 
           {/* Línea divisoria debajo de los tabs - solo cuando NO está en modo subárbol */}
           {!subtreeMode && (

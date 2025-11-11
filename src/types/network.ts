@@ -99,4 +99,17 @@ export interface B2CNetworkResponse {
   };
 }
 
+export interface AvailableMlmModelsData {
+  user_id: number;
+  has_b2c_descendants: boolean;
+  has_b2t_descendants: boolean;
+  has_b2b_descendants: boolean;
+}
+
+export interface AvailableMlmModelsResponse {
+  statusCode?: number;
+  message?: string;
+  data?: AvailableMlmModelsData;
+}
+
 

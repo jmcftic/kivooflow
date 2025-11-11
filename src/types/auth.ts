@@ -61,6 +61,30 @@ export interface User {
   created_at: string;
   updated_at: string;
   last_login?: string;
+  mlm_model?: string;
+  mlmModel?: string;
+  network_model?: string;
+  networkModel?: string;
+  mlm?: {
+    message?: string;
+    data?: {
+      userId?: number;
+      mlmCode?: string;
+      mlmName?: string;
+      rootUserId?: number;
+      rootUserName?: string;
+      isTeamLeader?: boolean;
+      networkDepth?: number;
+      profileIconUrl?: string | null;
+      teamBannerUrl?: string | null;
+      card1Name?: string | null;
+      card1Url?: string | null;
+      card2Name?: string | null;
+      card2Url?: string | null;
+      card3Name?: string | null;
+      card3Url?: string | null;
+    };
+  };
 }
 
 export type UserStatus = "pending" | "active" | "suspended" | "blocked";

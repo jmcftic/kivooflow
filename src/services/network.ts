@@ -1,6 +1,6 @@
 import { apiService } from './api';
 import { API_ENDPOINTS } from '@/constants/api';
-import { NetworkResponse, DescendantSubtreeResponse, B2CNetworkResponse } from '@/types/network';
+import { NetworkResponse, DescendantSubtreeResponse, B2CNetworkResponse, AvailableMlmModelsData, AvailableMlmModelsResponse } from '@/types/network';
 
 export interface GetNetworkParams {
   levelStart: number;
@@ -49,6 +49,19 @@ export async function getB2CNetwork({ level = 1, limit = 10, offset = 0 }: GetB2
 
   const res = await apiService.get<B2CNetworkResponse>(API_ENDPOINTS.NETWORK.B2C, query);
   return res as unknown as B2CNetworkResponse;
+}
+
+export async function getAvailableMlmModels(): Promise<AvailableMlmModelsData> {
+  const res = await apiService.get<AvailableMlmModelsResponse>(API_ENDPOINTS.NETWORK.AVAILABLE_MODEL);
+  const payload: any = res;
+  const data = payload?.data ?? payload;
+
+  return {
+    user_id: data?.user_id ?? 0,
+    has_b2c_descendants: data?.has_b2c_descendants === true,
+    has_b2t_descendants: data?.has_b2t_descendants === true,
+    has_b2b_descendants: data?.has_b2b_descendants === true,
+  };
 }
 
 
