@@ -43,6 +43,8 @@ export const API_ENDPOINTS = {
     SUBTREE: "/network/descendant/:descendantId/subtree",
     B2C: "/network/b2c",
     AVAILABLE_MODEL: "/network/available-model",
+    B2B_LEADERS_OWNED_TO_B2C: "/network/b2b-leaders-owned-to-b2c",
+    B2T_LEADERS_OWNED_TO_B2C: "/network/b2t-leaders-owned-to-b2c",
   },
   CRYPTO: {
     WALLETS: "/crypto/wallets",

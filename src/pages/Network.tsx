@@ -11,9 +11,20 @@ import NetworkTableHeader from '../components/organisms/NetworkTableHeader';
 import MiniBaner from '../components/atoms/MiniBaner';
 import SingleArrowHistory from '../components/atoms/SingleArrowHistory';
 import MoneyIcon from '../components/atoms/MoneyIcon';
-import { getNetwork, getDescendantSubtree, getB2CNetwork, getAvailableMlmModels } from '@/services/network';
+import {
+  getNetwork,
+  getDescendantSubtree,
+  getB2CNetwork,
+  getAvailableMlmModels,
+  getB2BLeadersOwnedToB2C,
+  getB2TLeadersOwnedToB2C,
+} from '@/services/network';
 import authService from '@/services/auth';
-import { NetworkLevel } from '@/types/network';
+import {
+  NetworkLevel,
+  NetworkLeaderOwnedToB2C,
+  NetworkLeadersPagination,
+} from '@/types/network';
 
 type NetworkTabId = 'b2c' | 'b2b' | 'b2t';
 
@@ -53,9 +64,21 @@ const Network: React.FC = () => {
   const [b2cPagination, setB2cPagination] = useState<{ totalPages: number; currentPage: number; totalUsers: number } | null>(null);
   const hasSetInitialTabRef = useRef(false);
   const hasFetchedAvailableModelsRef = useRef(false);
+  type LeaderTab = 'b2b' | 'b2t';
+  type LeadersTabState = {
+    leaders: NetworkLeaderOwnedToB2C[];
+    total: number;
+    pagination: NetworkLeadersPagination;
+    limit: number;
+    offset: number;
+  };
+  const [leadersByTab, setLeadersByTab] = useState<Partial<Record<LeaderTab, LeadersTabState>>>({});
+  const [leadersLoading, setLeadersLoading] = useState(false);
+  const [leadersError, setLeadersError] = useState<string | null>(null);
   const historyReadyRef = useRef(false);
   const suppressHistoryPushRef = useRef(false);
   const skipNextSubtreeFetchRef = useRef(false);
+  const isLeaderTab = userModel === 'b2c' && (activeTab === 'b2b' || activeTab === 'b2t');
 
   useEffect(() => {
     const storedUser = authService.getStoredUser();
@@ -164,6 +187,8 @@ const Network: React.FC = () => {
       try {
         // Si estamos en el tab B2C y no en modo subtree, usar el nuevo endpoint B2C
         if (activeTab === 'b2c') {
+          setLeadersLoading(false);
+          setLeadersError(null);
           const res = await getB2CNetwork({
             level: activeLevel,
             limit: usersLimit,
@@ -208,8 +233,45 @@ const Network: React.FC = () => {
             setParentExhausted({});
             setParentErrors({});
           }
+        } else if (isLeaderTab && tabAvailability[activeTab]) {
+          const leaderTab = activeTab as LeaderTab;
+          setLevels([]);
+          setTotalDescendants(0);
+          setB2cPagination(null);
+          setSubtreeMode(false);
+          setSubtreeUsers([]);
+          setSubtreeRootId(null);
+          setSubtreeTotal(0);
+          setSubtreePage(1);
+          setChildrenByParent({});
+          setAllChildrenByParent({});
+          setParentExhausted({});
+          setParentErrors({});
+
+          setLeadersLoading(true);
+          setLeadersError(null);
+
+          const fetchFn = leaderTab === 'b2b' ? getB2BLeadersOwnedToB2C : getB2TLeadersOwnedToB2C;
+          const result = await fetchFn({
+            limit: usersLimit,
+            offset: usersOffset,
+          });
+
+          setLeadersByTab(prev => ({
+            ...prev,
+            [leaderTab]: {
+              leaders: result.leaders,
+              total: result.total,
+              pagination: result.pagination,
+              limit: result.limit,
+              offset: result.offset,
+            },
+          }));
+          setLeadersLoading(false);
         } else {
-          // Usar el endpoint original para otros tabs (B2B, B2T)
+          setLeadersLoading(false);
+          setLeadersError(null);
+          // Usar el endpoint original para otros tabs (B2B, B2T) cuando no aplican líderes
           const res = await getNetwork({
             levelStart: 1,
             levelEnd: 3,
@@ -235,10 +297,15 @@ const Network: React.FC = () => {
         setLevels([]);
         setTotalDescendants(0);
         setB2cPagination(null);
+        if (isLeaderTab) {
+          const message = (e as any)?.message ?? 'No se pudieron obtener los líderes.';
+          setLeadersError(typeof message === 'string' ? message : 'No se pudieron obtener los líderes.');
+          setLeadersLoading(false);
+        }
       }
     };
     load();
-  }, [activeTab, activeLevel, usersLimit, usersOffset, subtreeMode]);
+  }, [activeTab, activeLevel, usersLimit, usersOffset, subtreeMode, isLeaderTab, tabAvailability, userModel]);
 
   // Paginación del subárbol
   useEffect(() => {
@@ -368,7 +435,33 @@ const Network: React.FC = () => {
     loadSubtree();
   }, [subtreeMode, subtreeRootId, subtreePage, usersLimit, subtreeRootLevel, activeTab]);
 
+  const leaderState = isLeaderTab ? leadersByTab[activeTab as LeaderTab] : undefined;
+
+  const leaderItems = useMemo(() => {
+    if (!isLeaderTab || !leaderState) {
+      return [];
+    }
+
+    return leaderState.leaders.map((leader) => {
+      const depth = Math.min(leader.depth || 1, 3);
+      return {
+        id: leader.userId,
+        name: leader.fullName || leader.email,
+        email: leader.email,
+        createdAt: leader.createdAt,
+        level: depth,
+        authLevel: depth,
+        totalDescendants: 0,
+        leader,
+      };
+    });
+  }, [isLeaderTab, leaderState]);
+
   const allLevelItems = useMemo(() => {
+    if (isLeaderTab) {
+      return leaderItems;
+    }
+
     return levels.flatMap((levelGroup) =>
       (levelGroup.users || []).map((u) => ({
         id: u.user_id,
@@ -380,9 +473,13 @@ const Network: React.FC = () => {
         totalDescendants: u.total_descendants_of_user || 0,
       }))
     );
-  }, [levels]);
+  }, [isLeaderTab, leaderItems, levels]);
 
   const baseItems = useMemo(() => {
+    if (isLeaderTab) {
+      return leaderItems;
+    }
+
     if (subtreeMode) {
       return subtreeUsers.map((u) => ({
         id: u.id,
@@ -397,7 +494,7 @@ const Network: React.FC = () => {
     }
 
     return allLevelItems.filter((item) => item.level === activeLevel);
-  }, [subtreeMode, subtreeUsers, allLevelItems, activeLevel]);
+  }, [isLeaderTab, leaderItems, subtreeMode, subtreeUsers, allLevelItems, activeLevel]);
 
   const displayedItems = useMemo(() => {
     const query = searchFilter.trim().toLowerCase();
@@ -993,6 +1090,10 @@ const Network: React.FC = () => {
   }, [activeLevel, activeTab, handleBackToNetwork, loadTreeForUser, subtreeMode]);
 
   const totalItemsLevel1 = useMemo(() => {
+    if (isLeaderTab) {
+      return leaderState?.total ?? leaderItems.length;
+    }
+
     // Si estamos en B2C, usar la información de paginación B2C
     if (activeTab === 'b2c' && b2cPagination) {
       return b2cPagination.totalUsers;
@@ -1022,7 +1123,7 @@ const Network: React.FC = () => {
     
     // Si no hay más y no alcanzamos el límite, usamos el máximo entre usuarios mostrados y total reportado
     return Math.max(lvl1.users.length, lvl1.total_users_in_level || lvl1.users.length);
-  }, [levels, usersLimit, activeTab, activeLevel, b2cPagination]);
+  }, [isLeaderTab, leaderState, leaderItems, levels, usersLimit, activeTab, activeLevel, b2cPagination]);
 
   return (
     <div className="h-screen w-full bg-[#2a2a2a] relative flex flex-col lg:flex-row overflow-hidden">
@@ -1106,7 +1207,7 @@ const Network: React.FC = () => {
               activeLevel={activeLevel}
               onSearchChange={setSearchFilter}
               onLevelChange={setActiveLevel}
-              showLevelTabs={!subtreeMode}
+              showLevelTabs={!subtreeMode && !isLeaderTab}
             />
           </div>
 
@@ -1116,26 +1217,39 @@ const Network: React.FC = () => {
             <NetworkTableHeader />
 
             {/* Tabla con filas */}
-            {displayedItems.length > 0 ? (
+            {isLeaderTab && leadersError ? (
+              <div className="py-10 text-center text-sm text-[#FF7A7A] px-4">
+                {leadersError}
+              </div>
+            ) : isLeaderTab && leadersLoading ? (
+              <div className="py-10 text-center text-sm text-white/60">
+                Cargando líderes...
+              </div>
+            ) : displayedItems.length > 0 ? (
               <NetworkTable 
                 items={displayedItems} 
                 activeTab={activeTab}
                 activeLevel={activeLevel}
                 onToggleExpand={handleToggleExpand}
-                childrenByParent={hasSearch ? {} : childrenByParent}
+                childrenByParent={(isLeaderTab || hasSearch) ? {} : childrenByParent}
                 childIndentPx={30}
                 onViewTree={handleViewTree}
-                disableExpand={hasSearch || (subtreeMode && activeTab !== 'b2c')}
-                onLoadMoreChildren={handleLoadMoreChildren}
-                parentHasMore={parentHasMore}
-                parentLoading={parentLoading}
+                disableExpand={hasSearch || (subtreeMode && activeTab !== 'b2c') || isLeaderTab}
+                disableViewTree={isLeaderTab}
+                onLoadMoreChildren={isLeaderTab ? undefined : handleLoadMoreChildren}
+                parentHasMore={isLeaderTab ? {} : parentHasMore}
+                parentLoading={isLeaderTab ? {} : parentLoading}
                 loadingTreeUserId={loadingTreeUserId}
-                parentExhausted={parentExhausted}
-                parentErrors={parentErrors}
+                parentExhausted={isLeaderTab ? {} : parentExhausted}
+                parentErrors={isLeaderTab ? {} : parentErrors}
               />
             ) : (
               <div className="py-10 text-center text-sm text-white/60">
-                {hasSearch ? 'Sin resultados para tu búsqueda.' : 'No hay usuarios disponibles.'}
+                {hasSearch
+                  ? 'Sin resultados para tu búsqueda.'
+                  : isLeaderTab
+                    ? 'No hay líderes disponibles.'
+                    : 'No hay usuarios disponibles.'}
               </div>
             )}
           </div>

@@ -112,4 +112,51 @@ export interface AvailableMlmModelsResponse {
   data?: AvailableMlmModelsData;
 }
 
+export interface NetworkLeaderOwnedToB2C {
+  userId: number;
+  depth: number;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  referralCode: string;
+  profileIconUrl: string | null;
+  isEnterprice: boolean;
+  status: string;
+  createdAt: string;
+  parentName: string | null;
+  parentReferralCode: string | null;
+  teamId: number | null;
+  teamName: string | null;
+  teamBannerUrl: string | null;
+  mlmCode: string | null;
+  mlmName: string | null;
+  isTeamLeader: boolean | null;
+  networkDepth: number | null;
+  card1Url: string | null;
+  card2Url: string | null;
+  card3Url: string | null;
+}
+
+export interface NetworkLeadersPagination {
+  totalPages: number;
+  currentPage: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface NetworkLeadersResult {
+  type: 'B2B' | 'B2T';
+  total: number;
+  limit: number;
+  offset: number;
+  pagination: NetworkLeadersPagination;
+  leaders: NetworkLeaderOwnedToB2C[];
+}
+
+export interface NetworkLeadersResponse {
+  statusCode?: number;
+  message?: string;
+  data?: NetworkLeadersResult;
+}
+
 

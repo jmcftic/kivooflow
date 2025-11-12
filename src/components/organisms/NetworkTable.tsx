@@ -24,6 +24,7 @@ interface NetworkTableProps {
   childIndentPx?: number;
   onViewTree?: (userId: number) => void;
   disableExpand?: boolean;
+  disableViewTree?: boolean;
   onLoadMoreChildren?: (parentId: number, parentLevel: number) => void;
   parentHasMore?: Record<number, boolean>;
   parentLoading?: Record<number, boolean>;
@@ -32,7 +33,7 @@ interface NetworkTableProps {
   parentErrors?: Record<number, string>;
 }
 
-const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLevel, onToggleExpand, childrenByParent = {}, childIndentPx = 30, onViewTree, disableExpand = false, onLoadMoreChildren, parentHasMore = {}, parentLoading = {}, loadingTreeUserId = null, parentExhausted = {}, parentErrors = {} }) => {
+const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLevel, onToggleExpand, childrenByParent = {}, childIndentPx = 30, onViewTree, disableExpand = false, disableViewTree = false, onLoadMoreChildren, parentHasMore = {}, parentLoading = {}, loadingTreeUserId = null, parentExhausted = {}, parentErrors = {} }) => {
   return (
     <div className="space-y-4">
       {items.map((item) => {
@@ -41,7 +42,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
         const canExpand = !disableExpand && authLevel < 3 && (item.totalDescendants ?? 0) > 0;
         const isExpanded = Array.isArray(childrenByParent[item.id]);
         const isLoading = loadingTreeUserId === item.id;
-        const canViewTree = authLevel < 3;
+        const canViewTree = !disableViewTree && authLevel < 3;
         const itemError = parentErrors[item.id];
 
         return (
@@ -101,7 +102,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                 const childCanExpand = !disableExpand && childAuthLevel < 3 && (child.totalDescendants ?? 0) > 0;
                 const childExpanded = Array.isArray(childrenByParent[child.id]);
                 const childIsLoading = loadingTreeUserId === child.id;
-                const childCanViewTree = childAuthLevel < 3;
+                const childCanViewTree = !disableViewTree && childAuthLevel < 3;
                 const childError = parentErrors[child.id];
 
                 return (
