@@ -101,10 +101,30 @@ const Network: React.FC = () => {
 
     if (resolvedModel) {
       setUserModel(resolvedModel);
-      setTabAvailability(prev => ({
-        ...prev,
-        [resolvedModel as NetworkTabId]: true,
-      }));
+      
+      // Configurar disponibilidad de tabs según el modelo del usuario
+      if (resolvedModel === 'b2c') {
+        // Usuario B2C: B2C habilitado, B2B y B2T se habilitarán después si tienen descendientes
+        setTabAvailability({
+          b2c: true,
+          b2b: false,
+          b2t: false,
+        });
+      } else if (resolvedModel === 'b2b') {
+        // Usuario B2B: solo B2B habilitado
+        setTabAvailability({
+          b2c: false,
+          b2b: true,
+          b2t: false,
+        });
+      } else if (resolvedModel === 'b2t') {
+        // Usuario B2T: solo B2T habilitado
+        setTabAvailability({
+          b2c: false,
+          b2b: false,
+          b2t: true,
+        });
+      }
 
       if (!hasSetInitialTabRef.current && resolvedModel !== 'b2c') {
         setActiveTab(resolvedModel);
@@ -119,8 +139,8 @@ const Network: React.FC = () => {
   }, [currentPage, usersLimit]);
 
   useEffect(() => {
-    // Solo ejecutar si tenemos un modelo de usuario válido
-    if (!userModel) {
+    // Solo ejecutar si el usuario es B2C
+    if (userModel !== 'b2c') {
       return;
     }
 
@@ -132,29 +152,12 @@ const Network: React.FC = () => {
       try {
         const data = await getAvailableMlmModels();
         
-        // Habilitar tabs según el modelo del usuario y los descendientes disponibles
-        if (userModel === 'b2c') {
-          // Usuario B2C: habilitar B2B y B2T si tienen descendientes
-          setTabAvailability(prev => ({
-            ...prev,
-            b2b: data.has_b2b_descendants,
-            b2t: data.has_b2t_descendants,
-          }));
-        } else if (userModel === 'b2b') {
-          // Usuario B2B: habilitar B2C y B2T si tienen descendientes
-          setTabAvailability(prev => ({
-            ...prev,
-            b2c: data.has_b2c_descendants,
-            b2t: data.has_b2t_descendants,
-          }));
-        } else if (userModel === 'b2t') {
-          // Usuario B2T: habilitar B2C y B2B si tienen descendientes
-          setTabAvailability(prev => ({
-            ...prev,
-            b2c: data.has_b2c_descendants,
-            b2b: data.has_b2b_descendants,
-          }));
-        }
+        // Usuario B2C: habilitar B2B y B2T si tienen descendientes
+        setTabAvailability(prev => ({
+          ...prev,
+          b2b: data.has_b2b_descendants,
+          b2t: data.has_b2t_descendants,
+        }));
       } catch (error) {
         console.error('Error obteniendo modelos disponibles', error);
       } finally {
