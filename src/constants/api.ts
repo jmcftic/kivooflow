@@ -41,7 +41,8 @@ export const API_ENDPOINTS = {
   NETWORK: {
     GET: "/Network",
     SUBTREE: "/network/descendant/:descendantId/subtree",
-    B2C: "/network/b2c",
+    SINGLE_LEVEL: "/network/single-level",
+    B2C_EXCLUDING_B2B_B2T: "/network/b2c-excluding-b2b-b2t",
     AVAILABLE_MODEL: "/network/available-model",
     B2B_LEADERS_OWNED_TO_B2C: "/network/b2b-leaders-owned-to-b2c",
     B2T_LEADERS_OWNED_TO_B2C: "/network/b2t-leaders-owned-to-b2c",

@@ -101,9 +101,10 @@ export interface B2CNetworkResponse {
 
 export interface AvailableMlmModelsData {
   user_id: number;
-  has_b2c_descendants: boolean;
-  has_b2t_descendants: boolean;
-  has_b2b_descendants: boolean;
+  my_model: string; // B2C, B2T, o B2B
+  show_b2c_tab: boolean;
+  show_b2t_tab: boolean;
+  show_b2b_tab: boolean;
 }
 
 export interface AvailableMlmModelsResponse {

@@ -14,7 +14,8 @@ import MoneyIcon from '../components/atoms/MoneyIcon';
 import {
   getNetwork,
   getDescendantSubtree,
-  getB2CNetwork,
+  getSingleLevelNetwork,
+  getB2CNetworkExcludingB2BB2T,
   getAvailableMlmModels,
   getB2BLeadersOwnedToB2C,
   getB2TLeadersOwnedToB2C,
@@ -80,6 +81,7 @@ const Network: React.FC = () => {
   const skipNextSubtreeFetchRef = useRef(false);
   const isLeaderTab = userModel === 'b2c' && (activeTab === 'b2b' || activeTab === 'b2t');
 
+  // Inicializar userModel desde localStorage como fallback (el endpoint lo actualizará)
   useEffect(() => {
     const storedUser = authService.getStoredUser();
     const rawModel = ((storedUser as any)?.mlm_model ??
@@ -99,30 +101,19 @@ const Network: React.FC = () => {
       resolvedModel = 'b2t';
     }
 
+    // Solo establecer como fallback inicial una vez, el endpoint lo actualizará
     if (resolvedModel) {
       setUserModel(resolvedModel);
-      setTabAvailability(prev => ({
-        ...prev,
-        [resolvedModel as NetworkTabId]: true,
-      }));
-
-      if (!hasSetInitialTabRef.current && resolvedModel !== 'b2c') {
-        setActiveTab(resolvedModel);
-      }
     }
-
-    hasSetInitialTabRef.current = true;
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar una vez al montar
 
   useEffect(() => {
     setUsersOffset((currentPage - 1) * usersLimit);
   }, [currentPage, usersLimit]);
 
+  // Usar el endpoint available-model para TODOS los tipos de usuarios
   useEffect(() => {
-    if (userModel !== 'b2c') {
-      return;
-    }
-
     if (hasFetchedAvailableModelsRef.current) {
       return;
     }
@@ -130,11 +121,30 @@ const Network: React.FC = () => {
     const fetchAvailableModels = async () => {
       try {
         const data = await getAvailableMlmModels();
-        setTabAvailability(prev => ({
-          ...prev,
-          b2b: data.has_b2b_descendants,
-          b2t: data.has_b2t_descendants,
-        }));
+        
+        // Establecer el modelo del usuario desde el endpoint
+        const normalizedModel = data.my_model?.trim().toLowerCase();
+        if (normalizedModel === 'b2c' || normalizedModel === 'b2b' || normalizedModel === 'b2t') {
+          setUserModel(normalizedModel as NetworkTabId);
+        }
+        
+        // Establecer qué tabs están disponibles basándose en la respuesta del endpoint
+        setTabAvailability({
+          b2c: data.show_b2c_tab,
+          b2b: data.show_b2b_tab,
+          b2t: data.show_b2t_tab,
+        });
+
+        // Establecer el tab activo inicial si no se ha establecido aún
+        if (!hasSetInitialTabRef.current) {
+          const initialTab = 
+            (data.show_b2c_tab && 'b2c') ||
+            (data.show_b2b_tab && 'b2b') ||
+            (data.show_b2t_tab && 'b2t') ||
+            'b2c';
+          setActiveTab(initialTab);
+          hasSetInitialTabRef.current = true;
+        }
       } catch (error) {
         console.error('Error obteniendo modelos disponibles', error);
       } finally {
@@ -143,7 +153,7 @@ const Network: React.FC = () => {
     };
 
     void fetchAvailableModels();
-  }, [userModel]);
+  }, []);
 
   useEffect(() => {
     if (tabAvailability[activeTab]) {
@@ -161,7 +171,7 @@ const Network: React.FC = () => {
   }, [tabAvailability, activeTab]);
 
   // Resetear página cuando cambia el nivel o el tab
-  useEffect(() => {
+  useEffect(() => { 
     setCurrentPage(1);
     setB2cPagination(null);
   }, [activeLevel, activeTab]);
@@ -184,12 +194,24 @@ const Network: React.FC = () => {
       if (subtreeMode) {
         return;
       }
+      
+      // Esperar a que se haya obtenido el modelo del usuario desde el endpoint available-model
+      // para evitar ejecutar el endpoint incorrecto (getNetwork) antes de saber el tipo de usuario
+      if (!hasFetchedAvailableModelsRef.current || !userModel) {
+        return;
+      }
+      
       try {
-        // Si estamos en el tab B2C y no en modo subtree, usar el nuevo endpoint B2C
-        if (activeTab === 'b2c') {
+        // Lógica según tipo de usuario y tab activo
+        // Usuario B2C: tab B2C usa excluding, tabs B2B/B2T usan owned
+        // Usuario B2B: tab B2B usa single-level
+        // Usuario B2T: tab B2T usa single-level
+        
+        // Usuario B2C en tab B2C: usar excluding
+        if (userModel === 'b2c' && activeTab === 'b2c') {
           setLeadersLoading(false);
           setLeadersError(null);
-          const res = await getB2CNetwork({
+          const res = await getB2CNetworkExcludingB2BB2T({
             level: activeLevel,
             limit: usersLimit,
             offset: usersOffset,
@@ -233,7 +255,9 @@ const Network: React.FC = () => {
             setParentExhausted({});
             setParentErrors({});
           }
-        } else if (isLeaderTab && tabAvailability[activeTab]) {
+        } 
+        // Usuario B2C en tabs B2B/B2T: usar owned
+        else if (isLeaderTab && tabAvailability[activeTab]) {
           const leaderTab = activeTab as LeaderTab;
           setLevels([]);
           setTotalDescendants(0);
@@ -268,10 +292,61 @@ const Network: React.FC = () => {
             },
           }));
           setLeadersLoading(false);
-        } else {
+        } 
+        // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
+        else if ((userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
           setLeadersLoading(false);
           setLeadersError(null);
-          // Usar el endpoint original para otros tabs (B2B, B2T) cuando no aplican líderes
+          const res = await getSingleLevelNetwork({
+            level: activeLevel,
+            limit: usersLimit,
+            offset: usersOffset,
+          });
+          const data = res?.data;
+          if (data) {
+            // Convertir la respuesta al formato NetworkLevel[]
+            const singleLevel: NetworkLevel = {
+              level: data.level.level,
+              total_users_in_level: data.level.totalUsers,
+              active_users_in_level: data.level.activeUsers,
+              has_more_users_in_level: data.pagination.hasNextPage,
+              users: data.users.map(u => ({
+                user_id: u.user_id,
+                user_email: u.user_email,
+                user_full_name: u.user_full_name,
+                user_phone: u.user_phone,
+                user_status: u.user_status,
+                user_created_at: u.user_created_at,
+                user_referral_code: u.user_referral_code,
+                direct_parent_id: u.direct_parent_id,
+                direct_parent_email: u.direct_parent_email,
+                direct_parent_full_name: u.direct_parent_full_name,
+                direct_parent_referral_code: u.direct_parent_referral_code,
+                direct_referrals: u.direct_referrals,
+                total_descendants_of_user: u.total_descendants_of_user,
+              })),
+            };
+            setLevels([singleLevel]);
+            setTotalDescendants(data.summary.totalDescendants);
+            setB2cPagination({
+              totalPages: data.pagination.totalPages,
+              currentPage: data.pagination.currentPage,
+              totalUsers: data.level.totalUsers,
+            });
+            setSubtreeMode(false);
+            setSubtreeUsers([]);
+            setSubtreeRootId(null);
+            setSubtreeTotal(0);
+            setSubtreePage(1);
+            setParentExhausted({});
+            setParentErrors({});
+          }
+        } 
+        // Fallback: usar el endpoint original para otros casos (no debería ejecutarse normalmente)
+        else {
+          console.warn('Usando endpoint fallback getNetwork - esto no debería ocurrir si userModel está establecido correctamente', { userModel, activeTab });
+          setLeadersLoading(false);
+          setLeadersError(null);
           const res = await getNetwork({
             levelStart: 1,
             levelEnd: 3,
@@ -316,8 +391,9 @@ const Network: React.FC = () => {
         return;
       }
       try {
-        // Si estamos en B2C, usar el endpoint B2C
-        if (activeTab === 'b2c') {
+        // Usuario B2C en tab B2C: usar excluding
+        // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
+        if ((userModel === 'b2c' && activeTab === 'b2c') || (userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
           // subtreeRootLevel es el nivel del usuario cuya red estamos viendo
           // Los hijos están en el nivel siguiente
           const childrenLevel = subtreeRootLevel + 1;
@@ -336,7 +412,11 @@ const Network: React.FC = () => {
             
             // Cargar todas las páginas para obtener todos los hijos directos
             while (true) {
-              const res = await getB2CNetwork({
+              // Usar excluding para B2C, single-level para B2B/B2T
+              const fetchFn = (userModel === 'b2c' && activeTab === 'b2c') 
+                ? getB2CNetworkExcludingB2BB2T 
+                : getSingleLevelNetwork;
+              const res = await fetchFn({
                 level: childrenLevel,
                 limit,
                 offset,
@@ -540,21 +620,26 @@ const Network: React.FC = () => {
 
     setParentLoading(prev => ({ ...prev, [parentUserId]: true }));
     try {
-      // Si estamos en B2C, usar el endpoint B2C en lugar de subtree (tanto en modo normal como subtree)
-      if (activeTab === 'b2c') {
+      // Usuario B2C en tab B2C: usar excluding
+      // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
+      if ((userModel === 'b2c' && activeTab === 'b2c') || (userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
         const nextLevel = parentAuthLevel + 1;
         if (nextLevel > 3) {
           return;
         }
         
-        // Cargar usuarios del nivel siguiente usando B2C
+        // Cargar usuarios del nivel siguiente
         const allChildren: any[] = [];
         let offset = 0;
         const limit = 100; // Cargar en lotes grandes para encontrar todos los hijos
         
         // Hacer múltiples llamadas hasta encontrar todos los hijos o no haya más usuarios
         while (true) {
-          const res = await getB2CNetwork({
+          // Usar excluding para B2C, single-level para B2B/B2T
+          const fetchFn = (userModel === 'b2c' && activeTab === 'b2c') 
+            ? getB2CNetworkExcludingB2BB2T 
+            : getSingleLevelNetwork;
+          const res = await fetchFn({
             level: nextLevel,
             limit,
             offset,
@@ -659,8 +744,9 @@ const Network: React.FC = () => {
       const currentOffset = parentOffsets[parentId] ?? 0;
       setParentLoading(prev => ({ ...prev, [parentId]: true }));
       
-      // Si estamos en B2C, usar el endpoint B2C en lugar de subtree (tanto en modo normal como subtree)
-      if (activeTab === 'b2c') {
+      // Usuario B2C en tab B2C: usar excluding
+      // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
+      if ((userModel === 'b2c' && activeTab === 'b2c') || (userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
         const nextLevel = parentLevel + 1;
         if (nextLevel > 3) {
           return;
@@ -710,7 +796,11 @@ const Network: React.FC = () => {
           
           // Hacer múltiples llamadas hasta encontrar todos los hijos
           while (true) {
-            const res = await getB2CNetwork({
+            // Usar excluding para B2C, single-level para B2B/B2T
+            const fetchFn = (userModel === 'b2c' && activeTab === 'b2c') 
+              ? getB2CNetworkExcludingB2BB2T 
+              : getSingleLevelNetwork;
+            const res = await fetchFn({
               level: nextLevel,
               limit,
               offset,
@@ -844,15 +934,19 @@ const Network: React.FC = () => {
         return;
       }
       
-      // Si estamos en B2C, usar el endpoint B2C
-      if (activeTab === 'b2c') {
+      // Usuario B2C en tab B2C: usar excluding
+      // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
+      if ((userModel === 'b2c' && activeTab === 'b2c') || (userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
         const nextLevel = userLevel + 1;
         if (nextLevel > 3) {
           return;
         }
         
-        // Cargar usuarios del nivel siguiente usando B2C
-        const res = await getB2CNetwork({
+        // Usar excluding para B2C, single-level para B2B/B2T
+        const fetchFn = (userModel === 'b2c' && activeTab === 'b2c') 
+          ? getB2CNetworkExcludingB2BB2T 
+          : getSingleLevelNetwork;
+        const res = await fetchFn({
           level: nextLevel,
           limit: usersLimit,
           offset: 0,
@@ -1094,8 +1188,8 @@ const Network: React.FC = () => {
       return leaderState?.total ?? leaderItems.length;
     }
 
-    // Si estamos en B2C, usar la información de paginación B2C
-    if (activeTab === 'b2c' && b2cPagination) {
+    // Si estamos usando single-level o excluding, usar la información de paginación
+    if (((userModel === 'b2c' && activeTab === 'b2c') || (userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) && b2cPagination) {
       return b2cPagination.totalUsers;
     }
     

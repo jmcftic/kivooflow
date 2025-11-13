@@ -50,14 +50,25 @@ export interface GetB2CNetworkParams {
   offset?: number; // default 0
 }
 
-export async function getB2CNetwork({ level = 1, limit = 10, offset = 0 }: GetB2CNetworkParams): Promise<B2CNetworkResponse> {
+export async function getSingleLevelNetwork({ level = 1, limit = 10, offset = 0 }: GetB2CNetworkParams): Promise<B2CNetworkResponse> {
   const query = {
     level,
     limit,
     offset,
   } as Record<string, string | number>;
 
-  const res = await apiService.get<B2CNetworkResponse>(API_ENDPOINTS.NETWORK.B2C, query);
+  const res = await apiService.get<B2CNetworkResponse>(API_ENDPOINTS.NETWORK.SINGLE_LEVEL, query);
+  return res as unknown as B2CNetworkResponse;
+}
+
+export async function getB2CNetworkExcludingB2BB2T({ level = 1, limit = 10, offset = 0 }: GetB2CNetworkParams): Promise<B2CNetworkResponse> {
+  const query = {
+    level,
+    limit,
+    offset,
+  } as Record<string, string | number>;
+
+  const res = await apiService.get<B2CNetworkResponse>(API_ENDPOINTS.NETWORK.B2C_EXCLUDING_B2B_B2T, query);
   return res as unknown as B2CNetworkResponse;
 }
 
@@ -68,9 +79,10 @@ export async function getAvailableMlmModels(): Promise<AvailableMlmModelsData> {
 
   return {
     user_id: data?.user_id ?? 0,
-    has_b2c_descendants: data?.has_b2c_descendants === true,
-    has_b2t_descendants: data?.has_b2t_descendants === true,
-    has_b2b_descendants: data?.has_b2b_descendants === true,
+    my_model: data?.my_model ?? '',
+    show_b2c_tab: data?.show_b2c_tab === true,
+    show_b2t_tab: data?.show_b2t_tab === true,
+    show_b2b_tab: data?.show_b2b_tab === true,
   };
 }
 
