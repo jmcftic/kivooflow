@@ -119,7 +119,8 @@ const Network: React.FC = () => {
   }, [currentPage, usersLimit]);
 
   useEffect(() => {
-    if (userModel !== 'b2c') {
+    // Solo ejecutar si tenemos un modelo de usuario válido
+    if (!userModel) {
       return;
     }
 
@@ -130,11 +131,30 @@ const Network: React.FC = () => {
     const fetchAvailableModels = async () => {
       try {
         const data = await getAvailableMlmModels();
-        setTabAvailability(prev => ({
-          ...prev,
-          b2b: data.has_b2b_descendants,
-          b2t: data.has_b2t_descendants,
-        }));
+        
+        // Habilitar tabs según el modelo del usuario y los descendientes disponibles
+        if (userModel === 'b2c') {
+          // Usuario B2C: habilitar B2B y B2T si tienen descendientes
+          setTabAvailability(prev => ({
+            ...prev,
+            b2b: data.has_b2b_descendants,
+            b2t: data.has_b2t_descendants,
+          }));
+        } else if (userModel === 'b2b') {
+          // Usuario B2B: habilitar B2C y B2T si tienen descendientes
+          setTabAvailability(prev => ({
+            ...prev,
+            b2c: data.has_b2c_descendants,
+            b2t: data.has_b2t_descendants,
+          }));
+        } else if (userModel === 'b2t') {
+          // Usuario B2T: habilitar B2C y B2B si tienen descendientes
+          setTabAvailability(prev => ({
+            ...prev,
+            b2c: data.has_b2c_descendants,
+            b2b: data.has_b2b_descendants,
+          }));
+        }
       } catch (error) {
         console.error('Error obteniendo modelos disponibles', error);
       } finally {
