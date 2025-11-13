@@ -103,8 +103,9 @@ const Network: React.FC = () => {
       setUserModel(resolvedModel);
       
       // Configurar disponibilidad de tabs según el modelo del usuario
+      // Solo se habilita la tab correspondiente al modelo del usuario
       if (resolvedModel === 'b2c') {
-        // Usuario B2C: B2C habilitado, B2B y B2T se habilitarán después si tienen descendientes
+        // Usuario B2C: solo B2C habilitado
         setTabAvailability({
           b2c: true,
           b2b: false,
@@ -138,35 +139,36 @@ const Network: React.FC = () => {
     setUsersOffset((currentPage - 1) * usersLimit);
   }, [currentPage, usersLimit]);
 
-  useEffect(() => {
-    // Solo ejecutar si el usuario es B2C
-    if (userModel !== 'b2c') {
-      return;
-    }
+  // Deshabilitado temporalmente hasta que el backend esté desplegado con los endpoints
+  // useEffect(() => {
+  //   // Solo ejecutar si el usuario es B2C
+  //   if (userModel !== 'b2c') {
+  //     return;
+  //   }
 
-    if (hasFetchedAvailableModelsRef.current) {
-      return;
-    }
+  //   if (hasFetchedAvailableModelsRef.current) {
+  //     return;
+  //   }
 
-    const fetchAvailableModels = async () => {
-      try {
-        const data = await getAvailableMlmModels();
+  //   const fetchAvailableModels = async () => {
+  //     try {
+  //       const data = await getAvailableMlmModels();
         
-        // Usuario B2C: habilitar B2B y B2T si tienen descendientes
-        setTabAvailability(prev => ({
-          ...prev,
-          b2b: data.has_b2b_descendants,
-          b2t: data.has_b2t_descendants,
-        }));
-      } catch (error) {
-        console.error('Error obteniendo modelos disponibles', error);
-      } finally {
-        hasFetchedAvailableModelsRef.current = true;
-      }
-    };
+  //       // Usuario B2C: habilitar B2B y B2T si tienen descendientes
+  //       setTabAvailability(prev => ({
+  //         ...prev,
+  //         b2b: data.has_b2b_descendants,
+  //         b2t: data.has_b2t_descendants,
+  //       }));
+  //     } catch (error) {
+  //       console.error('Error obteniendo modelos disponibles', error);
+  //     } finally {
+  //       hasFetchedAvailableModelsRef.current = true;
+  //     }
+  //   };
 
-    void fetchAvailableModels();
-  }, [userModel]);
+  //   void fetchAvailableModels();
+  // }, [userModel]);
 
   useEffect(() => {
     if (tabAvailability[activeTab]) {
@@ -256,41 +258,43 @@ const Network: React.FC = () => {
             setParentExhausted({});
             setParentErrors({});
           }
-        } else if (isLeaderTab && tabAvailability[activeTab]) {
-          const leaderTab = activeTab as LeaderTab;
-          setLevels([]);
-          setTotalDescendants(0);
-          setB2cPagination(null);
-          setSubtreeMode(false);
-          setSubtreeUsers([]);
-          setSubtreeRootId(null);
-          setSubtreeTotal(0);
-          setSubtreePage(1);
-          setChildrenByParent({});
-          setAllChildrenByParent({});
-          setParentExhausted({});
-          setParentErrors({});
+        // Deshabilitado temporalmente hasta que el backend esté desplegado con los endpoints
+        // } else if (isLeaderTab && tabAvailability[activeTab]) {
+        //   const leaderTab = activeTab as LeaderTab;
+        //   setLevels([]);
+        //   setTotalDescendants(0);
+        //   setB2cPagination(null);
+        //   setSubtreeMode(false);
+        //   setSubtreeUsers([]);
+        //   setSubtreeRootId(null);
+        //   setSubtreeTotal(0);
+        //   setSubtreePage(1);
+        //   setChildrenByParent({});
+        //   setAllChildrenByParent({});
+        //   setParentExhausted({});
+        //   setParentErrors({});
 
-          setLeadersLoading(true);
-          setLeadersError(null);
+        //   setLeadersLoading(true);
+        //   setLeadersError(null);
 
-          const fetchFn = leaderTab === 'b2b' ? getB2BLeadersOwnedToB2C : getB2TLeadersOwnedToB2C;
-          const result = await fetchFn({
-            limit: usersLimit,
-            offset: usersOffset,
-          });
+        //   const fetchFn = leaderTab === 'b2b' ? getB2BLeadersOwnedToB2C : getB2TLeadersOwnedToB2C;
+        //   const result = await fetchFn({
+        //     limit: usersLimit,
+        //     offset: usersOffset,
+        //   });
 
-          setLeadersByTab(prev => ({
-            ...prev,
-            [leaderTab]: {
-              leaders: result.leaders,
-              total: result.total,
-              pagination: result.pagination,
-              limit: result.limit,
-              offset: result.offset,
-            },
-          }));
-          setLeadersLoading(false);
+        //   setLeadersByTab(prev => ({
+        //     ...prev,
+        //     [leaderTab]: {
+        //       leaders: result.leaders,
+        //       total: result.total,
+        //       pagination: result.pagination,
+        //       limit: result.limit,
+        //       offset: result.offset,
+        //     },
+        //   }));
+        //   setLeadersLoading(false);
+        // } else {
         } else {
           setLeadersLoading(false);
           setLeadersError(null);
