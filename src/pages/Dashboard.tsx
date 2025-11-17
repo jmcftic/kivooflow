@@ -98,7 +98,7 @@ const Dashboard: React.FC = () => {
           <MiniBaner 
             className="h-[90px] md:h-[100px] lg:h-[110px]"
             detail="0.00"
-            subtitle="Total acomulado histórico"
+            subtitle="Ganancias totales"
           />
           <MiniBaner 
             className="h-[90px] md:h-[100px] lg:h-[110px]"
