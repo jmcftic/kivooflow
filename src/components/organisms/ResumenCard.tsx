@@ -1,13 +1,11 @@
+"use client"
+
 import React, { useState, useMemo } from "react";
 import {
-  BarChart,
-  Bar,
+  AreaChart,
+  Area,
   XAxis,
-  YAxis,
   CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
 import FoldedCard from "../atoms/FoldedCard";
 import {
@@ -17,6 +15,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import resumenData from "../../data/resumen.json";
 
 type RangeOption = "6months" | "1year" | "2years";
@@ -24,6 +30,21 @@ type RangeOption = "6months" | "1year" | "2years";
 interface ResumenCardProps {
   className?: string;
 }
+
+const chartConfig = {
+  ventas: {
+    label: "Ventas",
+    color: "#00BFFF",
+  },
+  recargas: {
+    label: "Recargas",
+    color: "#FFFF00",
+  },
+  comisiones: {
+    label: "Comisiones",
+    color: "#B8860B",
+  },
+} satisfies ChartConfig;
 
 const ResumenCard: React.FC<ResumenCardProps> = ({ className = "" }) => {
   const [selectedRange, setSelectedRange] = useState<RangeOption>("6months");
@@ -48,7 +69,7 @@ const ResumenCard: React.FC<ResumenCardProps> = ({ className = "" }) => {
     <div className="w-full h-full flex flex-col mb-0 pt-10">
       {/* Header con título y selector */}
       <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[#FFF000] text-xl font-bold uppercase">RESUMEN</h3>
+          <h3 className="text-[#FFF000] text-xl font-bold uppercase">RESUMEN GENERAL</h3>
           
           {/* Select para rango de tiempo */}
           <Select value={selectedRange} onValueChange={(value) => setSelectedRange(value as RangeOption)}>
@@ -65,64 +86,95 @@ const ResumenCard: React.FC<ResumenCardProps> = ({ className = "" }) => {
 
         {/* Gráfico */}
         <div className="flex-1 min-h-[350px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart 
-              data={filteredData}
-              margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
-            >
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-full w-full"
+          >
+            <AreaChart data={filteredData}>
+              <defs>
+                <linearGradient id="fillVentas" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-ventas)"
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-ventas)"
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
+                <linearGradient id="fillRecargas" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-recargas)"
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-recargas)"
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
+                <linearGradient id="fillComisiones" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-comisiones)"
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-comisiones)"
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
+              </defs>
               <CartesianGrid 
                 strokeDasharray="3 3" 
-                stroke="#333" 
                 vertical={false}
+                className="stroke-[#333]"
               />
-              <XAxis 
-                dataKey="mesCorto" 
-                stroke="#aaa"
+              <XAxis
+                dataKey="mesCorto"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
                 tick={{ fill: '#aaa', fontSize: 11 }}
-                axisLine={{ stroke: '#333' }}
+                className="stroke-[#aaa]"
               />
-              <YAxis 
-                stroke="#aaa"
-                tick={{ fill: '#aaa' }}
-                axisLine={{ stroke: '#333' }}
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    className="bg-[#212020] border-[#FFF100] text-white"
+                    indicator="dot"
+                  />
+                }
               />
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: '#212020',
-                  border: '1px solid #FFF100',
-                  borderRadius: '8px',
-                  color: '#fff'
-                }}
-                cursor={{ fill: 'rgba(255, 241, 0, 0.1)' }}
+              <Area
+                type="monotone"
+                dataKey="ventas"
+                fill="url(#fillVentas)"
+                stroke="var(--color-ventas)"
+                strokeWidth={2}
               />
-              <Legend 
-                wrapperStyle={{ 
-                  paddingTop: '20px',
-                  color: '#aaa'
-                }}
-                iconType="circle"
-                align="left"
+              <Area
+                type="monotone"
+                dataKey="recargas"
+                fill="url(#fillRecargas)"
+                stroke="var(--color-recargas)"
+                strokeWidth={2}
               />
-              <Bar 
-                dataKey="ventas" 
-                fill="#00BFFF" 
-                radius={[4, 4, 0, 0]}
-                name="Ventas"
+              <Area
+                type="monotone"
+                dataKey="comisiones"
+                fill="url(#fillComisiones)"
+                stroke="var(--color-comisiones)"
+                strokeWidth={2}
               />
-              <Bar 
-                dataKey="recargas" 
-                fill="#FFFF00" 
-                radius={[4, 4, 0, 0]}
-                name="Recargas"
-              />
-              <Bar 
-                dataKey="comisiones" 
-                fill="#B8860B" 
-                radius={[4, 4, 0, 0]}
-                name="Comisiones"
-              />
-            </BarChart>
-          </ResponsiveContainer>
+              <ChartLegend content={<ChartLegendContent />} />
+            </AreaChart>
+          </ChartContainer>
         </div>
       </div>
     </FoldedCard>

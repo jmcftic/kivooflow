@@ -9,12 +9,15 @@ import FullBanner from '../components/atoms/FullBanner';
 import FoldedCard from '../components/atoms/FoldedCard';
 import ResumenCard from '../components/organisms/ResumenCard';
 import TransaccionesRecientesCard from '../components/organisms/TransaccionesRecientesCard';
+import ModelSelector from '../components/molecules/ModelSelector';
 import KivoMainBg from '../components/atoms/KivoMainBg';
 import { User } from '../types/auth';
+import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 
 const Dashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [referralLink, setReferralLink] = useState<string>('');
+  const { metrics, loading: metricsLoading, error: metricsError } = useDashboardMetrics();
 
   useEffect(() => {
     // Cargar información del usuario del localStorage
@@ -34,6 +37,14 @@ const Dashboard: React.FC = () => {
       }
     }
   }, []);
+
+  // Función para formatear valores monetarios (solo número, sin símbolo)
+  const formatCurrency = (amount: number, currency: string = 'MXN'): string => {
+    return new Intl.NumberFormat('es-MX', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
@@ -93,28 +104,7 @@ const Dashboard: React.FC = () => {
           </InfoBanner>
         </div>
 
-        {/* Mini Banners - Debajo del Info Banner */}
-        <div className="relative z-20 grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 mt-6">
-          <MiniBaner 
-            className="h-[90px] md:h-[100px] lg:h-[110px]"
-            detail="0.00"
-            subtitle="Ganancias totales"
-          />
-          <MiniBaner 
-            className="h-[90px] md:h-[100px] lg:h-[110px]"
-            detail="0.00"
-            subtitle="Saldo disponible"
-            actionButton={{
-              text: "Solicitar pago",
-              onClick: () => {
-                // Aquí puedes agregar la lógica para abrir un modal o cambiar de página
-                console.log("Solicitar pago clickeado");
-              }
-            }}
-          />
-        </div>
-
-        {/* Full Banner - Debajo de los Mini Banners */}
+        {/* Full Banner - Link de referido - Debajo del Info Banner */}
         <div className="relative z-20 mt-6 mb-2">
           <FullBanner
             title="Link de referido"
@@ -130,23 +120,54 @@ const Dashboard: React.FC = () => {
           />
         </div>
 
+        {/* Selector de Modelo - Debajo del Link de referido */}
+        <div className="relative z-20 mt-4 flex justify-end">
+          <ModelSelector 
+            onModelChange={(model) => {
+              console.log('Modelo seleccionado:', model);
+              // Aquí puedes agregar la lógica para cambiar el modelo
+            }}
+          />
+        </div>
+
+        {/* Mini Banners - Debajo del Selector de Modelo */}
+        <div className="relative z-20 grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 mt-6">
+          <MiniBaner 
+            className="h-[90px] md:h-[100px] lg:h-[110px]"
+            detail={metricsLoading ? "Cargando..." : metrics ? formatCurrency(metrics.totalEarnings, metrics.currency) : "0.00"}
+            subtitle="Ganancias totales"
+          />
+          <MiniBaner 
+            className="h-[90px] md:h-[100px] lg:h-[110px]"
+            detail={metricsLoading ? "Cargando..." : metrics ? formatCurrency(metrics.availableBalance, metrics.currency) : "0.00"}
+            subtitle="Saldo disponible"
+            actionButton={{
+              text: "Solicitar pago",
+              onClick: () => {
+                // Aquí puedes agregar la lógica para abrir un modal o cambiar de página
+                console.log("Solicitar pago clickeado");
+              }
+            }}
+          />
+        </div>
+
         {/* Mini Banners adicionales - Debajo del Full Banner */}
         <div className="relative z-20 grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mt-6">
           <MiniBaner 
             className="h-[90px] md:h-[100px] lg:h-[110px]"
-            detail="0"
+            detail={metricsLoading ? "Cargando..." : metrics ? metrics.activeReferrals.toString() : "0"}
             subtitle="Referidos Activos"
             showDollarSign={false}
           />
           <MiniBaner 
             className="h-[90px] md:h-[100px] lg:h-[110px]"
-            detail="0.00"
+            detail={metricsLoading ? "Cargando..." : metrics ? formatCurrency(metrics.lastMonthCommissions, metrics.currency) : "0.00"}
             subtitle="Comisiones último mes"
           />
           <MiniBaner 
             className="h-[90px] md:h-[100px] lg:h-[110px]"
-            detail="0.00"
-            subtitle="Claims pendientes"
+            detail={metricsLoading ? "Cargando..." : metrics ? formatCurrency(metrics.totalVolume, metrics.currency) : "0.00"}
+            subtitle="Volumen total"
           />
         </div>
 

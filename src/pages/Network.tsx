@@ -80,6 +80,15 @@ const Network: React.FC = () => {
   const suppressHistoryPushRef = useRef(false);
   const skipNextSubtreeFetchRef = useRef(false);
   const isLeaderTab = userModel === 'b2c' && (activeTab === 'b2b' || activeTab === 'b2t');
+  
+  // Usuario B2B en tab B2B no tiene límite de profundidad
+  const hasDepthLimit = useMemo(() => {
+    return !(userModel === 'b2b' && activeTab === 'b2b');
+  }, [userModel, activeTab]);
+  
+  const maxDepth = useMemo(() => {
+    return hasDepthLimit ? 3 : 999; // 999 como valor alto para representar sin límite
+  }, [hasDepthLimit]);
 
   // Inicializar userModel desde localStorage como fallback (el endpoint lo actualizará)
   useEffect(() => {
@@ -238,6 +247,7 @@ const Network: React.FC = () => {
                 direct_parent_referral_code: u.direct_parent_referral_code,
                 direct_referrals: u.direct_referrals,
                 total_descendants_of_user: u.total_descendants_of_user,
+                has_descendants: u.has_descendants,
               })),
             };
             setLevels([b2cLevel]);
@@ -324,6 +334,7 @@ const Network: React.FC = () => {
                 direct_parent_referral_code: u.direct_parent_referral_code,
                 direct_referrals: u.direct_referrals,
                 total_descendants_of_user: u.total_descendants_of_user,
+                has_descendants: u.has_descendants,
               })),
             };
             setLevels([singleLevel]);
@@ -397,7 +408,7 @@ const Network: React.FC = () => {
           // subtreeRootLevel es el nivel del usuario cuya red estamos viendo
           // Los hijos están en el nivel siguiente
           const childrenLevel = subtreeRootLevel + 1;
-          if (childrenLevel > 3) {
+          if (hasDepthLimit && childrenLevel > 3) {
             setSubtreeUsers([]);
             setAllSubtreeUsers([]);
             return;
@@ -449,6 +460,7 @@ const Network: React.FC = () => {
             level: childrenLevel,
             authLevel: childrenLevel,
             totalDescendants: u.total_descendants_of_user || 0,
+            hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
           }));
           
           setSubtreeUsers(users);
@@ -500,6 +512,7 @@ const Network: React.FC = () => {
               levelInSubtree,
               authLevel,
               totalDescendants: u.totalDescendants || 0,
+              hasDescendants: u.hasDescendants ?? (u.totalDescendants || 0) > 0,
             };
           });
           
@@ -513,7 +526,7 @@ const Network: React.FC = () => {
       }
     };
     loadSubtree();
-  }, [subtreeMode, subtreeRootId, subtreePage, usersLimit, subtreeRootLevel, activeTab]);
+  }, [subtreeMode, subtreeRootId, subtreePage, usersLimit, subtreeRootLevel, activeTab, hasDepthLimit, maxDepth, userModel]);
 
   const leaderState = isLeaderTab ? leadersByTab[activeTab as LeaderTab] : undefined;
 
@@ -551,6 +564,7 @@ const Network: React.FC = () => {
         level: levelGroup.level,
         authLevel: levelGroup.level,
         totalDescendants: u.total_descendants_of_user || 0,
+        hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
       }))
     );
   }, [isLeaderTab, leaderItems, levels]);
@@ -570,6 +584,7 @@ const Network: React.FC = () => {
         level: u.levelInSubtree,
         authLevel: u.authLevel,
         totalDescendants: u.totalDescendants || 0,
+        hasDescendants: (u as any).hasDescendants ?? (u.totalDescendants || 0) > 0,
       }));
     }
 
@@ -591,7 +606,7 @@ const Network: React.FC = () => {
 
   const hasSearch = searchFilter.trim().length > 0;
 
-  const handleToggleExpand = async (parentUserId: number, level: number) => {
+  const handleToggleExpand = useCallback(async (parentUserId: number, level: number) => {
     // Toggle: si existe array -> colapsar (eliminar), si no -> expandir
     if (Array.isArray(childrenByParent[parentUserId])) {
       setChildrenByParent(prev => {
@@ -614,7 +629,7 @@ const Network: React.FC = () => {
     const parentDataset = subtreeMode ? baseItems : allLevelItems;
     const parentItem = parentDataset.find(item => item.id === parentUserId);
     const parentAuthLevel = (parentItem as any)?.authLevel ?? (parentItem as any)?.level ?? level;
-    if (parentAuthLevel >= 3) {
+    if (hasDepthLimit && parentAuthLevel >= 3) {
       return;
     }
 
@@ -624,7 +639,7 @@ const Network: React.FC = () => {
       // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
       if ((userModel === 'b2c' && activeTab === 'b2c') || (userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
         const nextLevel = parentAuthLevel + 1;
-        if (nextLevel > 3) {
+        if (hasDepthLimit && nextLevel > 3) {
           return;
         }
         
@@ -671,6 +686,7 @@ const Network: React.FC = () => {
           level: nextLevel,
           authLevel: nextLevel,
           totalDescendants: u.total_descendants_of_user || 0,
+          hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
         }));
         
         setChildrenByParent(prev => ({ ...prev, [parentUserId]: users }));
@@ -685,11 +701,11 @@ const Network: React.FC = () => {
         });
       } else {
         // Usar subtree para otros tabs
-        const subtree = await getDescendantSubtree({ descendantId: parentUserId, maxDepth: 3, limit: usersLimit, offset: 0 });
+        const subtree = await getDescendantSubtree({ descendantId: parentUserId, maxDepth: maxDepth, limit: usersLimit, offset: 0 });
         const sdata = (subtree as any)?.data ?? subtree;
         const directUsers = (sdata?.users || []).filter((u: any) => (u.levelInSubtree ?? 1) === 1);
         const users = directUsers.map((u: any) => {
-          const authLevel = Math.min(3, parentAuthLevel + 1);
+          const authLevel = hasDepthLimit ? Math.min(3, parentAuthLevel + 1) : parentAuthLevel + 1;
           return {
             id: u.userId,
             name: u.fullName || u.email,
@@ -699,6 +715,7 @@ const Network: React.FC = () => {
             level: authLevel,
             authLevel,
             totalDescendants: u.totalDescendants || 0,
+            hasDescendants: u.hasDescendants ?? (u.totalDescendants || 0) > 0,
           };
         });
         setChildrenByParent(prev => ({ ...prev, [parentUserId]: users }));
@@ -737,9 +754,9 @@ const Network: React.FC = () => {
     } finally {
       setParentLoading(prev => ({ ...prev, [parentUserId]: false }));
     }
-  };
+  }, [hasDepthLimit, maxDepth, userModel, activeTab, usersLimit, subtreeMode, allLevelItems, baseItems, parentOffsets, allChildrenByParent, childrenByParent, setChildrenByParent, setAllChildrenByParent, setParentExhausted, setParentLoading, setParentOffsets, setParentHasMore, setParentErrors]);
 
-  const handleLoadMoreChildren = async (parentId: number, parentLevel: number) => {
+  const handleLoadMoreChildren = useCallback(async (parentId: number, parentLevel: number) => {
     try {
       const currentOffset = parentOffsets[parentId] ?? 0;
       setParentLoading(prev => ({ ...prev, [parentId]: true }));
@@ -748,7 +765,7 @@ const Network: React.FC = () => {
       // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
       if ((userModel === 'b2c' && activeTab === 'b2c') || (userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
         const nextLevel = parentLevel + 1;
-        if (nextLevel > 3) {
+        if (hasDepthLimit && nextLevel > 3) {
           return;
         }
         
@@ -768,6 +785,7 @@ const Network: React.FC = () => {
             level: nextLevel,
             authLevel: nextLevel,
             totalDescendants: u.total_descendants_of_user || 0,
+            hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
           }));
           
           setChildrenByParent(prev => {
@@ -837,6 +855,7 @@ const Network: React.FC = () => {
             level: nextLevel,
             authLevel: nextLevel,
             totalDescendants: u.total_descendants_of_user || 0,
+            hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
           }));
           
           setChildrenByParent(prev => {
@@ -860,11 +879,11 @@ const Network: React.FC = () => {
         }
       } else {
         // Usar subtree para otros tabs
-        const subtree = await getDescendantSubtree({ descendantId: parentId, maxDepth: 3, limit: usersLimit, offset: currentOffset });
+        const subtree = await getDescendantSubtree({ descendantId: parentId, maxDepth: maxDepth, limit: usersLimit, offset: currentOffset });
         const sdata = (subtree as any)?.data ?? subtree;
         const directUsers = (sdata?.users || []).filter((u: any) => (u.levelInSubtree ?? 1) === 1);
         const newChildren = directUsers.map((u: any) => {
-          const authLevel = Math.min(3, parentLevel + 1);
+          const authLevel = hasDepthLimit ? Math.min(3, parentLevel + 1) : parentLevel + 1;
           return {
             id: u.userId,
             name: u.fullName || u.email,
@@ -874,6 +893,7 @@ const Network: React.FC = () => {
             level: authLevel,
             authLevel,
             totalDescendants: u.totalDescendants || 0,
+            hasDescendants: u.hasDescendants ?? (u.totalDescendants || 0) > 0,
           };
         });
         setChildrenByParent(prev => {
@@ -916,72 +936,126 @@ const Network: React.FC = () => {
     } finally {
       setParentLoading(prev => ({ ...prev, [parentId]: false }));
     }
-  };
+  }, [hasDepthLimit, maxDepth, userModel, activeTab, usersLimit, allChildrenByParent, childrenByParent, parentOffsets, setParentLoading, setChildrenByParent, setAllChildrenByParent, setParentOffsets, setParentHasMore, setParentExhausted, setParentErrors]);
 
   const loadTreeForUser = useCallback(async (userId: number) => {
+    console.log('loadTreeForUser llamado para userId:', userId);
     setLoadingTreeUserId(userId);
     try {
       // Buscar el usuario en la lista actual para obtener su información
       const lookupDataset = subtreeMode ? baseItems : allLevelItems;
-      const userItem = lookupDataset.find(item => item.id === userId);
+      let userItem = lookupDataset.find(item => item.id === userId);
+      
+      // Si no se encuentra en el dataset principal, buscar en childrenByParent
       if (!userItem) {
+        const allChildren = Object.values(childrenByParent).flat();
+        userItem = allChildren.find(item => item.id === userId);
+      }
+      
+      console.log('loadTreeForUser - userItem encontrado:', userItem);
+      if (!userItem) {
+        console.log('loadTreeForUser - No se encontró userItem, retornando');
         return;
       }
       const userLevel = (userItem as any)?.authLevel ?? (userItem as any)?.level ?? activeLevel;
       const userName = userItem?.name || 'Usuario';
+      const hasDescendants = (userItem as any)?.hasDescendants ?? ((userItem as any)?.totalDescendants ?? 0) > 0;
+      console.log('loadTreeForUser - userLevel:', userLevel, 'hasDescendants:', hasDescendants, 'userModel:', userModel, 'activeTab:', activeTab);
 
-      if (userLevel >= 3) {
+      // Solo bloquear si no hay descendientes
+      if (!hasDescendants) {
+        console.log('loadTreeForUser - No tiene descendientes, retornando');
         return;
       }
       
       // Usuario B2C en tab B2C: usar excluding
       // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
+      let loadedWithSingleLevel = false;
+      
       if ((userModel === 'b2c' && activeTab === 'b2c') || (userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
+        console.log('loadTreeForUser - Entrando al bloque de single-level/excluding');
         const nextLevel = userLevel + 1;
-        if (nextLevel > 3) {
-          return;
-        }
+        
+        // Si hay límite de profundidad y el siguiente nivel excede el límite, aún así intentar cargar
+        // pero mostrar los usuarios como nivel 3 (limitado)
+        const levelToFetch = nextLevel;
+        const displayLevel = hasDepthLimit && nextLevel > 3 ? 3 : nextLevel;
+        console.log('loadTreeForUser - nextLevel:', nextLevel, 'levelToFetch:', levelToFetch, 'displayLevel:', displayLevel);
         
         // Usar excluding para B2C, single-level para B2B/B2T
         const fetchFn = (userModel === 'b2c' && activeTab === 'b2c') 
           ? getB2CNetworkExcludingB2BB2T 
           : getSingleLevelNetwork;
-        const res = await fetchFn({
-          level: nextLevel,
-          limit: usersLimit,
-          offset: 0,
-        });
-        const data = res?.data;
         
-        if (data) {
-          // Filtrar solo los hijos directos del usuario
-          const directUsers = data.users.filter((u: any) => u.direct_parent_id === userId);
+        try {
+          console.log('loadTreeForUser - Iniciando llamadas al API con level:', levelToFetch);
+          // Cargar usuarios del nivel siguiente - hacer múltiples llamadas para encontrar todos los hijos
+          const allDirectUsers: any[] = [];
+          let offset = 0;
+          const limit = 100; // Cargar en lotes grandes para encontrar todos los hijos
           
-          const users = directUsers.map((u: any) => ({
-            id: u.user_id,
-            name: u.user_full_name || u.user_email,
-            email: u.user_email,
-            createdAt: u.user_created_at,
-            levelInSubtree: 1,
-            level: nextLevel,
-            authLevel: nextLevel,
-            totalDescendants: u.total_descendants_of_user || 0,
-          }));
+          // Hacer múltiples llamadas hasta encontrar todos los hijos o no haya más usuarios
+          while (true) {
+            console.log('loadTreeForUser - Llamando API con offset:', offset);
+            const res = await fetchFn({
+              level: levelToFetch,
+              limit,
+              offset,
+            });
+            const data = res?.data;
+            console.log('loadTreeForUser - Respuesta del API:', data);
+            if (!data || data.users.length === 0) break;
+            
+            // Filtrar solo los hijos directos del usuario
+            const directChildren = data.users.filter((u: any) => u.direct_parent_id === userId);
+            console.log('loadTreeForUser - Hijos directos encontrados:', directChildren.length);
+            allDirectUsers.push(...directChildren);
+            
+            // Si no hay más páginas, salir
+            if (!data.pagination.hasNextPage) break;
+            
+            offset += limit;
+          }
           
-          skipNextSubtreeFetchRef.current = true;
-          setSubtreeMode(true);
-          setSubtreeRootId(userId);
-          setSubtreeRootName(userName);
-          setSubtreeRootLevel(userLevel); // Nivel del usuario cuya red estamos viendo
-          setSubtreeUsers(users);
-          setSubtreeTotal(directUsers.length);
-          setSubtreePage(1);
-          setAllSubtreeUsers(directUsers); // Guardar todos los usuarios para paginación
-          setChildrenByParent({});
-          setAllChildrenByParent({});
-          setParentExhausted({});
+          console.log('loadTreeForUser - Total hijos directos encontrados:', allDirectUsers.length);
+          if (allDirectUsers.length > 0) {
+            const users = allDirectUsers.map((u: any) => ({
+              id: u.user_id,
+              name: u.user_full_name || u.user_email,
+              email: u.user_email,
+              createdAt: u.user_created_at,
+              levelInSubtree: 1,
+              level: displayLevel,
+              authLevel: displayLevel,
+              totalDescendants: u.total_descendants_of_user || 0,
+              hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
+            }));
+            
+            // Tomar solo los primeros usuarios según el límite para la primera página
+            const pageUsers = users.slice(0, usersLimit);
+            
+            skipNextSubtreeFetchRef.current = true;
+            setSubtreeMode(true);
+            setSubtreeRootId(userId);
+            setSubtreeRootName(userName);
+            setSubtreeRootLevel(userLevel); // Nivel del usuario cuya red estamos viendo
+            setSubtreeUsers(pageUsers);
+            setSubtreeTotal(allDirectUsers.length);
+            setSubtreePage(1);
+            setAllSubtreeUsers(allDirectUsers); // Guardar todos los usuarios para paginación
+            setChildrenByParent({});
+            setAllChildrenByParent({});
+            setParentExhausted({});
+            loadedWithSingleLevel = true;
+          }
+        } catch (error) {
+          // Si falla al obtener el nivel, continuar al bloque else para usar subtree
+          console.error('Error obteniendo nivel, intentando con subtree:', error);
         }
-      } else {
+      }
+      
+      // Si no se pudo cargar con single-level o es otro caso, usar subtree
+      if (!loadedWithSingleLevel) {
         // Para otros tabs, usar subtree
         // Acumular usuarios de nivel 1 de múltiples páginas del backend si es necesario
         const allDirectUsers: any[] = [];
@@ -993,7 +1067,7 @@ const Network: React.FC = () => {
         while (allDirectUsers.length < usersLimit) {
           const res = await getDescendantSubtree({ 
             descendantId: userId, 
-            maxDepth: 3, 
+            maxDepth: maxDepth, 
             limit: backendLimit, 
             offset: backendOffset 
           });
@@ -1020,13 +1094,13 @@ const Network: React.FC = () => {
         const requesterLevel = typeof firstData?.requesterLevelToDescendant === 'number' && firstData?.requesterLevelToDescendant > 0
           ? firstData?.requesterLevelToDescendant
           : userLevel;
-        const rootLevel = Math.min(3, requesterLevel);
+        const rootLevel = hasDepthLimit ? Math.min(3, requesterLevel) : requesterLevel;
         
         // Tomar solo los primeros usuarios de nivel 1 para la primera página
         const pageUsers = allDirectUsers.slice(0, usersLimit);
         const users = pageUsers.map((u: any) => {
           const levelInSubtree = u.levelInSubtree ?? 1;
-          const authLevel = Math.min(3, rootLevel + levelInSubtree);
+          const authLevel = hasDepthLimit ? Math.min(3, rootLevel + levelInSubtree) : rootLevel + levelInSubtree;
           return {
             id: u.userId,
             name: u.fullName || u.email,
@@ -1035,6 +1109,7 @@ const Network: React.FC = () => {
             levelInSubtree,
             authLevel,
             totalDescendants: u.totalDescendants || 0,
+            hasDescendants: u.hasDescendants ?? (u.totalDescendants || 0) > 0,
           };
         });
         
@@ -1068,17 +1143,32 @@ const Network: React.FC = () => {
     } finally {
       setLoadingTreeUserId(null);
     }
-  }, [activeLevel, activeTab, allLevelItems, baseItems, subtreeMode, usersLimit]);
+  }, [activeLevel, activeTab, allLevelItems, baseItems, subtreeMode, usersLimit, hasDepthLimit, maxDepth, childrenByParent]);
 
   const handleViewTree = (userId: number) => {
+    console.log('handleViewTree llamado para userId:', userId);
     const lookupDataset = subtreeMode ? baseItems : allLevelItems;
-    const userItem = lookupDataset.find(item => item.id === userId);
+    let userItem = lookupDataset.find(item => item.id === userId);
+    
+    // Si no se encuentra en el dataset principal, buscar en childrenByParent
     if (!userItem) {
+      const allChildren = Object.values(childrenByParent).flat();
+      userItem = allChildren.find(item => item.id === userId);
+    }
+    
+    console.log('userItem encontrado:', userItem);
+    if (!userItem) {
+      console.log('No se encontró userItem, retornando');
       return;
     }
     const userLevel = (userItem as any)?.authLevel ?? (userItem as any)?.level ?? activeLevel;
+    const hasDescendants = (userItem as any)?.hasDescendants ?? ((userItem as any)?.totalDescendants ?? 0) > 0;
+    console.log('userLevel:', userLevel, 'hasDescendants:', hasDescendants);
 
-    if (userLevel >= 3) {
+    // Permitir ver árbol si tiene descendientes, incluso en nivel 3
+    // Solo bloquear si no hay descendientes
+    if (!hasDescendants) {
+      console.log('No tiene descendientes, retornando');
       return;
     }
 
@@ -1088,6 +1178,7 @@ const Network: React.FC = () => {
       return;
     }
 
+    console.log('Llamando a loadTreeForUser');
     void loadTreeForUser(userId);
   };
 
@@ -1289,7 +1380,7 @@ const Network: React.FC = () => {
                 className="h-[90px] md:h-[100px] lg:h-[110px]"
                 icon={<MoneyIcon size={24} />}
                 detail="0.00"
-                subtitle="Claims pendientes"
+                subtitle="Volumen total"
               />
             </div>
           )}
@@ -1328,8 +1419,10 @@ const Network: React.FC = () => {
                 childrenByParent={(isLeaderTab || hasSearch) ? {} : childrenByParent}
                 childIndentPx={30}
                 onViewTree={handleViewTree}
-                disableExpand={hasSearch || (subtreeMode && activeTab !== 'b2c') || isLeaderTab}
+                disableExpand={hasSearch || isLeaderTab}
                 disableViewTree={isLeaderTab}
+                hasDepthLimit={hasDepthLimit}
+                maxDepth={maxDepth}
                 onLoadMoreChildren={isLeaderTab ? undefined : handleLoadMoreChildren}
                 parentHasMore={isLeaderTab ? {} : parentHasMore}
                 parentLoading={isLeaderTab ? {} : parentLoading}

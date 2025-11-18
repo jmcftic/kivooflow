@@ -4,6 +4,7 @@ import DropDownTringle from '../atoms/DropDownTringle';
 import LevelOneTag from '../atoms/LevelOneTag';
 import LevelTwoTag from '../atoms/LevelTwoTag';
 import LevelThreeTag from '../atoms/LevelThreeTag';
+import LevelFourPlusTag from '../atoms/LevelFourPlusTag';
 import { Spinner } from '@/components/ui/spinner';
 
 interface NetworkTableProps {
@@ -13,6 +14,7 @@ interface NetworkTableProps {
     email?: string;
     createdAt?: string;
     totalDescendants?: number;
+    hasDescendants?: boolean;
     authLevel?: number;
     levelInSubtree?: number;
     level?: number;
@@ -20,7 +22,7 @@ interface NetworkTableProps {
   activeTab: 'b2c' | 'b2b' | 'b2t';
   activeLevel: 1 | 2 | 3;
   onToggleExpand?: (userId: number, level: number) => void;
-  childrenByParent?: Record<number, Array<{ id: number; name: string; email?: string; createdAt?: string; totalDescendants?: number }>>;
+  childrenByParent?: Record<number, Array<{ id: number; name: string; email?: string; createdAt?: string; totalDescendants?: number; hasDescendants?: boolean }>>;
   childIndentPx?: number;
   onViewTree?: (userId: number) => void;
   disableExpand?: boolean;
@@ -31,18 +33,21 @@ interface NetworkTableProps {
   loadingTreeUserId?: number | null;
   parentExhausted?: Record<number, boolean>;
   parentErrors?: Record<number, string>;
+  hasDepthLimit?: boolean;
+  maxDepth?: number;
 }
 
-const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLevel, onToggleExpand, childrenByParent = {}, childIndentPx = 30, onViewTree, disableExpand = false, disableViewTree = false, onLoadMoreChildren, parentHasMore = {}, parentLoading = {}, loadingTreeUserId = null, parentExhausted = {}, parentErrors = {} }) => {
+const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLevel, onToggleExpand, childrenByParent = {}, childIndentPx = 30, onViewTree, disableExpand = false, disableViewTree = false, onLoadMoreChildren, parentHasMore = {}, parentLoading = {}, loadingTreeUserId = null, parentExhausted = {}, parentErrors = {}, hasDepthLimit = true, maxDepth = 3 }) => {
   return (
     <div className="space-y-4">
       {items.map((item) => {
         const itemLevel = (item as any).levelInSubtree ?? (item as any).level ?? activeLevel;
         const authLevel = (item as any).authLevel ?? (item as any).level ?? activeLevel;
-        const canExpand = !disableExpand && authLevel < 3 && (item.totalDescendants ?? 0) > 0;
+        const canExpand = !disableExpand && (!hasDepthLimit || authLevel < 3) && (item.totalDescendants ?? 0) > 0;
         const isExpanded = Array.isArray(childrenByParent[item.id]);
         const isLoading = loadingTreeUserId === item.id;
-        const canViewTree = !disableViewTree && authLevel < 3;
+        const hasDescendants = item.hasDescendants ?? (item.totalDescendants ?? 0) > 0;
+        const canViewTree = !disableViewTree && (!hasDepthLimit || authLevel < 3) && hasDescendants;
         const itemError = parentErrors[item.id];
 
         return (
@@ -76,7 +81,8 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                   {(() => {
                     if (authLevel === 1) return <LevelOneTag />;
                     if (authLevel === 2) return <LevelTwoTag />;
-                    return <LevelThreeTag />;
+                    if (authLevel === 3) return <LevelThreeTag />;
+                    return <LevelFourPlusTag level={authLevel} />;
                   })()}
                 </div>
                 <div className="text-center">Resumen</div>
@@ -97,12 +103,13 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
           {Array.isArray(childrenByParent[item.id]) && (
             <div className="space-y-2" style={{ marginLeft: `${childIndentPx}px` }}>
               {childrenByParent[item.id].map((child) => {
-                const childLevel = (child as any).levelInSubtree ?? (child as any).level ?? Math.min(itemLevel + 1, 3);
-                const childAuthLevel = (child as any).authLevel ?? (child as any).level ?? Math.min(authLevel + 1, 3);
-                const childCanExpand = !disableExpand && childAuthLevel < 3 && (child.totalDescendants ?? 0) > 0;
+                const childLevel = (child as any).levelInSubtree ?? (child as any).level ?? (hasDepthLimit ? Math.min(itemLevel + 1, 3) : itemLevel + 1);
+                const childAuthLevel = (child as any).authLevel ?? (child as any).level ?? (hasDepthLimit ? Math.min(authLevel + 1, 3) : authLevel + 1);
+                const childCanExpand = !disableExpand && (!hasDepthLimit || childAuthLevel < 3) && (child.totalDescendants ?? 0) > 0;
                 const childExpanded = Array.isArray(childrenByParent[child.id]);
                 const childIsLoading = loadingTreeUserId === child.id;
-                const childCanViewTree = !disableViewTree && childAuthLevel < 3;
+                const childHasDescendants = (child as any).hasDescendants ?? (child.totalDescendants ?? 0) > 0;
+                const childCanViewTree = !disableViewTree && (!hasDepthLimit || childAuthLevel < 3) && childHasDescendants;
                 const childError = parentErrors[child.id];
 
                 return (
@@ -133,6 +140,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                           {childAuthLevel === 1 && <LevelOneTag />}
                           {childAuthLevel === 2 && <LevelTwoTag />}
                           {childAuthLevel === 3 && <LevelThreeTag />}
+                          {childAuthLevel > 3 && <LevelFourPlusTag level={childAuthLevel} />}
                         </div>
                         <div className="text-center">Resumen</div>
                         <div className="text-center">$0.00</div>
@@ -158,7 +166,13 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                               <div className="relative pl-10 text-left truncate" title={grand.email || `${grand.name}@email.com`}>{grand.email || `${grand.name}@email.com`}</div>
                               <div className="text-center">{grand.createdAt ? new Date(grand.createdAt).toISOString().slice(0,10) : '—'}</div>
                               <div className="flex items-center justify-center">
-                                <LevelThreeTag />
+                                {(() => {
+                                  const grandLevel = (grand as any).authLevel ?? (grand as any).level ?? 3;
+                                  if (grandLevel === 1) return <LevelOneTag />;
+                                  if (grandLevel === 2) return <LevelTwoTag />;
+                                  if (grandLevel === 3) return <LevelThreeTag />;
+                                  return <LevelFourPlusTag level={grandLevel} />;
+                                })()}
                               </div>
                               <div className="text-center">Resumen</div>
                               <div className="text-center">$0.00</div>

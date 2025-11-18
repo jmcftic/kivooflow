@@ -12,6 +12,7 @@ export interface NetworkUser {
   direct_parent_referral_code?: string;
   direct_referrals: number;
   total_descendants_of_user: number;
+  has_descendants?: boolean;
 }
 
 export interface NetworkLevel {
