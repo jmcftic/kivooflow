@@ -36,7 +36,6 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
   monto,
 }) => {
   const [selectedTarjeta, setSelectedTarjeta] = useState<string>("");
-  const [montoInput, setMontoInput] = useState<string>(monto.toFixed(2));
   const [confirmed, setConfirmed] = useState(false);
   const [tarjetas, setTarjetas] = useState<UserCard[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -49,9 +48,8 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
       // Resetear estados al abrir
       setSelectedTarjeta("");
       setConfirmed(false);
-      setMontoInput(monto.toFixed(2));
     }
-  }, [open, monto]);
+  }, [open]);
 
   const loadTarjetas = async () => {
     try {
@@ -63,10 +61,16 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
         (card) => card.isActive && !card.isBlocked && card.cardStatus === "ACTIVA"
       );
       setTarjetas(tarjetasActivas);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error cargando tarjetas:", err);
-      setError("Error al cargar las tarjetas");
-      setTarjetas([]);
+      // Si es un error 500, mostrar mensaje específico
+      if (err?.status === 500 || err?.response?.status === 500) {
+        setError("Sin tarjetas disponibles");
+        setTarjetas([]);
+      } else {
+        setError("Error al cargar las tarjetas");
+        setTarjetas([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -81,7 +85,7 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
     console.log("Claim confirmado:", {
       claimId,
       tarjeta: selectedTarjeta,
-      monto: montoInput,
+      monto: monto,
       confirmed
     });
     // Aquí iría la lógica para confirmar el claim
@@ -112,7 +116,17 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                   <span className="text-sm text-[#aaa] ml-2">Cargando tarjetas...</span>
                 </div>
               ) : error ? (
-                <div className="text-sm text-[#ff6d64] py-2">{error}</div>
+                <Select 
+                  value={selectedTarjeta} 
+                  onValueChange={setSelectedTarjeta}
+                  disabled={true}
+                >
+                  <SelectTrigger className="w-full" disabled={true}>
+                    <SelectValue 
+                      placeholder={error === "Sin tarjetas disponibles" ? "Sin tarjetas disponibles" : "Error al cargar tarjetas"} 
+                    />
+                  </SelectTrigger>
+                </Select>
               ) : (
                 <Select 
                   value={selectedTarjeta} 
@@ -141,8 +155,8 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
             <div className="mb-4">
               <Input
                 variant="kivoo-glass"
-                value={montoInput}
-                onChange={(e) => setMontoInput(e.target.value)}
+                value={monto.toFixed(2)}
+                disabled
                 placeholder="0.00"
                 rightIcon={<MoneyCircleIcon size={24} />}
               />

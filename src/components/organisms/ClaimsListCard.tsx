@@ -24,7 +24,8 @@ const mapClaim = (claim: Claim): MappedClaim => {
   // Mapear estado del backend a formato legible
   const mapStatus = (status: string): string => {
     const statusLower = status.toLowerCase();
-    if (statusLower === 'processed' || statusLower === 'claimed') return 'Aprobado';
+    if (statusLower === 'claimed') return 'Recibida';
+    if (statusLower === 'processed') return 'Aprobado';
     if (statusLower === 'pending') return 'Pendiente';
     if (statusLower === 'available') return 'Disponible';
     if (statusLower === 'rejected' || statusLower === 'cancelled') return 'Rechazado';
@@ -128,7 +129,7 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "" }) => {
                     tarjeta={claim.tarjeta}
                     estado={claim.estado}
                     monto={claim.monto}
-                    onVerDetalle={() => handleVerDetalle(claim.id)}
+                    onVerDetalle={undefined}
                   />
                 ))}
 

@@ -35,6 +35,8 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
     switch(estado.toLowerCase()) {
       case 'aprobado':
         return 'text-[#32d74b]';
+      case 'recibida':
+        return 'text-[#32d74b]'; // Verde para recibida
       case 'disponible':
         return 'text-[#32d74b]'; // Verde para disponible
       case 'rechazado':
@@ -90,7 +92,8 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
       <div className="flex flex-col col-span-2 md:col-span-1 justify-start">
         <button
           onClick={onVerDetalle}
-          className="action-text text-left mb-1 py-1"
+          disabled={!onVerDetalle}
+          className={`action-text text-left mb-1 py-1 ${!onVerDetalle ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Ver detalle
         </button>
