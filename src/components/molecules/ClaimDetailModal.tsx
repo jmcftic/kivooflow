@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,13 +17,16 @@ import { Button } from "@/components/ui/button";
 import FoldedCard from "../atoms/FoldedCard";
 import Input from "../atoms/Input";
 import MoneyCircleIcon from "../atoms/MoneyCircleIcon";
+import { getMisTarjetas } from "@/services/cards";
+import { UserCard } from "@/types/card";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ClaimDetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   claimId: string;
   monto: number;
-  tarjetasDisponibles: string[];
+  tarjetasDisponibles?: string[]; // Mantener por compatibilidad pero no se usará
 }
 
 const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
@@ -31,11 +34,48 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
   onOpenChange,
   claimId,
   monto,
-  tarjetasDisponibles,
 }) => {
   const [selectedTarjeta, setSelectedTarjeta] = useState<string>("");
   const [montoInput, setMontoInput] = useState<string>(monto.toFixed(2));
   const [confirmed, setConfirmed] = useState(false);
+  const [tarjetas, setTarjetas] = useState<UserCard[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Cargar tarjetas cuando se abre el modal
+  useEffect(() => {
+    if (open) {
+      loadTarjetas();
+      // Resetear estados al abrir
+      setSelectedTarjeta("");
+      setConfirmed(false);
+      setMontoInput(monto.toFixed(2));
+    }
+  }, [open, monto]);
+
+  const loadTarjetas = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getMisTarjetas();
+      // Filtrar solo tarjetas activas
+      const tarjetasActivas = response.cards.filter(
+        (card) => card.isActive && !card.isBlocked && card.cardStatus === "ACTIVA"
+      );
+      setTarjetas(tarjetasActivas);
+    } catch (err) {
+      console.error("Error cargando tarjetas:", err);
+      setError("Error al cargar las tarjetas");
+      setTarjetas([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Formatear tarjeta para mostrar en el select
+  const formatTarjetaLabel = (card: UserCard): string => {
+    return `**** ${card.cardNumber} - ${card.holderName}`;
+  };
 
   const handleConfirm = () => {
     console.log("Claim confirmado:", {
@@ -66,18 +106,35 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
             {/* Select de tarjeta */}
             <div className="mb-4">
               <label className="text-white text-sm mb-2 block">Seleccionar tarjeta</label>
-              <Select value={selectedTarjeta} onValueChange={setSelectedTarjeta}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Elige una tarjeta" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tarjetasDisponibles.map((tarjeta) => (
-                    <SelectItem key={tarjeta} value={tarjeta}>
-                      {tarjeta}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {loading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Spinner className="size-4 text-[#FFF000]" />
+                  <span className="text-sm text-[#aaa] ml-2">Cargando tarjetas...</span>
+                </div>
+              ) : error ? (
+                <div className="text-sm text-[#ff6d64] py-2">{error}</div>
+              ) : (
+                <Select 
+                  value={selectedTarjeta} 
+                  onValueChange={setSelectedTarjeta}
+                  disabled={tarjetas.length === 0}
+                >
+                  <SelectTrigger className="w-full" disabled={tarjetas.length === 0}>
+                    <SelectValue 
+                      placeholder={tarjetas.length === 0 ? "Sin tarjetas activas" : "Elige una tarjeta"} 
+                    />
+                  </SelectTrigger>
+                  {tarjetas.length > 0 && (
+                    <SelectContent>
+                      {tarjetas.map((tarjeta) => (
+                        <SelectItem key={tarjeta.id} value={String(tarjeta.id)}>
+                          {formatTarjetaLabel(tarjeta)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  )}
+                </Select>
+              )}
             </div>
 
             {/* Input de monto */}
@@ -112,7 +169,7 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                 variant="yellow"
                 className="w-full font-semibold"
                 onClick={handleConfirm}
-                disabled={!selectedTarjeta || !confirmed}
+                disabled={true} // Deshabilitado por ahora según requerimiento
               >
                 Confirmar claim
               </Button>

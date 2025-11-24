@@ -17,7 +17,8 @@ import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 const Dashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [referralLink, setReferralLink] = useState<string>('');
-  const { metrics, loading: metricsLoading, error: metricsError } = useDashboardMetrics();
+  const [selectedModel, setSelectedModel] = useState<string | null>(null);
+  const { metrics, loading: metricsLoading, error: metricsError, updateResume } = useDashboardMetrics(selectedModel);
 
   useEffect(() => {
     // Cargar información del usuario del localStorage
@@ -125,7 +126,7 @@ const Dashboard: React.FC = () => {
           <ModelSelector 
             onModelChange={(model) => {
               console.log('Modelo seleccionado:', model);
-              // Aquí puedes agregar la lógica para cambiar el modelo
+              setSelectedModel(model);
             }}
           />
         </div>
@@ -173,12 +174,19 @@ const Dashboard: React.FC = () => {
 
         {/* Resumen Card - Gráfico de barras */}
         <div className="relative z-20 mt-6 mb-6">
-          <ResumenCard />
+          <ResumenCard 
+            monthlyData={metrics?.resume?.monthlyData}
+            onDateFilterChange={updateResume}
+            currentDateFilter={metrics?.resume?.period as any}
+          />
         </div>
 
         {/* Transacciones Recientes Card */}
         <div className="relative z-20 mb-8">
-          <TransaccionesRecientesCard />
+          <TransaccionesRecientesCard 
+            model={selectedModel}
+            initialTransactions={metrics?.recentTransactions}
+          />
         </div>
 
         {/* Contenido principal centrado */}

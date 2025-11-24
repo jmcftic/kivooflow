@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../atoms/Button";
 import EmailInput from "../molecules/EmailInput";
@@ -27,8 +27,19 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [error, setError] = useState("");
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   
   const loginMutation = useLogin();
+
+  // Enfocar automáticamente el campo de contraseña cuando cambia el step
+  useEffect(() => {
+    if (step === 'password' && passwordInputRef.current) {
+      // Pequeño delay para asegurar que el DOM se haya actualizado
+      setTimeout(() => {
+        passwordInputRef.current?.focus();
+      }, 100);
+    }
+  }, [step]);
 
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,6 +146,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           <form onSubmit={handlePasswordSubmit} className="space-y-6">
             {/* Campo de contraseña */}
             <PasswordInput
+              ref={passwordInputRef}
               value={password}
               onChange={handlePasswordChange}
               error={error}

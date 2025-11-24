@@ -161,4 +161,37 @@ export interface NetworkLeadersResponse {
   data?: NetworkLeadersResult;
 }
 
+export interface Claim {
+  id: number;
+  userId: number;
+  commissionType: string; // papa, abuelo, bis_abuelo, leader_retention
+  baseAmount: number;
+  commissionPercentage: number;
+  commissionAmount: number;
+  leaderMarkupAmount?: number | null;
+  markupPercentage?: number | null;
+  currency: string;
+  status: string; // pending, processed, etc.
+  cryptoTransactionId?: number | null;
+  createdAt: string;
+  [key: string]: any; // Para otros campos adicionales
+}
+
+export interface ClaimsPagination {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface ClaimsResponse {
+  items: Claim[];
+  pagination: ClaimsPagination;
+}
+
+export interface ClaimsApiResponse {
+  statusCode: number;
+  message: string;
+  data: ClaimsResponse;
+}
 

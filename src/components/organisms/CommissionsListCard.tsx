@@ -6,7 +6,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { getClaims } from "@/services/network";
 import { Claim } from "@/types/network";
 
-interface ClaimsListCardProps {
+interface CommissionsListCardProps {
   className?: string;
 }
 
@@ -48,15 +48,15 @@ const mapClaim = (claim: Claim): MappedClaim => {
   };
 };
 
-// Función para obtener claims de la API con paginación
-const fetchClaims = async ({ 
+// Función para obtener comisiones (claims disponibles) de la API con paginación
+const fetchCommissions = async ({ 
   pageParam = 1 
 }: { 
   pageParam: number;
 }): Promise<{ data: MappedClaim[], nextPage: number | null, totalPages: number }> => {
   const pageSize = 10;
-  // Filtrar solo por estado "claimed"
-  const response = await getClaims({ page: pageParam, pageSize, status: 'claimed' });
+  // Filtrar solo por estado "available"
+  const response = await getClaims({ page: pageParam, pageSize, status: 'available' });
   
   const mappedData = response.items.map(mapClaim);
   const hasMore = pageParam < response.pagination.totalPages;
@@ -68,7 +68,7 @@ const fetchClaims = async ({
   };
 };
 
-const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "" }) => {
+const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "" }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedClaim, setSelectedClaim] = useState<MappedClaim | null>(null);
 
@@ -79,18 +79,18 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "" }) => {
     isFetchingNextPage,
     status,
   } = useInfiniteQuery({
-    queryKey: ['claims'],
-    queryFn: ({ pageParam = 1 }) => fetchClaims({ pageParam: pageParam as number }),
+    queryKey: ['commissions'],
+    queryFn: ({ pageParam = 1 }) => fetchCommissions({ pageParam: pageParam as number }),
     getNextPageParam: (lastPage: { data: MappedClaim[], nextPage: number | null }) => lastPage.nextPage,
     initialPageParam: 1,
   });
 
-  const allClaims = useMemo(() => {
+  const allCommissions = useMemo(() => {
     return data?.pages.flatMap((page: { data: MappedClaim[] }) => page.data) || [];
   }, [data]);
 
   const handleVerDetalle = (id: string) => {
-    const claim = allClaims.find((c: MappedClaim) => c.id === id);
+    const claim = allCommissions.find((c: MappedClaim) => c.id === id);
     if (claim) {
       setSelectedClaim(claim);
       setModalOpen(true);
@@ -113,22 +113,22 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "" }) => {
               <div className="flex items-center justify-center h-full min-h-[300px]">
                 <span className="text-sm text-[#ff6d64]">Error al cargar comisiones</span>
               </div>
-            ) : allClaims.length === 0 ? (
+            ) : allCommissions.length === 0 ? (
               <div className="flex items-center justify-center h-full min-h-[300px]">
-                <span className="text-sm text-[#aaa]">No hay claims disponibles</span>
+                <span className="text-sm text-[#aaa]">No hay comisiones disponibles</span>
               </div>
             ) : (
               <>
                 {/* Lista de comisiones */}
-                {allClaims.map((claim: MappedClaim) => (
+                {allCommissions.map((commission: MappedClaim) => (
                   <ClaimItem
-                    key={claim.id}
-                    id={claim.id}
-                    fecha={claim.fecha}
-                    tarjeta={claim.tarjeta}
-                    estado={claim.estado}
-                    monto={claim.monto}
-                    onVerDetalle={() => handleVerDetalle(claim.id)}
+                    key={commission.id}
+                    id={commission.id}
+                    fecha={commission.fecha}
+                    tarjeta={commission.tarjeta}
+                    estado={commission.estado}
+                    monto={commission.monto}
+                    onVerDetalle={() => handleVerDetalle(commission.id)}
                   />
                 ))}
 
@@ -168,5 +168,5 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "" }) => {
   );
 };
 
-export default ClaimsListCard;
+export default CommissionsListCard;
 

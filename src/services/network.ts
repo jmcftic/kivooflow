@@ -10,6 +10,8 @@ import {
   NetworkLeadersResult,
   NetworkLeaderOwnedToB2C,
   NetworkLeadersPagination,
+  ClaimsResponse,
+  ClaimsApiResponse,
 } from '@/types/network';
 
 export interface GetNetworkParams {
@@ -203,5 +205,43 @@ export async function getB2TLeadersOwnedToB2C({ limit = 20, offset = 0 }: GetNet
   return normalizeLeadersResult(res as unknown as NetworkLeadersResponse, 'B2T', limit, offset);
 }
 
+export interface GetClaimsParams {
+  page?: number;
+  pageSize?: number;
+  status?: string | string[]; // Puede ser un estado o múltiples estados separados por comas
+}
 
+export async function getClaims({ page = 1, pageSize = 10, status }: GetClaimsParams = {}): Promise<ClaimsResponse> {
+  const query: Record<string, string> = {
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+  };
+
+  // Agregar status si se proporciona
+  if (status) {
+    if (Array.isArray(status)) {
+      query.status = status.join(',');
+    } else {
+      query.status = status;
+    }
+  }
+
+  const res = await apiService.get<ClaimsApiResponse>(
+    API_ENDPOINTS.NETWORK.CLAIMS,
+    query,
+  );
+
+  const payload: any = res;
+  const data = payload?.data ?? payload;
+
+  return {
+    items: data?.items ?? [],
+    pagination: data?.pagination ?? {
+      page: page,
+      pageSize: pageSize,
+      total: 0,
+      totalPages: 0,
+    },
+  };
+}
 

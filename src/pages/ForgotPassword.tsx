@@ -20,7 +20,7 @@ const ForgotPassword: React.FC = () => {
       
       {/* Logo en la parte superior */}
       <div className="relative z-20 pt-8 flex justify-center">
-        <Logo width={212} height={40} />
+        <Logo width={173} height={48} />
       </div>
 
       {/* Contenido principal centrado */}

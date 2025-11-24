@@ -9,6 +9,8 @@ export type TransactionItemType = {
   montoCOP: number;
   tipo: "ingreso" | "egreso";
   className?: string;
+  cryptocurrency?: string; // Opcional: tipo de crypto (USDT, USDC, etc.)
+  localCurrency?: string; // Opcional: moneda local (MXN, USD, COP, etc.)
 };
 
 const TransactionItem: FunctionComponent<TransactionItemType> = ({ 

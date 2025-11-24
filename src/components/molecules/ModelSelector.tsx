@@ -51,7 +51,8 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     };
 
     void fetchModels();
-  }, [onModelChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar una vez al montar
 
   const handleModelChange = (value: string) => {
     setSelectedModel(value);

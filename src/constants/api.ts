@@ -28,6 +28,7 @@ export const API_ENDPOINTS = {
     ACTIVATE: "/cards/:id/activate",
     BLOCK: "/cards/:id/block",
     UNBLOCK: "/cards/:id/unblock",
+    MIS_TARJETAS: "/cards/mis-tarjetas",
   },
   TRANSACTIONS: {
     LIST: "/transactions",
@@ -47,9 +48,12 @@ export const API_ENDPOINTS = {
     AVAILABLE_MODEL: "/network/available-model",
     B2B_LEADERS_OWNED_TO_B2C: "/network/b2b-leaders-owned-to-b2c",
     B2T_LEADERS_OWNED_TO_B2C: "/network/b2t-leaders-owned-to-b2c",
+    CLAIMS: "/network/claims",
   },
   DASHBOARD: {
     METRICS: "/dashboard/metrics",
+    RESUME: "/dashboard/resume",
+    RECENT_TRANSACTIONS: "/dashboard/recent-transactions",
   },
   CRYPTO: {
     WALLETS: "/crypto/wallets",

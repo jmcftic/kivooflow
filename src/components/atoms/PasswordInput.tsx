@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, forwardRef } from "react";
 import { FunctionComponent } from "react";
 import Input from "./Input";
 
@@ -10,13 +10,13 @@ export type PasswordInputType = {
   className?: string;
 };
 
-const PasswordInput: FunctionComponent<PasswordInputType> = ({
+const PasswordInput = forwardRef<HTMLInputElement, PasswordInputType>(({
   value,
   onChange,
   placeholder = "Contraseña",
   error = "",
   className = "",
-}) => {
+}, ref) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const togglePasswordVisibility = () => {
@@ -44,6 +44,7 @@ const PasswordInput: FunctionComponent<PasswordInputType> = ({
   return (
     <div className={`w-full ${className}`}>
       <Input
+        ref={ref}
         type={showPassword ? "text" : "password"}
         value={value}
         onChange={onChange}
@@ -55,6 +56,8 @@ const PasswordInput: FunctionComponent<PasswordInputType> = ({
       />
     </div>
   );
-};
+});
+
+PasswordInput.displayName = "PasswordInput";
 
 export default PasswordInput;

@@ -26,7 +26,7 @@ const VerificationSent: React.FC = () => {
       <KivoMainBg className="absolute inset-0 z-0" />
       
       <div className="relative z-20 pt-8 flex justify-center">
-        <Logo width={212} height={40} />
+        <Logo width={173} height={48} />
       </div>
 
       <div className="relative z-20 h-full flex flex-col items-center justify-center px-4 -mt-8">

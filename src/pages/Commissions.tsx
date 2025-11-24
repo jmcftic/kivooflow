@@ -1,13 +1,38 @@
-import React from "react";
+import React from 'react';
+import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
+import SidebarApp from '../components/organisms/SidebarApp';
+import DashboardNavbar from '../components/atoms/DashboardNavbar';
+import KivoMainBg from '../components/atoms/KivoMainBg';
+import CommissionsListCard from '../components/organisms/CommissionsListCard';
 
 const Commissions: React.FC = () => {
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-[#1f1f1f] text-white">
-      <div className="rounded-2xl border border-white/10 bg-white/5 px-8 py-6 text-center shadow-lg backdrop-blur-md">
-        <h1 className="text-2xl font-bold text-[#FFF100]">Comisiones</h1>
-        <p className="mt-3 text-sm text-white/80">
-          Este módulo estará próximamente disponible.
-        </p>
+    <div className="h-screen w-full bg-[#2a2a2a] relative flex flex-col lg:flex-row overflow-hidden">
+      {/* Nuevo fondo SVG */}
+      <KivoMainBg className="absolute inset-0 z-0" />
+
+      {/* Sidebar - Mobile drawer + Desktop collapsible */}
+      <SidebarApp />
+
+      {/* Contenido principal */}
+      <div className="flex-1 relative flex flex-col pl-6 pr-6 overflow-y-auto pb-8 pt-16 lg:pt-0">
+        {/* Navbar responsivo */}
+        <DashboardNavbar title="Comisiones" />
+
+        {/* Contenido de Comisiones */}
+        <div className="relative z-20 mt-6 mb-8">
+          <CommissionsListCard />
+        </div>
+
+        {/* SVG de esquina en inferior derecha */}
+        <div className="absolute bottom-0 right-0 pointer-events-none overflow-hidden z-0">
+          <Ki6SvgIcon
+            width={2850.92}
+            height={940.08}
+            rotation={0}
+            className="w-[80vw] sm:w-[60vw] lg:w-[50vw] h-auto border-0 outline-none"
+          />
+        </div>
       </div>
     </div>
   );

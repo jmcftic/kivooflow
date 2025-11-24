@@ -165,7 +165,7 @@ function App() {
         <Route
           path="/claims"
           element={
-            <ProtectedRoute allowed={false}>
+            <ProtectedRoute>
               <Claims />
             </ProtectedRoute>
           }
@@ -189,7 +189,7 @@ function App() {
         <Route
           path="/commissions"
           element={
-            <ProtectedRoute allowed={false}>
+            <ProtectedRoute>
               <Commissions />
             </ProtectedRoute>
           }

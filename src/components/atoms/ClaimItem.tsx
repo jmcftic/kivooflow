@@ -35,6 +35,8 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
     switch(estado.toLowerCase()) {
       case 'aprobado':
         return 'text-[#32d74b]';
+      case 'disponible':
+        return 'text-[#32d74b]'; // Verde para disponible
       case 'rechazado':
         return 'text-[#ff6d64]';
       case 'pendiente':
@@ -78,7 +80,9 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
 
       {/* Monto */}
       <div className="flex flex-col">
-        <span className="text-[#32d74b] text-sm font-semibold mb-1">${monto.toFixed(2)}</span>
+        <span className="text-[#32d74b] text-sm font-semibold mb-1">
+          ${typeof monto === 'number' ? monto.toFixed(2) : (parseFloat(String(monto)) || 0).toFixed(2)}
+        </span>
         <span className="text-[#CBCACA] text-xs">Monto</span>
       </div>
 

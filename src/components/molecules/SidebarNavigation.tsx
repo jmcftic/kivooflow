@@ -33,7 +33,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
       label: 'Claims',
       icon: <ClaimsIcon />,
       path: '/claims',
-      disabled: true,
+      disabled: false,
     },
     {
       key: 'card',
@@ -47,7 +47,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
       label: 'Comisiones',
       icon: <CommissionsIcon />,
       path: '/commissions',
-      disabled: true,
+      disabled: false,
     },
     {
       key: 'network',
