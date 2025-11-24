@@ -101,15 +101,29 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
+type TooltipProps = React.ComponentProps<typeof RechartsPrimitive.Tooltip>
+
+type TooltipPayloadItem = {
+  name?: string
+  value?: number | string
+  dataKey?: string
+  color?: string
+  payload?: any
+  fill?: string
+}
+
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
+  Omit<TooltipProps, "content"> &
     React.ComponentProps<"div"> & {
       hideLabel?: boolean
       hideIndicator?: boolean
       indicator?: "line" | "dot" | "dashed"
       nameKey?: string
       labelKey?: string
+      payload?: TooltipPayloadItem[]
+      label?: string | number
+      active?: boolean
     }
 >(
   (
@@ -184,7 +198,7 @@ const ChartTooltipContent = React.forwardRef<
       >
         {!nestLabel ? tooltipLabel : null}
         <div className="grid gap-1.5">
-          {payload.map((item, index) => {
+          {payload.map((item: any, index: number) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`
             const itemConfig = config[key as keyof typeof config]
             const indicatorColor = color || item.payload.fill || item.color
@@ -257,11 +271,20 @@ ChartTooltipContent.displayName = "ChartTooltipContent"
 
 const ChartLegend = RechartsPrimitive.Legend
 
+type LegendProps = RechartsPrimitive.LegendProps
+
+type LegendPayloadItem = {
+  value?: string
+  dataKey?: string
+  color?: string
+  type?: string
+}
+
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
-    payload?: RechartsPrimitive.LegendProps["payload"]
-    verticalAlign?: RechartsPrimitive.LegendProps["verticalAlign"]
+    payload?: LegendPayloadItem[]
+    verticalAlign?: "top" | "bottom"
     hideIcon?: boolean
     nameKey?: string
   }
@@ -285,7 +308,7 @@ const ChartLegendContent = React.forwardRef<
           className
         )}
       >
-        {payload.map((item) => {
+        {payload.map((item: any) => {
           const key = `${nameKey || item.dataKey || "value"}`
           const itemConfig = config[key as keyof typeof config]
 
