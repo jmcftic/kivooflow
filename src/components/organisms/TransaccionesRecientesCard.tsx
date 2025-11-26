@@ -25,14 +25,48 @@ interface MappedTransaction {
   localCurrency: string;
 }
 
+// Función para censurar el correo electrónico
+const censorEmail = (email: string): string => {
+  if (!email || !email.includes('@')) {
+    return email || 'N/A';
+  }
+  
+  const [localPart, domain] = email.split('@');
+  
+  // Si el nombre de usuario tiene más de 2 caracteres, mostrar solo los primeros 2 y censurar el resto
+  if (localPart.length > 2) {
+    const visibleChars = localPart.substring(0, 2);
+    const censoredChars = '*'.repeat(Math.min(localPart.length - 2, 4)); // Máximo 4 asteriscos
+    return `${visibleChars}${censoredChars}@${domain}`;
+  } else if (localPart.length === 2) {
+    // Si tiene exactamente 2 caracteres, mostrar solo el primero
+    return `${localPart[0]}*@${domain}`;
+  } else {
+    // Si tiene 1 carácter, mostrar asterisco
+    return `*@${domain}`;
+  }
+};
+
 const mapTransaction = (tx: RecentTransaction): MappedTransaction => {
   // Las recargas siempre son ingresos
+  // Usar correo censurado en lugar del nombre
+  const empresa = censorEmail(tx.userEmail || '');
+  
+  // Debug: verificar valores recibidos del backend
+  console.log('Transaction data:', {
+    id: tx.id,
+    cryptoAmount: tx.cryptoAmount,
+    localAmount: tx.localAmount,
+    cryptocurrency: tx.cryptocurrency,
+    localCurrency: tx.localCurrency
+  });
+  
   return {
     id: tx.id,
     fecha: tx.createdAt,
-    empresa: tx.userEmail, // Usar el email censurado como "empresa"
-    montoUSDT: tx.cryptoAmount, // Monto en crypto (puede ser USDT, USDC, etc.)
-    montoCOP: tx.localAmount, // Monto en moneda local (puede ser MXN, USD, etc.)
+    empresa: empresa,
+    montoUSDT: tx.cryptoAmount, // Monto en crypto (USDT, USDC, etc.)
+    montoCOP: tx.localAmount, // Monto en moneda local (MXN, COP, USD, etc.)
     tipo: "ingreso", // Las recargas siempre son ingresos
     cryptocurrency: tx.cryptocurrency,
     localCurrency: tx.localCurrency,

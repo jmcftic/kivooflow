@@ -1182,6 +1182,12 @@ const Network: React.FC = () => {
     void loadTreeForUser(userId);
   };
 
+  const handleViewDetail = (userId: number) => {
+    // Navegar a la página de detalle de empresa
+    const model = activeTab === 'b2b' ? 'b2b' : 'b2t';
+    window.location.href = `/enterprise-detail/${userId}/${model}`;
+  };
+
   useEffect(() => {
     if (pendingTreeUserId === null) return;
     if (searchFilter.trim()) return;
@@ -1419,8 +1425,10 @@ const Network: React.FC = () => {
                 childrenByParent={(isLeaderTab || hasSearch) ? {} : childrenByParent}
                 childIndentPx={30}
                 onViewTree={handleViewTree}
+                onViewDetail={isLeaderTab ? handleViewDetail : undefined}
                 disableExpand={hasSearch || isLeaderTab}
                 disableViewTree={isLeaderTab}
+                isLeaderTab={isLeaderTab}
                 hasDepthLimit={hasDepthLimit}
                 maxDepth={maxDepth}
                 onLoadMoreChildren={isLeaderTab ? undefined : handleLoadMoreChildren}

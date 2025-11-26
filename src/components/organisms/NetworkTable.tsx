@@ -25,8 +25,10 @@ interface NetworkTableProps {
   childrenByParent?: Record<number, Array<{ id: number; name: string; email?: string; createdAt?: string; totalDescendants?: number; hasDescendants?: boolean }>>;
   childIndentPx?: number;
   onViewTree?: (userId: number) => void;
+  onViewDetail?: (userId: number) => void;
   disableExpand?: boolean;
   disableViewTree?: boolean;
+  isLeaderTab?: boolean;
   onLoadMoreChildren?: (parentId: number, parentLevel: number) => void;
   parentHasMore?: Record<number, boolean>;
   parentLoading?: Record<number, boolean>;
@@ -37,7 +39,7 @@ interface NetworkTableProps {
   maxDepth?: number;
 }
 
-const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLevel, onToggleExpand, childrenByParent = {}, childIndentPx = 30, onViewTree, disableExpand = false, disableViewTree = false, onLoadMoreChildren, parentHasMore = {}, parentLoading = {}, loadingTreeUserId = null, parentExhausted = {}, parentErrors = {}, hasDepthLimit = true, maxDepth = 3 }) => {
+const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLevel, onToggleExpand, childrenByParent = {}, childIndentPx = 30, onViewTree, onViewDetail, disableExpand = false, disableViewTree = false, isLeaderTab = false, onLoadMoreChildren, parentHasMore = {}, parentLoading = {}, loadingTreeUserId = null, parentExhausted = {}, parentErrors = {}, hasDepthLimit = true, maxDepth = 3 }) => {
   return (
     <div className="space-y-4">
       {items.map((item) => {
@@ -88,7 +90,16 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                 <div className="text-center">Resumen</div>
                 <div className="text-center">$0.00</div>
                 <div className="text-right pr-6">
-                  {canViewTree ? (
+                  {isLeaderTab && onViewDetail ? (
+                    <div className="flex items-center justify-end gap-2">
+                      <span 
+                        className="text-[#FFF100] cursor-pointer hover:text-[#E6D900] transition-colors" 
+                        onClick={() => onViewDetail(item.id)}
+                      >
+                        Ver detalle
+                      </span>
+                    </div>
+                  ) : canViewTree ? (
                     <div className="flex items-center justify-end gap-2">
                       <span className={`text-[#FFF100] ${isLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !isLoading && onViewTree && onViewTree(item.id)}>
                         Ver árbol

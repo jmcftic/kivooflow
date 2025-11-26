@@ -195,3 +195,21 @@ export interface ClaimsApiResponse {
   data: ClaimsResponse;
 }
 
+export interface TeamDetailsData {
+  teamName: string;
+  level: number;
+  leaderEmail: string;
+  leaderFullName: string;
+  totalEarnings: number;
+  availableBalance: number;
+  activeReferrals: number;
+  totalReferrals: number;
+  totalVolume: number;
+}
+
+export interface TeamDetailsResponse {
+  statusCode: number;
+  message: string;
+  data: TeamDetailsData;
+}
+

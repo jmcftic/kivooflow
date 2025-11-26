@@ -5,6 +5,13 @@ export interface MonthlyData {
   comisiones: number;
 }
 
+export interface WeeklyData {
+  semana: string;
+  ventas: number;
+  recargas: number;
+  comisiones: number;
+}
+
 export interface ResumeData {
   commissions: number;
   recargas: number;
@@ -13,6 +20,7 @@ export interface ResumeData {
   startDate?: string;
   endDate?: string;
   monthlyData: MonthlyData[];
+  weeklyData?: WeeklyData[];
 }
 
 export interface DashboardMetrics {
@@ -50,6 +58,7 @@ export type DateFilter =
 export interface RecentTransaction {
   id: string;
   userId: number;
+  userName: string;
   userEmail: string;
   cryptoAmount: number;
   localAmount: number;

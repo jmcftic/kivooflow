@@ -176,6 +176,7 @@ const Dashboard: React.FC = () => {
         <div className="relative z-20 mt-6 mb-6">
           <ResumenCard 
             monthlyData={metrics?.resume?.monthlyData}
+            weeklyData={metrics?.resume?.weeklyData}
             onDateFilterChange={updateResume}
             currentDateFilter={metrics?.resume?.period as any}
           />

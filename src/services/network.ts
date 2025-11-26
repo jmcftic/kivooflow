@@ -12,6 +12,8 @@ import {
   NetworkLeadersPagination,
   ClaimsResponse,
   ClaimsApiResponse,
+  TeamDetailsResponse,
+  TeamDetailsData,
 } from '@/types/network';
 
 export interface GetNetworkParams {
@@ -96,6 +98,23 @@ export interface GetNetworkLeadersParams {
 function normalizeLeader(row: any): NetworkLeaderOwnedToB2C {
   const depth = Number(row?.depth ?? row?.Depth ?? 0) || 0;
 
+  // Manejar team cuando viene como objeto anidado o como campos directos
+  const team = row?.team ?? {};
+  const teamId = row?.teamId != null 
+    ? Number(row?.teamId) 
+    : row?.team_id != null 
+      ? Number(row?.team_id) 
+      : team?.id != null 
+        ? Number(team.id) 
+        : null;
+  const teamName = row?.teamName ?? row?.team_name ?? team?.name ?? null;
+  const teamBannerUrl = row?.teamBannerUrl ?? row?.team_banner_url ?? team?.bannerUrl ?? null;
+
+  // Manejar mlm cuando viene como objeto anidado o como campos directos
+  const mlm = row?.mlm ?? {};
+  const mlmCode = row?.mlmCode ?? row?.mlm_code ?? mlm?.code ?? null;
+  const mlmName = row?.mlmName ?? row?.mlm_name ?? mlm?.name ?? null;
+
   return {
     userId: Number(row?.userId ?? row?.user_id ?? row?.descendant_id ?? 0),
     depth,
@@ -109,24 +128,28 @@ function normalizeLeader(row: any): NetworkLeaderOwnedToB2C {
     createdAt: row?.createdAt ?? row?.created_at ?? '',
     parentName: row?.parentName ?? row?.parent_name ?? null,
     parentReferralCode: row?.parentReferralCode ?? row?.parent_referral_code ?? null,
-    teamId: row?.teamId != null ? Number(row?.teamId) : row?.team_id != null ? Number(row?.team_id) : null,
-    teamName: row?.teamName ?? row?.team_name ?? null,
-    teamBannerUrl: row?.teamBannerUrl ?? row?.team_banner_url ?? null,
-    mlmCode: row?.mlmCode ?? row?.mlm_code ?? null,
-    mlmName: row?.mlmName ?? row?.mlm_name ?? null,
+    teamId,
+    teamName,
+    teamBannerUrl,
+    mlmCode,
+    mlmName,
     isTeamLeader: typeof row?.isTeamLeader === 'boolean'
       ? row.isTeamLeader
       : row?.is_team_leader != null
         ? row?.is_team_leader === true || row?.is_team_leader === 1
-        : null,
+        : mlm?.isTeamLeader != null
+          ? mlm.isTeamLeader === true || mlm.isTeamLeader === 1
+          : null,
     networkDepth: row?.networkDepth != null
       ? Number(row.networkDepth)
       : row?.network_depth != null
         ? Number(row.network_depth)
-        : null,
-    card1Url: row?.card1Url ?? row?.card1_url ?? null,
-    card2Url: row?.card2Url ?? row?.card2_url ?? null,
-    card3Url: row?.card3Url ?? row?.card3_url ?? null,
+        : mlm?.networkDepth != null
+          ? Number(mlm.networkDepth)
+          : null,
+    card1Url: row?.card1Url ?? row?.card1_url ?? mlm?.card1Url ?? null,
+    card2Url: row?.card2Url ?? row?.card2_url ?? mlm?.card2Url ?? null,
+    card3Url: row?.card3Url ?? row?.card3_url ?? mlm?.card3Url ?? null,
   };
 }
 
@@ -203,6 +226,70 @@ export async function getB2TLeadersOwnedToB2C({ limit = 20, offset = 0 }: GetNet
   );
 
   return normalizeLeadersResult(res as unknown as NetworkLeadersResponse, 'B2T', limit, offset);
+}
+
+/**
+ * Obtiene un líder específico por userId desde la lista de líderes B2B o B2T
+ */
+export async function getLeaderByUserId(userId: number, type: 'B2B' | 'B2T'): Promise<NetworkLeaderOwnedToB2C | null> {
+  // Buscar en la lista de líderes (puede requerir múltiples páginas si hay muchos líderes)
+  let offset = 0;
+  const limit = 100; // Obtener un número razonable de líderes por página
+  
+  while (true) {
+    const result = type === 'B2B' 
+      ? await getB2BLeadersOwnedToB2C({ limit, offset })
+      : await getB2TLeadersOwnedToB2C({ limit, offset });
+    
+    // Buscar el líder por userId
+    const leader = result.leaders.find(l => l.userId === userId);
+    if (leader) {
+      return leader;
+    }
+    
+    // Si no hay más páginas, no se encontró el líder
+    if (!result.pagination.hasNextPage) {
+      return null;
+    }
+    
+    // Continuar en la siguiente página
+    offset += limit;
+  }
+}
+
+/**
+ * Obtiene los detalles de un equipo por teamId
+ * @param teamId - ID del equipo
+ * @returns Datos del equipo o null si no se encuentra
+ * @throws Error con código de estado si hay problemas de autenticación o autorización
+ */
+export async function getTeamDetails(teamId: number): Promise<TeamDetailsData | null> {
+  const endpoint = apiService.buildEndpoint(API_ENDPOINTS.NETWORK.TEAM_DETAILS, { teamId });
+  
+  try {
+    const res = await apiService.get<TeamDetailsResponse>(endpoint);
+    const payload: any = res;
+    const data = payload?.data ?? payload;
+    
+    return {
+      teamName: data?.teamName ?? '',
+      level: data?.level ?? 0,
+      leaderEmail: data?.leaderEmail ?? '',
+      leaderFullName: data?.leaderFullName ?? '',
+      totalEarnings: data?.totalEarnings ?? 0,
+      availableBalance: data?.availableBalance ?? 0,
+      activeReferrals: data?.activeReferrals ?? 0,
+      totalReferrals: data?.totalReferrals ?? 0,
+      totalVolume: data?.totalVolume ?? 0,
+    };
+  } catch (error: any) {
+    // El apiService ya maneja los errores 401, 403, 404 automáticamente
+    // Solo necesitamos propagar el error o retornar null según sea necesario
+    if (error?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export interface GetClaimsParams {

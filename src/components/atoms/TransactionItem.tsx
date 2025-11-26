@@ -18,7 +18,9 @@ const TransactionItem: FunctionComponent<TransactionItemType> = ({
   montoUSDT,
   montoCOP,
   tipo,
-  className = ""
+  className = "",
+  cryptocurrency,
+  localCurrency
 }) => {
   const isPositive = montoUSDT > 0;
   const colorClass = isPositive ? "text-[#32d74b]" : "text-[#ff6d64]";
@@ -49,12 +51,12 @@ const TransactionItem: FunctionComponent<TransactionItemType> = ({
       <div className="flex flex-col items-end">
         {/* Monto en USDT */}
         <div className={`text-sm font-semibold ${colorClass}`}>
-          {isPositive ? '+' : ''}{montoUSDT.toFixed(2)} USDT
+          {isPositive ? '+' : ''}{montoUSDT.toFixed(2)} {cryptocurrency || 'USDT'}
         </div>
         
         {/* Monto en COP */}
         <div className="text-xs text-[#CBCACA]">
-          {isPositive ? '+' : ''}{montoCOP.toLocaleString('es-CO')} COP
+          {isPositive ? '+' : ''}{montoCOP.toLocaleString('es-CO')} {localCurrency || 'COP'}
         </div>
       </div>
     </div>

@@ -2,13 +2,16 @@ import { apiService } from './api';
 import { API_ENDPOINTS } from '@/constants/api';
 import { DashboardMetrics, DashboardMetricsResponse, ResumeData, ResumeResponse, DateFilter, RecentTransaction, RecentTransactionsApiResponse, RecentTransactionsResponse } from '@/types/dashboard';
 
-export async function getDashboardMetrics(model: string, dateFilter?: DateFilter): Promise<DashboardMetrics> {
+export async function getDashboardMetrics(model: string, dateFilter?: DateFilter, teamId?: number): Promise<DashboardMetrics> {
   // Convertir el modelo a mayúsculas para el query param (B2C, B2B, B2T)
   const modelUpper = model.toUpperCase();
   
-  const params: Record<string, string> = { model: modelUpper };
+  const params: Record<string, string | number> = { model: modelUpper };
   if (dateFilter) {
     params.dateFilter = dateFilter;
+  }
+  if (teamId != null) {
+    params.teamId = teamId;
   }
   
   const res = await apiService.get<DashboardMetricsResponse>(
@@ -34,10 +37,12 @@ export async function getDashboardMetrics(model: string, dateFilter?: DateFilter
       startDate: data.resume.startDate,
       endDate: data.resume.endDate,
       monthlyData: data.resume.monthlyData ?? [],
+      weeklyData: data.resume.weeklyData ?? [],
     } : undefined,
     recentTransactions: data?.recentTransactions ? data.recentTransactions.map((tx: any) => ({
       id: tx.id ?? '',
       userId: tx.userId ?? 0,
+      userName: tx.userName ?? '',
       userEmail: tx.userEmail ?? '',
       cryptoAmount: tx.cryptoAmount ?? 0,
       localAmount: tx.localAmount ?? 0,
@@ -49,16 +54,21 @@ export async function getDashboardMetrics(model: string, dateFilter?: DateFilter
   };
 }
 
-export async function getDashboardResume(model: string, dateFilter: DateFilter): Promise<ResumeData> {
+export async function getDashboardResume(model: string, dateFilter: DateFilter, teamId?: number): Promise<ResumeData> {
   // Convertir el modelo a mayúsculas para el query param (B2C, B2B, B2T)
   const modelUpper = model.toUpperCase();
   
+  const params: Record<string, string | number> = { 
+    model: modelUpper,
+    dateFilter: dateFilter
+  };
+  if (teamId != null) {
+    params.teamId = teamId;
+  }
+  
   const res = await apiService.get<ResumeResponse>(
     API_ENDPOINTS.DASHBOARD.RESUME,
-    { 
-      model: modelUpper,
-      dateFilter: dateFilter
-    }
+    params
   );
   const payload: any = res;
   const data = payload?.data ?? payload;
@@ -71,6 +81,7 @@ export async function getDashboardResume(model: string, dateFilter: DateFilter):
     startDate: data?.startDate,
     endDate: data?.endDate,
     monthlyData: data?.monthlyData ?? [],
+    weeklyData: data?.weeklyData ?? [],
   };
 }
 

@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Claims from "./pages/Claims";
 import Network from "./pages/Network";
+import EnterpriseDetail from "./pages/EnterpriseDetail";
 import CardAcquisition from "./pages/CardAcquisition";
 import Commissions from "./pages/Commissions";
 import Activity from "./pages/Activity";
@@ -125,6 +126,12 @@ function App() {
         metaDescription = "Página de prueba del nuevo fondo KivoMainBg";
         break;
     }
+    
+    // Verificar si es ruta de detalle de empresa
+    if (pathname.match(/^\/enterprise-detail\/.+$/)) {
+      title = "Kivoo Web - Detalle de Empresa";
+      metaDescription = "Detalle de empresa en Kivoo";
+    }
 
     if (title) {
       document.title = title;
@@ -175,6 +182,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Network />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/enterprise-detail/:enterpriseId/:model?"
+          element={
+            <ProtectedRoute>
+              <EnterpriseDetail />
             </ProtectedRoute>
           }
         />
