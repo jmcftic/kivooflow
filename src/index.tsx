@@ -5,6 +5,16 @@ import reportWebVitals from "./reportWebVitals";
 import { BrowserRouter } from "react-router-dom";
 import "./global.css";
 
+// Suprimir el mensaje de React DevTools
+const originalLog = console.log;
+console.log = (...args: any[]) => {
+  const message = args.join(' ');
+  if (message.includes('Download the React DevTools') || message.includes('react-devtools')) {
+    return;
+  }
+  originalLog.apply(console, args);
+};
+
 const container = document.getElementById("root") as Element | DocumentFragment | null;
 if (!container) {
   throw new Error("Root container #root not found in index.html");

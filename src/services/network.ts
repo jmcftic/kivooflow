@@ -14,6 +14,13 @@ import {
   ClaimsApiResponse,
   TeamDetailsResponse,
   TeamDetailsData,
+  B2BCommissionsResponse,
+  B2BCommissionsData,
+  B2BCommission,
+  ClaimB2BCommissionRequest,
+  ClaimMlmTransactionRequest,
+  ClaimMlmTransactionResponse,
+  Claim,
 } from '@/types/network';
 
 export interface GetNetworkParams {
@@ -52,6 +59,7 @@ export interface GetB2CNetworkParams {
   level?: number; // default 1
   limit?: number; // default 10
   offset?: number; // default 0
+  childUserId?: number; // Opcional: ID del usuario hijo desde el cual consultar descendientes
 }
 
 export async function getSingleLevelNetwork({ level = 1, limit = 10, offset = 0 }: GetB2CNetworkParams): Promise<B2CNetworkResponse> {
@@ -65,11 +73,12 @@ export async function getSingleLevelNetwork({ level = 1, limit = 10, offset = 0 
   return res as unknown as B2CNetworkResponse;
 }
 
-export async function getB2CNetworkExcludingB2BB2T({ level = 1, limit = 10, offset = 0 }: GetB2CNetworkParams): Promise<B2CNetworkResponse> {
+export async function getB2CNetworkExcludingB2BB2T({ level = 1, limit = 10, offset = 0, childUserId }: GetB2CNetworkParams): Promise<B2CNetworkResponse> {
   const query = {
     level,
     limit,
     offset,
+    ...(childUserId !== undefined && { childUserId }),
   } as Record<string, string | number>;
 
   const res = await apiService.get<B2CNetworkResponse>(API_ENDPOINTS.NETWORK.B2C_EXCLUDING_B2B_B2T, query);
@@ -211,7 +220,55 @@ export async function getB2BLeadersOwnedToB2C({ limit = 20, offset = 0 }: GetNet
     query,
   );
 
-  return normalizeLeadersResult(res as unknown as NetworkLeadersResponse, 'B2B', limit, offset);
+  const result = normalizeLeadersResult(res as unknown as NetworkLeadersResponse, 'B2B', limit, offset);
+  
+  // Obtener teamIds únicos de la página actual
+  const uniqueTeamIds = Array.from(
+    new Set(
+      result.leaders
+        .map(leader => leader.teamId)
+        .filter((teamId): teamId is number => teamId !== null && teamId !== undefined)
+    )
+  );
+
+  // Obtener detalles de equipos solo para los teams únicos de esta página (en paralelo)
+  const teamDetailsMap = new Map<number, TeamDetailsData | null>();
+  
+  if (uniqueTeamIds.length > 0) {
+    try {
+      const teamDetailsPromises = uniqueTeamIds.map(async (teamId) => {
+        try {
+          const details = await getTeamDetails(teamId);
+          return { teamId, details };
+        } catch (error) {
+          // Si hay error (404, 403, etc.), guardar null para ese team
+          console.warn(`Error obteniendo detalles del equipo ${teamId}:`, error);
+          return { teamId, details: null };
+        }
+      });
+
+      const teamDetailsResults = await Promise.all(teamDetailsPromises);
+      
+      // Construir el mapa de teamId -> teamDetails
+      teamDetailsResults.forEach(({ teamId, details }) => {
+        teamDetailsMap.set(teamId, details);
+      });
+    } catch (error) {
+      console.error('Error obteniendo detalles de equipos:', error);
+      // Continuar sin los detalles si hay error general
+    }
+  }
+
+  // Agregar teamDetails a cada líder
+  const leadersWithTeamDetails = result.leaders.map(leader => ({
+    ...leader,
+    teamDetails: leader.teamId ? teamDetailsMap.get(leader.teamId) ?? null : null,
+  }));
+
+  return {
+    ...result,
+    leaders: leadersWithTeamDetails,
+  };
 }
 
 export async function getB2TLeadersOwnedToB2C({ limit = 20, offset = 0 }: GetNetworkLeadersParams = {}): Promise<NetworkLeadersResult> {
@@ -295,21 +352,36 @@ export async function getTeamDetails(teamId: number): Promise<TeamDetailsData | 
 export interface GetClaimsParams {
   page?: number;
   pageSize?: number;
-  status?: string | string[]; // Puede ser un estado o múltiples estados separados por comas
+  /**
+   * Estado o estados a filtrar. Soporta múltiples formatos:
+   * - Array: ['claimed', 'requested']
+   * - String con comas: 'claimed,requested'
+   * - String con &: 'claimed&requested'
+   */
+  status?: string | string[];
 }
 
 export async function getClaims({ page = 1, pageSize = 10, status }: GetClaimsParams = {}): Promise<ClaimsResponse> {
-  const query: Record<string, string> = {
+  const query: Record<string, string | string[]> = {
     page: page.toString(),
     pageSize: pageSize.toString(),
   };
 
   // Agregar status si se proporciona
+  // Soporta múltiples formatos:
+  // - Array: ['claimed', 'requested']
+  // - String con comas: 'claimed,requested'
+  // - String con &: 'claimed&requested'
   if (status) {
     if (Array.isArray(status)) {
-      query.status = status.join(',');
-    } else {
+      // Si ya es un array, pasarlo directamente
       query.status = status;
+    } else if (typeof status === 'string') {
+      // Si es un string, dividir por comas o &
+      const statusArray = status.split(/[&,]/).map(s => s.trim()).filter(s => s.length > 0);
+      if (statusArray.length > 0) {
+        query.status = statusArray;
+      }
     }
   }
 
@@ -329,6 +401,98 @@ export async function getClaims({ page = 1, pageSize = 10, status }: GetClaimsPa
       total: 0,
       totalPages: 0,
     },
+  };
+}
+
+export interface GetB2BCommissionsParams {
+  limit?: number;
+  offset?: number;
+}
+
+export async function getB2BCommissions({ limit = 20, offset = 0 }: GetB2BCommissionsParams = {}): Promise<B2BCommissionsData> {
+  const query: Record<string, number> = {
+    limit,
+    offset,
+  };
+
+  const res = await apiService.get<B2BCommissionsResponse>(
+    API_ENDPOINTS.NETWORK.B2B_COMMISSIONS,
+    query,
+  );
+
+  const payload: any = res;
+  const data = payload?.data ?? payload;
+
+  return {
+    total: data?.total ?? 0,
+    available: data?.available ?? 0,
+    commissions: data?.commissions ?? [],
+    pagination: data?.pagination ?? {
+      totalPages: 1,
+      currentPage: 1,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+  };
+}
+
+export async function claimB2BCommission(request: ClaimB2BCommissionRequest): Promise<B2BCommission> {
+  const res = await apiService.post<{ statusCode: number; message: string; data: B2BCommission }>(
+    API_ENDPOINTS.NETWORK.CLAIM_B2B_COMMISSION,
+    request,
+  );
+
+  const payload: any = res;
+  const data = payload?.data ?? payload;
+
+  return {
+    id: data?.id ?? null,
+    teamId: data?.teamId ?? 0,
+    teamName: data?.teamName ?? '',
+    level: data?.level ?? 0,
+    commissionPercentage: data?.commissionPercentage ?? 0,
+    periodType: data?.periodType ?? 'monthly',
+    periodStartDate: data?.periodStartDate ?? '',
+    periodEndDate: data?.periodEndDate ?? '',
+    totalVolume: data?.totalVolume ?? 0,
+    commissionAmount: data?.commissionAmount ?? 0,
+    totalTransactions: data?.totalTransactions ?? 0,
+    currency: data?.currency ?? 'MXN',
+    status: data?.status ?? '',
+    calculationDetails: data?.calculationDetails,
+    createdAt: data?.createdAt ?? new Date().toISOString(),
+  };
+}
+
+export async function claimMlmTransaction(request: ClaimMlmTransactionRequest): Promise<ClaimMlmTransactionResponse> {
+  const res = await apiService.post<{ statusCode: number; message: string; data: Claim }>(
+    API_ENDPOINTS.NETWORK.CLAIM_MLM_TRANSACTION,
+    request,
+  );
+
+  const payload: any = res;
+  const message = payload?.message || 'Comisión reclamada exitosamente';
+  const data = payload?.data ?? payload;
+
+  const claim: Claim = {
+    id: data?.id ?? 0,
+    userId: data?.userId ?? 0,
+    commissionType: data?.commissionType ?? '',
+    baseAmount: data?.baseAmount ?? 0,
+    commissionPercentage: data?.commissionPercentage ?? 0,
+    commissionAmount: data?.commissionAmount ?? 0,
+    leaderMarkupAmount: data?.leaderMarkupAmount ?? null,
+    markupPercentage: data?.markupPercentage ?? null,
+    currency: data?.currency ?? 'MXN',
+    status: data?.status ?? '',
+    cryptoTransactionId: data?.cryptoTransactionId ?? null,
+    createdAt: data?.createdAt ?? new Date().toISOString(),
+    ...data, // Incluir otros campos adicionales como calculationDetails
+  };
+
+  return {
+    claim,
+    message,
   };
 }
 

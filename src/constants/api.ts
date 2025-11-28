@@ -50,6 +50,9 @@ export const API_ENDPOINTS = {
     B2T_LEADERS_OWNED_TO_B2C: "/network/b2t-leaders-owned-to-b2c",
     CLAIMS: "/network/claims",
     TEAM_DETAILS: "/network/team/:teamId/details",
+    B2B_COMMISSIONS: "/network/b2c-from-b2b-commissions/available",
+    CLAIM_B2B_COMMISSION: "/network/b2c-from-b2b-commissions/claim",
+    CLAIM_MLM_TRANSACTION: "/network/mlm-transactions/claim",
   },
   DASHBOARD: {
     METRICS: "/dashboard/metrics",

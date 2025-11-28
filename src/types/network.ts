@@ -195,6 +195,83 @@ export interface ClaimsApiResponse {
   data: ClaimsResponse;
 }
 
+export interface B2BCommissionTransaction {
+  transactionId: string;
+  expectedAmount: number;
+  receivedAmount: number;
+  exchangeRate: number;
+  cryptocurrency: string;
+  volumeMXN: number;
+  createdAt: string;
+  status: string;
+}
+
+export interface B2BCommissionCalculationDetails {
+  userCreatedAt: string;
+  originalJoinDate: string;
+  periodStartDate: string;
+  periodEndDate: string;
+  transactions: B2BCommissionTransaction[];
+  totalVolume: number;
+  commissionPercentage: number;
+  commissionAmount: number;
+  calculatedAt: string;
+}
+
+export interface B2BCommission {
+  id: number | null;
+  teamId: number;
+  teamName: string;
+  level: number; // 1 = hija directa (0.3%), 2 = nieta (0.2%)
+  commissionPercentage: number;
+  periodType: string;
+  periodStartDate: string;
+  periodEndDate: string;
+  totalVolume: number;
+  commissionAmount: number;
+  totalTransactions: number;
+  currency: string;
+  status: string;
+  calculationDetails?: B2BCommissionCalculationDetails;
+  createdAt: string;
+}
+
+export interface ClaimB2BCommissionRequest {
+  teamId: number;
+  level: number;
+  periodStartDate: string;
+  periodEndDate: string;
+}
+
+export interface ClaimMlmTransactionRequest {
+  transactionId: number;
+}
+
+export interface ClaimMlmTransactionResponse {
+  claim: Claim;
+  message: string;
+}
+
+export interface B2BCommissionsPagination {
+  totalPages: number;
+  currentPage: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface B2BCommissionsData {
+  total: number;
+  available: number;
+  commissions: B2BCommission[];
+  pagination: B2BCommissionsPagination;
+}
+
+export interface B2BCommissionsResponse {
+  statusCode: number;
+  message: string;
+  data: B2BCommissionsData;
+}
+
 export interface TeamDetailsData {
   teamName: string;
   level: number;

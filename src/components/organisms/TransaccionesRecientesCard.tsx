@@ -47,28 +47,42 @@ const censorEmail = (email: string): string => {
   }
 };
 
-const mapTransaction = (tx: RecentTransaction): MappedTransaction => {
-  // Las recargas siempre son ingresos
-  // Usar correo censurado en lugar del nombre
-  const empresa = censorEmail(tx.userEmail || '');
+const mapTransaction = (tx: RecentTransaction, userModel?: string | null, selectedModel?: string | null): MappedTransaction => {
+  // Ocultar concepto de comisiones si el usuario es B2C viendo la pestaña B2B
+  const isB2CViewingB2B = userModel?.toLowerCase() === 'b2c' && selectedModel?.toLowerCase() === 'b2b';
+  const shouldHideCommission = isB2CViewingB2B && tx.cryptocurrency?.toUpperCase() === 'COMMISSION';
+  const cryptocurrency = shouldHideCommission ? '' : tx.cryptocurrency;
   
-  // Debug: verificar valores recibidos del backend
-  console.log('Transaction data:', {
-    id: tx.id,
-    cryptoAmount: tx.cryptoAmount,
-    localAmount: tx.localAmount,
-    cryptocurrency: tx.cryptocurrency,
-    localCurrency: tx.localCurrency
-  });
+  // Para B2C viendo B2B, si es una comisión (COMMISSION), usar userName en lugar de email censurado
+  // porque las empresas no tienen email (viene como 'N/A')
+  let empresa: string;
+  if (isB2CViewingB2B && tx.cryptocurrency?.toUpperCase() === 'COMMISSION') {
+    // Para comisiones, usar el nombre de la empresa (userName)
+    empresa = tx.userName || 'Empresa';
+  } else {
+    // Para recargas normales, usar correo censurado
+    empresa = censorEmail(tx.userEmail || '');
+  }
+  
+  // Para B2C viendo B2B con comisiones:
+  // - cryptoAmount es 0 (no aplica)
+  // - localAmount es el monto de la comisión en USDT
+  // - localCurrency es 'USDT'
+  // Mostrar localAmount en montoUSDT cuando es comisión (porque está en USDT)
+  const montoUSDT = isB2CViewingB2B && tx.cryptocurrency?.toUpperCase() === 'COMMISSION' 
+    ? tx.localAmount  // Para comisiones, usar localAmount (está en USDT)
+    : tx.cryptoAmount; // Para recargas, usar cryptoAmount
+  
+  const montoCOP = tx.localAmount; // Monto en moneda local (USDT para comisiones, MXN/COP para recargas)
   
   return {
     id: tx.id,
     fecha: tx.createdAt,
     empresa: empresa,
-    montoUSDT: tx.cryptoAmount, // Monto en crypto (USDT, USDC, etc.)
-    montoCOP: tx.localAmount, // Monto en moneda local (MXN, COP, USD, etc.)
-    tipo: "ingreso", // Las recargas siempre son ingresos
-    cryptocurrency: tx.cryptocurrency,
+    montoUSDT: montoUSDT,
+    montoCOP: montoCOP,
+    tipo: "ingreso", // Las recargas y comisiones siempre son ingresos
+    cryptocurrency: cryptocurrency,
     localCurrency: tx.localCurrency,
   };
 };
@@ -76,15 +90,17 @@ const mapTransaction = (tx: RecentTransaction): MappedTransaction => {
 // Función para obtener transacciones de la API con paginación
 const fetchTransacciones = async ({ 
   pageParam = 1, 
-  model 
+  model,
+  userModel
 }: { 
   pageParam: number;
   model: string;
+  userModel?: string | null;
 }): Promise<{ data: MappedTransaction[], nextPage: number | null, totalPages: number }> => {
   const pageSize = 5;
   const response = await getRecentTransactions(model, pageParam, pageSize);
   
-  const mappedData = response.transactions.map(mapTransaction);
+  const mappedData = response.transactions.map(tx => mapTransaction(tx, userModel, model));
   const hasMore = pageParam < response.totalPages;
   
   return {
@@ -99,10 +115,26 @@ const TransaccionesRecientesCard: React.FC<TransaccionesRecientesCardProps> = ({
   model,
   initialTransactions = []
 }) => {
+  // Obtener el modelo del usuario desde localStorage
+  const getUserModel = (): string | null => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const userData = JSON.parse(userStr);
+        return userData?.mlmModel || userData?.mlm_model || userData?.networkModel || userData?.network_model || null;
+      }
+    } catch (error) {
+      console.error('Error obteniendo modelo del usuario:', error);
+    }
+    return null;
+  };
+
+  const userModel = getUserModel();
+
   // Mapear transacciones iniciales
   const initialMapped = useMemo(() => {
-    return initialTransactions.map(mapTransaction);
-  }, [initialTransactions]);
+    return initialTransactions.map(tx => mapTransaction(tx, userModel, model));
+  }, [initialTransactions, userModel, model]);
 
   const {
     data,
@@ -116,7 +148,7 @@ const TransaccionesRecientesCard: React.FC<TransaccionesRecientesCardProps> = ({
       if (!model) {
         return Promise.resolve({ data: [], nextPage: null, totalPages: 0 });
       }
-      return fetchTransacciones({ pageParam: pageParam as number, model });
+      return fetchTransacciones({ pageParam: pageParam as number, model, userModel });
     },
     getNextPageParam: (lastPage: { data: MappedTransaction[], nextPage: number | null }) => lastPage.nextPage,
     initialPageParam: 1,

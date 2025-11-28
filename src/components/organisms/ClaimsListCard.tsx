@@ -28,6 +28,7 @@ const mapClaim = (claim: Claim): MappedClaim => {
     if (statusLower === 'processed') return 'Aprobado';
     if (statusLower === 'pending') return 'Pendiente';
     if (statusLower === 'available') return 'Disponible';
+    if (statusLower === 'requested') return 'En proceso';
     if (statusLower === 'rejected' || statusLower === 'cancelled') return 'Rechazado';
     return status;
   };
@@ -37,14 +38,23 @@ const mapClaim = (claim: Claim): MappedClaim => {
     ? `**** ${String(claim.cryptoTransactionId).slice(-4)}`
     : 'N/A';
 
+  // Calcular monto: commissionAmount + leaderMarkupAmount (si existe y no es 0)
+  const commissionAmount = typeof claim.commissionAmount === 'number' 
+    ? claim.commissionAmount 
+    : parseFloat(String(claim.commissionAmount)) || 0;
+  
+  const leaderMarkupAmount = typeof claim.leaderMarkupAmount === 'number' 
+    ? claim.leaderMarkupAmount 
+    : (claim.leaderMarkupAmount ? parseFloat(String(claim.leaderMarkupAmount)) : 0) || 0;
+  
+  const monto = commissionAmount + leaderMarkupAmount;
+
   return {
     id: `CLM-${String(claim.id).padStart(3, '0')}`,
     fecha: claim.createdAt,
     tarjeta,
     estado: mapStatus(claim.status),
-    monto: typeof claim.commissionAmount === 'number' 
-      ? claim.commissionAmount 
-      : parseFloat(String(claim.commissionAmount)) || 0,
+    monto,
     originalClaim: claim,
   };
 };
@@ -56,8 +66,8 @@ const fetchClaims = async ({
   pageParam: number;
 }): Promise<{ data: MappedClaim[], nextPage: number | null, totalPages: number }> => {
   const pageSize = 10;
-  // Filtrar solo por estado "claimed"
-  const response = await getClaims({ page: pageParam, pageSize, status: 'claimed' });
+  // Filtrar por estados "claimed" y "requested"
+  const response = await getClaims({ page: pageParam, pageSize, status: ['claimed', 'requested'] });
   
   const mappedData = response.items.map(mapClaim);
   const hasMore = pageParam < response.pagination.totalPages;

@@ -179,6 +179,7 @@ const Dashboard: React.FC = () => {
             weeklyData={metrics?.resume?.weeklyData}
             onDateFilterChange={updateResume}
             currentDateFilter={metrics?.resume?.period as any}
+            model={selectedModel}
           />
         </div>
 

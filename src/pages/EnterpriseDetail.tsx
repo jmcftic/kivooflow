@@ -121,7 +121,7 @@ const EnterpriseDetail: React.FC = () => {
               <div className="text-white font-bold text-sm">
                 {capitalizeWords(enterpriseFullName)}
               </div>
-              <div className="text-white text-sm mt-1 font-normal" style={{ fontFamily: 'Archivo, sans-serif' }}>
+              <div className="text-gray-400 text-sm mt-1 font-normal" style={{ fontFamily: 'Archivo, sans-serif' }}>
                 {userEmail}
               </div>
             </div>

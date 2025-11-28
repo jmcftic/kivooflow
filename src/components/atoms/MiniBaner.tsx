@@ -51,7 +51,7 @@ const MiniBaner: FunctionComponent<MiniBanerType> = ({
         <div className="flex-1">
           {/* Texto principal con o sin símbolo $ */}
           <div className="text-white text-lg md:text-xl lg:text-2xl font-semibold mb-1">
-            {showDollarSign ? `$${detail}` : detail}
+            {showDollarSign && !detail.toLowerCase().includes('cargando') ? `$${detail}` : detail}
           </div>
           
           {/* Texto secundario */}

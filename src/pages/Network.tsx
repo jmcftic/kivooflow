@@ -11,6 +11,7 @@ import NetworkTableHeader from '../components/organisms/NetworkTableHeader';
 import MiniBaner from '../components/atoms/MiniBaner';
 import SingleArrowHistory from '../components/atoms/SingleArrowHistory';
 import MoneyIcon from '../components/atoms/MoneyIcon';
+import { Spinner } from '@/components/ui/spinner';
 import {
   getNetwork,
   getDescendantSubtree,
@@ -76,6 +77,7 @@ const Network: React.FC = () => {
   const [leadersByTab, setLeadersByTab] = useState<Partial<Record<LeaderTab, LeadersTabState>>>({});
   const [leadersLoading, setLeadersLoading] = useState(false);
   const [leadersError, setLeadersError] = useState<string | null>(null);
+  const [networkLoading, setNetworkLoading] = useState(true);
   const historyReadyRef = useRef(false);
   const suppressHistoryPushRef = useRef(false);
   const skipNextSubtreeFetchRef = useRef(false);
@@ -207,10 +209,12 @@ const Network: React.FC = () => {
       // Esperar a que se haya obtenido el modelo del usuario desde el endpoint available-model
       // para evitar ejecutar el endpoint incorrecto (getNetwork) antes de saber el tipo de usuario
       if (!hasFetchedAvailableModelsRef.current || !userModel) {
+        setNetworkLoading(true);
         return;
       }
       
       try {
+        setNetworkLoading(true);
         // Lógica según tipo de usuario y tab activo
         // Usuario B2C: tab B2C usa excluding, tabs B2B/B2T usan owned
         // Usuario B2B: tab B2B usa single-level
@@ -264,6 +268,7 @@ const Network: React.FC = () => {
             setSubtreePage(1);
             setParentExhausted({});
             setParentErrors({});
+            setNetworkLoading(false);
           }
         } 
         // Usuario B2C en tabs B2B/B2T: usar owned
@@ -302,6 +307,7 @@ const Network: React.FC = () => {
             },
           }));
           setLeadersLoading(false);
+          setNetworkLoading(false);
         } 
         // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
         else if ((userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
@@ -351,6 +357,7 @@ const Network: React.FC = () => {
             setSubtreePage(1);
             setParentExhausted({});
             setParentErrors({});
+            setNetworkLoading(false);
           }
         } 
         // Fallback: usar el endpoint original para otros casos (no debería ejecutarse normalmente)
@@ -376,6 +383,7 @@ const Network: React.FC = () => {
             setSubtreePage(1);
             setParentExhausted({});
             setParentErrors({});
+            setNetworkLoading(false);
           }
         }
       } catch (e) {
@@ -388,6 +396,8 @@ const Network: React.FC = () => {
           setLeadersError(typeof message === 'string' ? message : 'No se pudieron obtener los líderes.');
           setLeadersLoading(false);
         }
+      } finally {
+        setNetworkLoading(false);
       }
     };
     load();
@@ -537,18 +547,23 @@ const Network: React.FC = () => {
 
     return leaderState.leaders.map((leader) => {
       const depth = Math.min(leader.depth || 1, 3);
+      // Para B2B, usar teamName en lugar de email/nombre
+      const displayName = (activeTab === 'b2b' && leader.teamName) 
+        ? leader.teamName 
+        : (leader.fullName || leader.email);
       return {
         id: leader.userId,
-        name: leader.fullName || leader.email,
-        email: leader.email,
+        name: displayName,
+        email: activeTab === 'b2b' && leader.teamName ? leader.teamName : leader.email,
         createdAt: leader.createdAt,
         level: depth,
         authLevel: depth,
         totalDescendants: 0,
         leader,
+        profileIconUrl: leader.profileIconUrl || undefined, // Para mostrar el icono, convertir null a undefined
       };
     });
-  }, [isLeaderTab, leaderState]);
+  }, [isLeaderTab, leaderState, activeTab]);
 
   const allLevelItems = useMemo(() => {
     if (isLeaderTab) {
@@ -629,6 +644,8 @@ const Network: React.FC = () => {
     const parentDataset = subtreeMode ? baseItems : allLevelItems;
     const parentItem = parentDataset.find(item => item.id === parentUserId);
     const parentAuthLevel = (parentItem as any)?.authLevel ?? (parentItem as any)?.level ?? level;
+    // Solo bloquear si hay límite de profundidad Y el nivel es >= 3
+    // Si no hay límite de profundidad (usuario B2B en tab B2B), permitir expandir sin importar el nivel
     if (hasDepthLimit && parentAuthLevel >= 3) {
       return;
     }
@@ -639,6 +656,8 @@ const Network: React.FC = () => {
       // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
       if ((userModel === 'b2c' && activeTab === 'b2c') || (userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
         const nextLevel = parentAuthLevel + 1;
+        // Solo bloquear si hay límite de profundidad Y el siguiente nivel es > 3
+        // Si no hay límite de profundidad (usuario B2B en tab B2B), permitir expandir sin importar el nivel
         if (hasDepthLimit && nextLevel > 3) {
           return;
         }
@@ -939,7 +958,6 @@ const Network: React.FC = () => {
   }, [hasDepthLimit, maxDepth, userModel, activeTab, usersLimit, allChildrenByParent, childrenByParent, parentOffsets, setParentLoading, setChildrenByParent, setAllChildrenByParent, setParentOffsets, setParentHasMore, setParentExhausted, setParentErrors]);
 
   const loadTreeForUser = useCallback(async (userId: number) => {
-    console.log('loadTreeForUser llamado para userId:', userId);
     setLoadingTreeUserId(userId);
     try {
       // Buscar el usuario en la lista actual para obtener su información
@@ -952,19 +970,15 @@ const Network: React.FC = () => {
         userItem = allChildren.find(item => item.id === userId);
       }
       
-      console.log('loadTreeForUser - userItem encontrado:', userItem);
       if (!userItem) {
-        console.log('loadTreeForUser - No se encontró userItem, retornando');
         return;
       }
       const userLevel = (userItem as any)?.authLevel ?? (userItem as any)?.level ?? activeLevel;
       const userName = userItem?.name || 'Usuario';
       const hasDescendants = (userItem as any)?.hasDescendants ?? ((userItem as any)?.totalDescendants ?? 0) > 0;
-      console.log('loadTreeForUser - userLevel:', userLevel, 'hasDescendants:', hasDescendants, 'userModel:', userModel, 'activeTab:', activeTab);
 
       // Solo bloquear si no hay descendientes
       if (!hasDescendants) {
-        console.log('loadTreeForUser - No tiene descendientes, retornando');
         return;
       }
       
@@ -973,14 +987,12 @@ const Network: React.FC = () => {
       let loadedWithSingleLevel = false;
       
       if ((userModel === 'b2c' && activeTab === 'b2c') || (userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
-        console.log('loadTreeForUser - Entrando al bloque de single-level/excluding');
         const nextLevel = userLevel + 1;
         
         // Si hay límite de profundidad y el siguiente nivel excede el límite, aún así intentar cargar
         // pero mostrar los usuarios como nivel 3 (limitado)
         const levelToFetch = nextLevel;
         const displayLevel = hasDepthLimit && nextLevel > 3 ? 3 : nextLevel;
-        console.log('loadTreeForUser - nextLevel:', nextLevel, 'levelToFetch:', levelToFetch, 'displayLevel:', displayLevel);
         
         // Usar excluding para B2C, single-level para B2B/B2T
         const fetchFn = (userModel === 'b2c' && activeTab === 'b2c') 
@@ -988,7 +1000,6 @@ const Network: React.FC = () => {
           : getSingleLevelNetwork;
         
         try {
-          console.log('loadTreeForUser - Iniciando llamadas al API con level:', levelToFetch);
           // Cargar usuarios del nivel siguiente - hacer múltiples llamadas para encontrar todos los hijos
           const allDirectUsers: any[] = [];
           let offset = 0;
@@ -996,19 +1007,16 @@ const Network: React.FC = () => {
           
           // Hacer múltiples llamadas hasta encontrar todos los hijos o no haya más usuarios
           while (true) {
-            console.log('loadTreeForUser - Llamando API con offset:', offset);
             const res = await fetchFn({
               level: levelToFetch,
               limit,
               offset,
             });
             const data = res?.data;
-            console.log('loadTreeForUser - Respuesta del API:', data);
             if (!data || data.users.length === 0) break;
             
             // Filtrar solo los hijos directos del usuario
             const directChildren = data.users.filter((u: any) => u.direct_parent_id === userId);
-            console.log('loadTreeForUser - Hijos directos encontrados:', directChildren.length);
             allDirectUsers.push(...directChildren);
             
             // Si no hay más páginas, salir
@@ -1016,8 +1024,6 @@ const Network: React.FC = () => {
             
             offset += limit;
           }
-          
-          console.log('loadTreeForUser - Total hijos directos encontrados:', allDirectUsers.length);
           if (allDirectUsers.length > 0) {
             const users = allDirectUsers.map((u: any) => ({
               id: u.user_id,
@@ -1146,7 +1152,6 @@ const Network: React.FC = () => {
   }, [activeLevel, activeTab, allLevelItems, baseItems, subtreeMode, usersLimit, hasDepthLimit, maxDepth, childrenByParent]);
 
   const handleViewTree = (userId: number) => {
-    console.log('handleViewTree llamado para userId:', userId);
     const lookupDataset = subtreeMode ? baseItems : allLevelItems;
     let userItem = lookupDataset.find(item => item.id === userId);
     
@@ -1156,19 +1161,15 @@ const Network: React.FC = () => {
       userItem = allChildren.find(item => item.id === userId);
     }
     
-    console.log('userItem encontrado:', userItem);
     if (!userItem) {
-      console.log('No se encontró userItem, retornando');
       return;
     }
     const userLevel = (userItem as any)?.authLevel ?? (userItem as any)?.level ?? activeLevel;
     const hasDescendants = (userItem as any)?.hasDescendants ?? ((userItem as any)?.totalDescendants ?? 0) > 0;
-    console.log('userLevel:', userLevel, 'hasDescendants:', hasDescendants);
 
     // Permitir ver árbol si tiene descendientes, incluso en nivel 3
     // Solo bloquear si no hay descendientes
     if (!hasDescendants) {
-      console.log('No tiene descendientes, retornando');
       return;
     }
 
@@ -1178,7 +1179,6 @@ const Network: React.FC = () => {
       return;
     }
 
-    console.log('Llamando a loadTreeForUser');
     void loadTreeForUser(userId);
   };
 
@@ -1405,16 +1405,17 @@ const Network: React.FC = () => {
           {/* Contenido scrollable de la tabla */}
           <div className="flex-1 min-h-0 overflow-y-auto">
             {/* Header de columnas */}
-            <NetworkTableHeader />
+            <NetworkTableHeader activeTab={activeTab} />
 
             {/* Tabla con filas */}
             {isLeaderTab && leadersError ? (
               <div className="py-10 text-center text-sm text-[#FF7A7A] px-4">
                 {leadersError}
               </div>
-            ) : isLeaderTab && leadersLoading ? (
-              <div className="py-10 text-center text-sm text-white/60">
-                Cargando líderes...
+            ) : (isLeaderTab && leadersLoading) || (networkLoading && !isLeaderTab) ? (
+              <div className="py-10 text-center text-sm text-white/60 flex items-center justify-center gap-2">
+                <Spinner className="size-4 text-[#FFF100]" />
+                <span>Cargando</span>
               </div>
             ) : displayedItems.length > 0 ? (
               <NetworkTable 

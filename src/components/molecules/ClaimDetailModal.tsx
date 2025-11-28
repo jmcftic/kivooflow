@@ -27,6 +27,9 @@ interface ClaimDetailModalProps {
   claimId: string;
   monto: number;
   tarjetasDisponibles?: string[]; // Mantener por compatibilidad pero no se usará
+  mode?: 'view' | 'claim'; // 'view' para ver detalle, 'claim' para solicitar
+  onConfirm?: () => void; // Callback para cuando se confirma el claim (modo claim)
+  isClaiming?: boolean; // Indica si está procesando el claim
 }
 
 const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
@@ -34,6 +37,9 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
   onOpenChange,
   claimId,
   monto,
+  mode = 'view',
+  onConfirm,
+  isClaiming = false,
 }) => {
   const [selectedTarjeta, setSelectedTarjeta] = useState<string>("");
   const [confirmed, setConfirmed] = useState(false);
@@ -57,10 +63,31 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
       setError(null);
       const response = await getMisTarjetas();
       // Filtrar solo tarjetas activas
+      // Usar cardStatus como fuente de verdad principal
       const tarjetasActivas = response.cards.filter(
-        (card) => card.isActive && !card.isBlocked && card.cardStatus === "ACTIVA"
+        (card) => {
+          // Verificar que el estado sea ACTIVA (fuente de verdad principal)
+          const isActive = card.cardStatus === "ACTIVA";
+          
+          // Si cardStatus es ACTIVA, considerar la tarjeta como activa
+          // independientemente de blockedAt (puede haber sido bloqueada y luego reactivada)
+          if (isActive) {
+            return true;
+          }
+          
+          // Si cardStatus no es ACTIVA, verificar campos opcionales para compatibilidad
+          const optionalIsActive = (card as any).isActive !== undefined ? (card as any).isActive : false;
+          return optionalIsActive;
+        }
       );
-      setTarjetas(tarjetasActivas);
+      
+      // Si después del filtro no hay tarjetas, mostrar error
+      if (tarjetasActivas.length === 0) {
+        setError("Sin tarjetas activas disponibles");
+        setTarjetas([]);
+      } else {
+        setTarjetas(tarjetasActivas);
+      }
     } catch (err: any) {
       console.error("Error cargando tarjetas:", err);
       // Si es un error 500, mostrar mensaje específico
@@ -82,15 +109,25 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
   };
 
   const handleConfirm = () => {
-    console.log("Claim confirmado:", {
-      claimId,
-      tarjeta: selectedTarjeta,
-      monto: monto,
-      confirmed
-    });
-    // Aquí iría la lógica para confirmar el claim
-    onOpenChange(false);
+    if (mode === 'claim' && onConfirm) {
+      // Si es modo claim, llamar al callback
+      onConfirm();
+    } else {
+      // Modo view, solo cerrar
+      console.log("Claim confirmado:", {
+        claimId,
+        tarjeta: selectedTarjeta,
+        monto: monto,
+        confirmed
+      });
+      onOpenChange(false);
+    }
   };
+
+  // Determinar si el botón debe estar habilitado
+  const canConfirm = mode === 'claim' 
+    ? !loading && !error && tarjetas.length > 0 && selectedTarjeta !== '' && confirmed && !isClaiming
+    : false; // En modo view siempre está deshabilitado
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -103,8 +140,8 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
         >
           <div className="w-full h-full flex flex-col p-6">
             {/* Título */}
-            <h2 className="text-[#FFF000] text-xl font-bold mb-6">
-              Detalle del Claim {claimId}
+            <h2 className="text-[#FFF100] text-xl font-bold mb-6">
+              {mode === 'claim' ? 'Solicitar Comisión' : `Detalle del Claim ${claimId}`}
             </h2>
 
             {/* Select de tarjeta */}
@@ -155,39 +192,49 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
             <div className="mb-4">
               <Input
                 variant="kivoo-glass"
-                value={monto.toFixed(2)}
+                value={monto.toString()}
                 disabled
                 placeholder="0.00"
                 rightIcon={<MoneyCircleIcon size={24} />}
               />
             </div>
 
-            {/* Checkbox de confirmación */}
-            <div className="flex items-center space-x-2 mb-6">
-              <Checkbox
-                id="confirm"
-                checked={confirmed}
-                onCheckedChange={(checked) => setConfirmed(checked as boolean)}
-              />
-              <label
-                htmlFor="confirm"
-                className="text-sm text-white leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Confirmo que deseo cargar este monto a mi tarjeta
-              </label>
-            </div>
+            {/* Checkbox de confirmación - Solo en modo claim */}
+            {mode === 'claim' && (
+              <div className="flex items-center space-x-2 mb-6">
+                <Checkbox
+                  id="confirm"
+                  checked={confirmed}
+                  onCheckedChange={(checked) => setConfirmed(checked as boolean)}
+                  disabled={loading || error !== null || tarjetas.length === 0}
+                />
+                <label
+                  htmlFor="confirm"
+                  className={`text-sm text-white leading-none ${(loading || error !== null || tarjetas.length === 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  Confirmo que deseo solicitar esta comisión
+                </label>
+              </div>
+            )}
 
             {/* Botón de confirmación */}
-            <div className="mt-auto">
-              <Button
-                variant="yellow"
-                className="w-full font-semibold"
-                onClick={handleConfirm}
-                disabled={true} // Deshabilitado por ahora según requerimiento
-              >
-                Confirmar claim
-              </Button>
-            </div>
+            {mode === 'claim' && (
+              <div className="mt-auto">
+                <Button
+                  variant="yellow"
+                  className="w-full font-semibold"
+                  onClick={handleConfirm}
+                  disabled={!canConfirm}
+                >
+                  {isClaiming ? 'Solicitando...' : 'Solicitar'}
+                </Button>
+                {(error || (tarjetas.length === 0 && !loading)) && (
+                  <p className="text-red-500 text-xs mt-2 text-center">
+                    {error || 'No hay tarjetas disponibles para solicitar la comisión'}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </FoldedCard>
       </DialogContent>

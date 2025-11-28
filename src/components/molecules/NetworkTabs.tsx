@@ -23,16 +23,18 @@ const NetworkTabs: React.FC<NetworkTabsProps> = ({ activeTab, onTabChange, avail
     { id: 'b2t', label: 'B2T' },
   ];
 
+  // Filtrar solo las tabs disponibles
+  const availableTabsList = tabs.filter((tab) => availability[tab.id]);
+
   return (
     <div className="flex items-start">
       <div className="flex" style={{ gap: '1px' }}>
-        {tabs.map((tab) => {
-          const disabled = !availability[tab.id];
+        {availableTabsList.map((tab) => {
           return (
             <div 
               key={tab.id} 
-              onClick={() => !disabled && onTabChange(tab.id)} 
-              className={disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} 
+              onClick={() => onTabChange(tab.id)} 
+              className="cursor-pointer" 
               style={{ width: '158px' }}
             >
               <FoldedTabCard

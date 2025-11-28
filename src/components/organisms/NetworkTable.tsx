@@ -18,6 +18,7 @@ interface NetworkTableProps {
     authLevel?: number;
     levelInSubtree?: number;
     level?: number;
+    profileIconUrl?: string; // Para mostrar icono en líderes B2B
   }>;
   activeTab: 'b2c' | 'b2b' | 'b2t';
   activeLevel: 1 | 2 | 3;
@@ -45,10 +46,15 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
       {items.map((item) => {
         const itemLevel = (item as any).levelInSubtree ?? (item as any).level ?? activeLevel;
         const authLevel = (item as any).authLevel ?? (item as any).level ?? activeLevel;
-        const canExpand = !disableExpand && (!hasDepthLimit || authLevel < 3) && (item.totalDescendants ?? 0) > 0;
+        // Si no hay límite de profundidad (usuario B2B en tab B2B), permitir expandir si tiene descendientes (sin importar el nivel)
+        // Si hay límite de profundidad, solo permitir expandir si authLevel < 3
+        const hasDescendants = item.hasDescendants ?? (item.totalDescendants ?? 0) > 0;
+        // Para usuarios B2B en tab B2B (hasDepthLimit = false), permitir expandir si tiene descendientes sin importar el nivel
+        // Para otros casos, solo permitir si authLevel < 3
+        const canExpand = !disableExpand && hasDescendants && (hasDepthLimit ? authLevel < 3 : true);
         const isExpanded = Array.isArray(childrenByParent[item.id]);
         const isLoading = loadingTreeUserId === item.id;
-        const hasDescendants = item.hasDescendants ?? (item.totalDescendants ?? 0) > 0;
+        // Si no hay límite de profundidad, permitir ver árbol si tiene descendientes
         const canViewTree = !disableViewTree && (!hasDepthLimit || authLevel < 3) && hasDescendants;
         const itemError = parentErrors[item.id];
 
@@ -58,7 +64,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
           <InfoBanner className="w-full h-16" backgroundColor={isExpanded ? "#3c3c3c" : "#212020"}>
             <div className="w-full flex items-center px-6 py-2">
               <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm text-white">
-                <div className="relative flex items-center justify-center pl-6">
+                <div className="relative flex items-center justify-center pl-6 gap-2">
                   {canExpand && (
                     <DropDownTringle 
                       className="absolute left-0 cursor-pointer" 
@@ -69,11 +75,41 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                       }}
                     />
                   )}
+                  {/* Mostrar icono si es tab B2B y tiene profileIconUrl */}
+                  {activeTab === 'b2b' && item.profileIconUrl && (
+                    <div className="flex-shrink-0 relative" style={{ width: '32px', height: '32px', overflow: 'hidden', borderRadius: '50%' }}>
+                      <svg 
+                        width="32" 
+                        height="32" 
+                        viewBox="0 0 32 32" 
+                        fill="none" 
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="absolute inset-0 pointer-events-none"
+                      >
+                        <defs>
+                          <clipPath id={`clip-circle-icon-${item.id}`}>
+                            <rect width="32" height="32" rx="16" fill="white"/>
+                          </clipPath>
+                        </defs>
+                      </svg>
+                      <img 
+                        src={item.profileIconUrl}
+                        alt=""
+                        style={{
+                          width: 'auto',
+                          height: 'auto',
+                          maxWidth: 'none',
+                          maxHeight: 'none',
+                          objectFit: 'none'
+                        }}
+                      />
+                    </div>
+                  )}
                   <span
                     className="block w-full text-center truncate"
-                    title={item.email || `${item.name}@email.com`}
+                    title={item.email || item.name}
                   >
-                    {item.email || `${item.name}@email.com`}
+                    {item.email || item.name}
                   </span>
                 </div>
                 <div className="text-center">
@@ -111,15 +147,18 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
               </div>
             </div>
           </InfoBanner>
-          {Array.isArray(childrenByParent[item.id]) && (
-            <div className="space-y-2" style={{ marginLeft: `${childIndentPx}px` }}>
-              {childrenByParent[item.id].map((child) => {
+          {Array.isArray(childrenByParent[item.id]) && (() => {
+            return (
+              <div className="space-y-2" style={{ marginLeft: `${childIndentPx}px` }}>
+                {childrenByParent[item.id].map((child) => {
                 const childLevel = (child as any).levelInSubtree ?? (child as any).level ?? (hasDepthLimit ? Math.min(itemLevel + 1, 3) : itemLevel + 1);
                 const childAuthLevel = (child as any).authLevel ?? (child as any).level ?? (hasDepthLimit ? Math.min(authLevel + 1, 3) : authLevel + 1);
-                const childCanExpand = !disableExpand && (!hasDepthLimit || childAuthLevel < 3) && (child.totalDescendants ?? 0) > 0;
+                // Si no hay límite de profundidad (usuario B2B en tab B2B), permitir expandir si tiene descendientes (sin importar el nivel)
+                const childHasDescendants = (child as any).hasDescendants ?? (child.totalDescendants ?? 0) > 0;
+                const childCanExpand = !disableExpand && childHasDescendants && (hasDepthLimit ? childAuthLevel < 3 : true);
                 const childExpanded = Array.isArray(childrenByParent[child.id]);
                 const childIsLoading = loadingTreeUserId === child.id;
-                const childHasDescendants = (child as any).hasDescendants ?? (child.totalDescendants ?? 0) > 0;
+                // Si no hay límite de profundidad, permitir ver árbol si tiene descendientes
                 const childCanViewTree = !disableViewTree && (!hasDepthLimit || childAuthLevel < 3) && childHasDescendants;
                 const childError = parentErrors[child.id];
 
@@ -168,31 +207,158 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                       </div>
                     </div>
                   </InfoBanner>
-                  {Array.isArray(childrenByParent[child.id]) && (
-                    <div className="space-y-2" style={{ marginLeft: `${Math.round(childIndentPx * 1.2)}px` }}>
-                      {childrenByParent[child.id].map(grand => (
-                        <InfoBanner key={grand.id} className="w-full h-16" backgroundColor="#3c3c3c">
-                          <div className="w-full flex items-center px-6 py-2">
-                            <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm text-white">
-                              <div className="relative pl-10 text-left truncate" title={grand.email || `${grand.name}@email.com`}>{grand.email || `${grand.name}@email.com`}</div>
-                              <div className="text-center">{grand.createdAt ? new Date(grand.createdAt).toISOString().slice(0,10) : '—'}</div>
-                              <div className="flex items-center justify-center">
-                                {(() => {
-                                  const grandLevel = (grand as any).authLevel ?? (grand as any).level ?? 3;
-                                  if (grandLevel === 1) return <LevelOneTag />;
-                                  if (grandLevel === 2) return <LevelTwoTag />;
-                                  if (grandLevel === 3) return <LevelThreeTag />;
-                                  return <LevelFourPlusTag level={grandLevel} />;
-                                })()}
-                              </div>
-                              <div className="text-center">Resumen</div>
-                              <div className="text-center">$0.00</div>
-                              <div className="text-right">{/* Nivel 3 no tiene "Ver red" */}</div>
+                  {Array.isArray(childrenByParent[child.id]) && (() => {
+                    return (
+                      <div className="space-y-2" style={{ marginLeft: `${Math.round(childIndentPx * 1.2)}px` }}>
+                        {childrenByParent[child.id].map(grand => {
+                          // Calcular si el nieto puede expandir (para usuarios B2B en tab B2B sin límite de profundidad)
+                          const grandLevel = (grand as any).levelInSubtree ?? (grand as any).level ?? (grand as any).authLevel ?? 3;
+                          const grandAuthLevel = (grand as any).authLevel ?? (grand as any).level ?? grandLevel;
+                          const grandHasDescendants = (grand as any).hasDescendants ?? (grand.totalDescendants ?? 0) > 0;
+                          const grandCanExpand = !disableExpand && grandHasDescendants && (hasDepthLimit ? grandAuthLevel < 3 : true);
+                          const grandExpanded = Array.isArray(childrenByParent[grand.id]);
+                          const grandIsLoading = loadingTreeUserId === grand.id;
+                          const grandCanViewTree = !disableViewTree && (!hasDepthLimit || grandAuthLevel < 3) && grandHasDescendants;
+                          const grandError = parentErrors[grand.id];
+                          
+                          return (
+                            <div key={grand.id} className="space-y-2">
+                              <InfoBanner className="w-full h-16" backgroundColor="#3c3c3c">
+                                <div className="w-full flex items-center px-6 py-2">
+                                  <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm text-white">
+                                    <div className="relative flex items-center justify-center pl-6">
+                                      {grandCanExpand && (
+                                        <DropDownTringle 
+                                          className="absolute left-0 cursor-pointer" 
+                                          isExpanded={grandExpanded}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            onToggleExpand && onToggleExpand(grand.id, grandAuthLevel as 1 | 2 | 3);
+                                          }}
+                                        />
+                                      )}
+                                      <span
+                                        className="block w-full text-center truncate"
+                                        title={grand.email || `${grand.name}@email.com`}
+                                      >
+                                        {grand.email || `${grand.name}@email.com`}
+                                      </span>
+                                    </div>
+                                    <div className="text-center">{grand.createdAt ? new Date(grand.createdAt).toISOString().slice(0,10) : '—'}</div>
+                                    <div className="flex items-center justify-center">
+                                      {grandAuthLevel === 1 && <LevelOneTag />}
+                                      {grandAuthLevel === 2 && <LevelTwoTag />}
+                                      {grandAuthLevel === 3 && <LevelThreeTag />}
+                                      {grandAuthLevel > 3 && <LevelFourPlusTag level={grandAuthLevel} />}
+                                    </div>
+                                    <div className="text-center">Resumen</div>
+                                    <div className="text-center">$0.00</div>
+                                    <div className="text-right pr-6">
+                                      {grandCanViewTree ? (
+                                        <div className="flex items-center justify-end gap-2">
+                                          <span className={`text-[#FFF100] ${grandIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !grandIsLoading && onViewTree && onViewTree(grand.id)}>
+                                            Ver árbol
+                                          </span>
+                                          {grandIsLoading && <Spinner className="size-4 text-[#FFF100]" />}
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                </div>
+                              </InfoBanner>
+                              {Array.isArray(childrenByParent[grand.id]) && (
+                                <div className="space-y-2" style={{ marginLeft: `${Math.round(childIndentPx * 1.4)}px` }}>
+                                  {childrenByParent[grand.id].map(greatGrand => {
+                                    // Calcular si el bisnieto puede expandir (para usuarios B2B en tab B2B sin límite de profundidad)
+                                    const greatGrandLevel = (greatGrand as any).levelInSubtree ?? (greatGrand as any).level ?? (greatGrand as any).authLevel ?? 4;
+                                    const greatGrandAuthLevel = (greatGrand as any).authLevel ?? (greatGrand as any).level ?? greatGrandLevel;
+                                    const greatGrandHasDescendants = (greatGrand as any).hasDescendants ?? (greatGrand.totalDescendants ?? 0) > 0;
+                                    const greatGrandCanExpand = !disableExpand && greatGrandHasDescendants && (hasDepthLimit ? greatGrandAuthLevel < 3 : true);
+                                    const greatGrandExpanded = Array.isArray(childrenByParent[greatGrand.id]);
+                                    const greatGrandIsLoading = loadingTreeUserId === greatGrand.id;
+                                    const greatGrandCanViewTree = !disableViewTree && (!hasDepthLimit || greatGrandAuthLevel < 3) && greatGrandHasDescendants;
+                                    
+                                    return (
+                                      <div key={greatGrand.id} className="space-y-2">
+                                        <InfoBanner className="w-full h-16" backgroundColor="#3c3c3c">
+                                          <div className="w-full flex items-center px-6 py-2">
+                                            <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm text-white">
+                                              <div className="relative flex items-center justify-center pl-6">
+                                                {greatGrandCanExpand && (
+                                                  <DropDownTringle 
+                                                    className="absolute left-0 cursor-pointer" 
+                                                    isExpanded={greatGrandExpanded}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      onToggleExpand && onToggleExpand(greatGrand.id, greatGrandAuthLevel as 1 | 2 | 3);
+                                                    }}
+                                                  />
+                                                )}
+                                                <span
+                                                  className="block w-full text-center truncate"
+                                                  title={greatGrand.email || `${greatGrand.name}@email.com`}
+                                                >
+                                                  {greatGrand.email || `${greatGrand.name}@email.com`}
+                                                </span>
+                                              </div>
+                                              <div className="text-center">{greatGrand.createdAt ? new Date(greatGrand.createdAt).toISOString().slice(0,10) : '—'}</div>
+                                              <div className="flex items-center justify-center">
+                                                {greatGrandAuthLevel === 1 && <LevelOneTag />}
+                                                {greatGrandAuthLevel === 2 && <LevelTwoTag />}
+                                                {greatGrandAuthLevel === 3 && <LevelThreeTag />}
+                                                {greatGrandAuthLevel > 3 && <LevelFourPlusTag level={greatGrandAuthLevel} />}
+                                              </div>
+                                              <div className="text-center">Resumen</div>
+                                              <div className="text-center">$0.00</div>
+                                              <div className="text-right pr-6">
+                                                {greatGrandCanViewTree ? (
+                                                  <div className="flex items-center justify-end gap-2">
+                                                    <span className={`text-[#FFF100] ${greatGrandIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !greatGrandIsLoading && onViewTree && onViewTree(greatGrand.id)}>
+                                                      Ver árbol
+                                                    </span>
+                                                    {greatGrandIsLoading && <Spinner className="size-4 text-[#FFF100]" />}
+                                                  </div>
+                                                ) : null}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </InfoBanner>
+                                        {/* A partir del nivel 5, no se incrementa más la indentación */}
+                                        {Array.isArray(childrenByParent[greatGrand.id]) && (
+                                          <div className="space-y-2" style={{ marginLeft: `${Math.round(childIndentPx * 1.4)}px` }}>
+                                            {childrenByParent[greatGrand.id].map(greatGreatGrand => (
+                                              <InfoBanner key={greatGreatGrand.id} className="w-full h-16" backgroundColor="#3c3c3c">
+                                                <div className="w-full flex items-center px-6 py-2">
+                                                  <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm text-white">
+                                                    <div className="relative pl-10 text-left truncate" title={greatGreatGrand.email || `${greatGreatGrand.name}@email.com`}>{greatGreatGrand.email || `${greatGreatGrand.name}@email.com`}</div>
+                                                    <div className="text-center">{greatGreatGrand.createdAt ? new Date(greatGreatGrand.createdAt).toISOString().slice(0,10) : '—'}</div>
+                                                    <div className="flex items-center justify-center">
+                                                      {(() => {
+                                                        const greatGreatGrandLevel = (greatGreatGrand as any).authLevel ?? (greatGreatGrand as any).level ?? 5;
+                                                        if (greatGreatGrandLevel === 1) return <LevelOneTag />;
+                                                        if (greatGreatGrandLevel === 2) return <LevelTwoTag />;
+                                                        if (greatGreatGrandLevel === 3) return <LevelThreeTag />;
+                                                        return <LevelFourPlusTag level={greatGreatGrandLevel} />;
+                                                      })()}
+                                                    </div>
+                                                    <div className="text-center">Resumen</div>
+                                                    <div className="text-center">$0.00</div>
+                                                    <div className="text-right">{/* Nivel 5+ no tiene "Ver red" */}</div>
+                                                  </div>
+                                                </div>
+                                              </InfoBanner>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        </InfoBanner>
-                      ))}
-                      {!disableExpand && (
+                          );
+                        })}
+                        {!disableExpand && (
                         childError ? (
                           <div className="w-full flex items-center justify-center py-2 text-[#FF7A7A] text-sm text-center px-4">
                             {childError}
@@ -213,9 +379,10 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                             </button>
                           </div>
                         ) : null
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
                 );
               })}
@@ -242,7 +409,8 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                 ) : null
               )}
             </div>
-          )}
+            );
+          })()}
         </div>
         );
       })}

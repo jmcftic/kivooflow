@@ -36,6 +36,7 @@ interface ResumenCardProps {
   weeklyData?: WeeklyData[];
   onDateFilterChange?: (filter: DateFilter) => void;
   currentDateFilter?: DateFilter;
+  model?: string | null; // Modelo seleccionado (B2C, B2B, B2T)
 }
 
 const chartConfig = {
@@ -78,8 +79,32 @@ const ResumenCard: React.FC<ResumenCardProps> = ({
   monthlyData = [],
   weeklyData = [],
   onDateFilterChange,
-  currentDateFilter = "last_2_months"
+  currentDateFilter = "last_2_months",
+  model
 }) => {
+  // Obtener el modelo del usuario desde localStorage
+  const getUserModel = (): string | null => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const userData = JSON.parse(userStr);
+        return userData?.mlmModel || userData?.mlm_model || userData?.networkModel || userData?.network_model || null;
+      }
+    } catch (error) {
+      console.error('Error obteniendo modelo del usuario:', error);
+    }
+    return null;
+  };
+
+  const userModel = getUserModel();
+  
+  // Detectar si es B2C viendo la pestaña B2B
+  const isB2CViewingB2B = userModel?.toLowerCase() === 'b2c' && model?.toLowerCase() === 'b2b';
+  
+  // Si es B2C viendo B2B, solo mostrar recargas
+  const filteredChartConfig = isB2CViewingB2B 
+    ? { recargas: chartConfig.recargas } 
+    : chartConfig;
   // Inicializar el rango basado en el currentDateFilter
   const initialRange = DATE_FILTER_TO_RANGE[currentDateFilter] || "2months";
   const [selectedRange, setSelectedRange] = useState<RangeOption>(initialRange as RangeOption);
@@ -258,23 +283,39 @@ const ResumenCard: React.FC<ResumenCardProps> = ({
             </div>
           ) : (
             <ChartContainer
-              config={chartConfig}
+              config={filteredChartConfig}
               className="aspect-auto h-full w-full"
             >
               <AreaChart data={filteredData}>
               <defs>
-                <linearGradient id="fillVentas" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-ventas)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-ventas)"
-                    stopOpacity={0.1}
-                  />
-                </linearGradient>
+                {!isB2CViewingB2B && (
+                  <>
+                    <linearGradient id="fillVentas" x1="0" y1="0" x2="0" y2="1">
+                      <stop
+                        offset="5%"
+                        stopColor="var(--color-ventas)"
+                        stopOpacity={0.8}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="var(--color-ventas)"
+                        stopOpacity={0.1}
+                      />
+                    </linearGradient>
+                    <linearGradient id="fillComisiones" x1="0" y1="0" x2="0" y2="1">
+                      <stop
+                        offset="5%"
+                        stopColor="var(--color-comisiones)"
+                        stopOpacity={0.8}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="var(--color-comisiones)"
+                        stopOpacity={0.1}
+                      />
+                    </linearGradient>
+                  </>
+                )}
                 <linearGradient id="fillRecargas" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="5%"
@@ -284,18 +325,6 @@ const ResumenCard: React.FC<ResumenCardProps> = ({
                   <stop
                     offset="95%"
                     stopColor="var(--color-recargas)"
-                    stopOpacity={0.1}
-                  />
-                </linearGradient>
-                <linearGradient id="fillComisiones" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-comisiones)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-comisiones)"
                     stopOpacity={0.1}
                   />
                 </linearGradient>
@@ -347,9 +376,18 @@ const ResumenCard: React.FC<ResumenCardProps> = ({
                         </div>
                       )}
                       <div className="space-y-1.5">
-                        {props.payload.map((item, index) => {
+                        {props.payload
+                          .filter((item) => {
+                            // Si es B2C viendo B2B, solo mostrar recargas
+                            if (isB2CViewingB2B) {
+                              const key = item.dataKey || item.name || 'value';
+                              return key === 'recargas';
+                            }
+                            return true;
+                          })
+                          .map((item, index) => {
                           const key = item.dataKey || item.name || 'value';
-                          const itemConfig = chartConfig[key as keyof typeof chartConfig];
+                          const itemConfig = filteredChartConfig[key as keyof typeof filteredChartConfig];
                           
                           // Obtener el valor original según el campo
                           let rawValue = 0;
@@ -398,25 +436,29 @@ const ResumenCard: React.FC<ResumenCardProps> = ({
                   );
                 }}
               />
-              <Area
-                type="monotone"
-                dataKey="ventas"
-                fill="url(#fillVentas)"
-                stroke="var(--color-ventas)"
-                strokeWidth={2}
-              />
+              {!isB2CViewingB2B && (
+                <>
+                  <Area
+                    type="monotone"
+                    dataKey="ventas"
+                    fill="url(#fillVentas)"
+                    stroke="var(--color-ventas)"
+                    strokeWidth={2}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="comisiones"
+                    fill="url(#fillComisiones)"
+                    stroke="var(--color-comisiones)"
+                    strokeWidth={2}
+                  />
+                </>
+              )}
               <Area
                 type="monotone"
                 dataKey="recargas"
                 fill="url(#fillRecargas)"
                 stroke="var(--color-recargas)"
-                strokeWidth={2}
-              />
-              <Area
-                type="monotone"
-                dataKey="comisiones"
-                fill="url(#fillComisiones)"
-                stroke="var(--color-comisiones)"
                 strokeWidth={2}
               />
               <ChartLegend content={<ChartLegendContent />} />

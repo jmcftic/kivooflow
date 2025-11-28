@@ -27,7 +27,7 @@ export async function getDashboardMetrics(model: string, dateFilter?: DateFilter
     activeReferrals: data?.activeReferrals ?? 0,
     lastMonthCommissions: data?.lastMonthCommissions ?? 0,
     totalVolume: data?.totalVolume ?? 0,
-    currency: data?.currency ?? 'MXN',
+    currency: data?.currency ?? (modelUpper === 'B2B' ? 'USDT' : 'MXN'), // B2B usa USDT por defecto
     lastUpdated: data?.lastUpdated ?? new Date().toISOString(),
     resume: data?.resume ? {
       commissions: data.resume.commissions ?? 0,
@@ -43,10 +43,10 @@ export async function getDashboardMetrics(model: string, dateFilter?: DateFilter
       id: tx.id ?? '',
       userId: tx.userId ?? 0,
       userName: tx.userName ?? '',
-      userEmail: tx.userEmail ?? '',
-      cryptoAmount: tx.cryptoAmount ?? 0,
+      userEmail: tx.userEmail ?? 'N/A', // Para empresas B2B viene como 'N/A'
+      cryptoAmount: tx.cryptoAmount ?? 0, // Para comisiones es 0
       localAmount: tx.localAmount ?? 0,
-      localCurrency: tx.localCurrency ?? 'MXN',
+      localCurrency: tx.localCurrency ?? (modelUpper === 'B2B' ? 'USDT' : 'MXN'), // B2B usa USDT
       cryptocurrency: tx.cryptocurrency ?? 'USDT',
       createdAt: tx.createdAt ?? new Date().toISOString(),
       status: tx.status ?? '',

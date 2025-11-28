@@ -158,8 +158,16 @@ class ApiService {
     
     if (params) {
       Object.keys(params).forEach(key => {
-        if (params[key] !== undefined && params[key] !== null) {
-          url.searchParams.append(key, params[key]);
+        const value = params[key];
+        if (value !== undefined && value !== null) {
+          // Si el valor es un array, agregar cada elemento como un parámetro separado
+          if (Array.isArray(value)) {
+            value.forEach(item => {
+              url.searchParams.append(key, String(item));
+            });
+          } else {
+            url.searchParams.append(key, String(value));
+          }
         }
       });
     }
