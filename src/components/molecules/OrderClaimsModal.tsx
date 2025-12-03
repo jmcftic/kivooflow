@@ -7,7 +7,11 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
-import { OrderClaimItem } from "@/types/network";
+import { 
+  OrderClaimItem, 
+  MlmTransactionOrderCalculationDetails,
+  B2BCommissionOrderCalculationDetails 
+} from "@/types/network";
 import { maskCardNumber } from "@/lib/utils";
 
 interface OrderClaimsModalProps {
@@ -235,30 +239,37 @@ const OrderClaimsModal: React.FC<OrderClaimsModalProps> = ({
                       <div className="mt-4 pt-4 border-t border-white/10">
                         <h4 className="text-white font-semibold mb-2 text-sm">Detalles MLM Transaction</h4>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                          {calcDetails?.ancestorLevelName && (
-                            <div>
-                              <span className="text-white/60 block mb-1">Nivel Ancestro</span>
-                              <span className="text-white">{calcDetails.ancestorLevelName}</span>
-                            </div>
-                          )}
-                          {calcDetails?.ancestorMlmCode && (
-                            <div>
-                              <span className="text-white/60 block mb-1">Código MLM</span>
-                              <span className="text-white">{calcDetails.ancestorMlmCode}</span>
-                            </div>
-                          )}
-                          {calcDetails?.generatedBy && (
-                            <div>
-                              <span className="text-white/60 block mb-1">Generado por</span>
-                              <span className="text-white">#{calcDetails.generatedBy}</span>
-                            </div>
-                          )}
-                          {calcDetails?.cryptocurrency && (
-                            <div>
-                              <span className="text-white/60 block mb-1">Criptomoneda</span>
-                              <span className="text-white">{calcDetails.cryptocurrency}</span>
-                            </div>
-                          )}
+                          {(() => {
+                            const mlmDetails = calcDetails as MlmTransactionOrderCalculationDetails;
+                            return (
+                              <>
+                                {mlmDetails?.ancestorLevelName && (
+                                  <div>
+                                    <span className="text-white/60 block mb-1">Nivel Ancestro</span>
+                                    <span className="text-white">{mlmDetails.ancestorLevelName}</span>
+                                  </div>
+                                )}
+                                {mlmDetails?.ancestorMlmCode && (
+                                  <div>
+                                    <span className="text-white/60 block mb-1">Código MLM</span>
+                                    <span className="text-white">{mlmDetails.ancestorMlmCode}</span>
+                                  </div>
+                                )}
+                                {mlmDetails?.generatedBy && (
+                                  <div>
+                                    <span className="text-white/60 block mb-1">Generado por</span>
+                                    <span className="text-white">#{mlmDetails.generatedBy}</span>
+                                  </div>
+                                )}
+                                {mlmDetails?.cryptocurrency && (
+                                  <div>
+                                    <span className="text-white/60 block mb-1">Criptomoneda</span>
+                                    <span className="text-white">{mlmDetails.cryptocurrency}</span>
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     )}
@@ -267,53 +278,60 @@ const OrderClaimsModal: React.FC<OrderClaimsModalProps> = ({
                       <div className="mt-4 pt-4 border-t border-white/10">
                         <h4 className="text-white font-semibold mb-2 text-sm">Detalles B2B Commission</h4>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                          {calcDetails?.teamName && (
-                            <div>
-                              <span className="text-white/60 block mb-1">Equipo</span>
-                              <span className="text-white">{calcDetails.teamName}</span>
-                            </div>
-                          )}
-                          {calcDetails?.level !== undefined && (
-                            <div>
-                              <span className="text-white/60 block mb-1">Nivel</span>
-                              <span className="text-white">{calcDetails.level}</span>
-                            </div>
-                          )}
-                          {calcDetails?.totalVolume !== undefined && (
-                            <div>
-                              <span className="text-white/60 block mb-1">Volumen Total</span>
-                              <span className="text-white">
-                                {formatCurrency(calcDetails.totalVolume, 'MXN')}
-                              </span>
-                            </div>
-                          )}
-                          {calcDetails?.periodStartDate && calcDetails?.periodEndDate && (
-                            <div className="col-span-2 md:col-span-3">
-                              <span className="text-white/60 block mb-1">Período</span>
-                              <span className="text-white">
-                                {formatDate(calcDetails.periodStartDate)} - {formatDate(calcDetails.periodEndDate)}
-                              </span>
-                            </div>
-                          )}
-                          {calcDetails?.transactions && calcDetails.transactions.length > 0 && (
-                            <div className="col-span-2 md:col-span-3 mt-2">
-                              <span className="text-white/60 block mb-2">Transacciones ({calcDetails.transactions.length})</span>
-                              <div className="space-y-2 max-h-32 overflow-y-auto">
-                                {calcDetails.transactions.map((tx, txIndex) => (
-                                  <div key={txIndex} className="bg-white/5 p-2 rounded text-xs">
-                                    <div className="flex justify-between">
-                                      <span className="text-white/60">Volumen:</span>
-                                      <span className="text-white">{formatCurrency(tx.volumeMXN, 'MXN')}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-white/60">Esperado:</span>
-                                      <span className="text-white">{tx.expectedAmount} {tx.cryptocurrency}</span>
+                          {(() => {
+                            const b2bDetails = calcDetails as B2BCommissionOrderCalculationDetails;
+                            return (
+                              <>
+                                {b2bDetails?.teamName && (
+                                  <div>
+                                    <span className="text-white/60 block mb-1">Equipo</span>
+                                    <span className="text-white">{b2bDetails.teamName}</span>
+                                  </div>
+                                )}
+                                {b2bDetails?.level !== undefined && (
+                                  <div>
+                                    <span className="text-white/60 block mb-1">Nivel</span>
+                                    <span className="text-white">{b2bDetails.level}</span>
+                                  </div>
+                                )}
+                                {b2bDetails?.totalVolume !== undefined && (
+                                  <div>
+                                    <span className="text-white/60 block mb-1">Volumen Total</span>
+                                    <span className="text-white">
+                                      {formatCurrency(b2bDetails.totalVolume, 'MXN')}
+                                    </span>
+                                  </div>
+                                )}
+                                {b2bDetails?.periodStartDate && b2bDetails?.periodEndDate && (
+                                  <div className="col-span-2 md:col-span-3">
+                                    <span className="text-white/60 block mb-1">Período</span>
+                                    <span className="text-white">
+                                      {formatDate(b2bDetails.periodStartDate)} - {formatDate(b2bDetails.periodEndDate)}
+                                    </span>
+                                  </div>
+                                )}
+                                {b2bDetails?.transactions && b2bDetails.transactions.length > 0 && (
+                                  <div className="col-span-2 md:col-span-3 mt-2">
+                                    <span className="text-white/60 block mb-2">Transacciones ({b2bDetails.transactions.length})</span>
+                                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                                      {b2bDetails.transactions.map((tx, txIndex) => (
+                                        <div key={txIndex} className="bg-white/5 p-2 rounded text-xs">
+                                          <div className="flex justify-between">
+                                            <span className="text-white/60">Volumen:</span>
+                                            <span className="text-white">{formatCurrency(tx.volumeMXN, 'MXN')}</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span className="text-white/60">Esperado:</span>
+                                            <span className="text-white">{tx.expectedAmount} {tx.cryptocurrency}</span>
+                                          </div>
+                                        </div>
+                                      ))}
                                     </div>
                                   </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     )}
