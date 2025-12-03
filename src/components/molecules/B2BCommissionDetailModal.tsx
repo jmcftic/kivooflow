@@ -40,6 +40,16 @@ const formatCurrency = (value?: number) => {
   return `$${formattedValue}`;
 };
 
+const formatVolume = (value?: number) => {
+  if (value === undefined || value === null) return "0";
+  // Truncar a 3 decimales sin redondear
+  const numericValue = typeof value === 'number' ? value : parseFloat(String(value)) || 0;
+  const valueStr = numericValue.toString();
+  const [integerPart, decimalPart = ""] = valueStr.split(".");
+  const truncatedDecimals = decimalPart.slice(0, 3);
+  return truncatedDecimals ? `${integerPart}.${truncatedDecimals}` : integerPart;
+};
+
 const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
   open,
   onOpenChange,
@@ -59,10 +69,8 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
     status,
     periodStartDate,
     periodEndDate,
-    calculationDetails,
+    commissionPercentage,
   } = commission;
-
-  const transactions = calculationDetails?.transactions ?? [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -73,7 +81,19 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          {/* Rango de fechas considerado - Más visible */}
+          <div className="p-4 bg-[#2A2A2A] rounded-lg border border-white/10">
+            <p className="text-[#CBCACA] text-xs mb-2 uppercase tracking-wide">
+              Rango de fechas considerado para la comisión
+            </p>
+            <p className="text-white font-semibold text-sm">
+              {periodStartDate && periodEndDate 
+                ? `${formatDate(periodStartDate)} - ${formatDate(periodEndDate)}`
+                : "—"}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <div>
               <p className="text-[#CBCACA] text-xs mb-1">Equipo</p>
               <p className="text-white font-medium">{teamName || "—"}</p>
@@ -85,80 +105,43 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
             <div>
               <p className="text-[#CBCACA] text-xs mb-1">Estado</p>
               <p className="text-white font-medium capitalize">
-                {status ?? "—"}
-              </p>
-            </div>
-            <div>
-              <p className="text-[#CBCACA] text-xs mb-1">Periodo</p>
-              <p className="text-white font-medium">
-                {`${formatDate(periodStartDate)} - ${formatDate(periodEndDate)}`}
+                {status?.toLowerCase() === 'available' ? 'Disponible' : (status ?? "—")}
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div className="p-4 bg-[#2A2A2A] rounded-lg">
-              <p className="text-[#CBCACA] text-xs mb-1">Monto estimado</p>
+              <p className="text-[#CBCACA] text-xs mb-1">Comisión</p>
               <p className="text-[#32d74b] font-semibold">
                 {formatCurrency(commissionAmount)}
               </p>
             </div>
             <div className="p-4 bg-[#2A2A2A] rounded-lg">
               <p className="text-[#CBCACA] text-xs mb-1">Volumen total</p>
-              <p className="text-white font-semibold">
-                {totalVolume?.toString() ?? "0"}
+              <p className="text-[#FFF100] font-semibold">
+                {formatVolume(totalVolume)}
               </p>
             </div>
             <div className="p-4 bg-[#2A2A2A] rounded-lg">
+              <p className="text-[#CBCACA] text-xs mb-1">Porcentaje de comisión</p>
+              <p className="text-[#FF7A7A] font-semibold">
+                {commissionPercentage !== undefined && commissionPercentage !== null
+                  ? `${(commissionPercentage * 100).toFixed(2)}%`
+                  : '—'}
+              </p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="p-4 bg-[#2A2A2A] rounded-lg">
               <p className="text-[#CBCACA] text-xs mb-1">Transacciones</p>
               <p className="text-white font-semibold">
-                {totalTransactions ?? transactions.length}
+                {totalTransactions ?? 0}
               </p>
             </div>
           </div>
 
-          {transactions.length > 0 && (
-            <div className="space-y-3">
-              <p className="text-[#CBCACA] text-xs uppercase tracking-wide">
-                Transacciones consideradas
-              </p>
-              <div className="max-h-56 overflow-y-auto space-y-3 pr-2">
-                {transactions.map((tx, index) => (
-                  <div
-                    key={`${tx.transactionId}-${index}`}
-                    className={cn(
-                      "rounded-lg border border-white/5 p-3 text-xs md:text-sm",
-                      "bg-[#1A1A1A]"
-                    )}
-                  >
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                      <div>
-                        <p className="text-white font-medium">
-                          {tx.transactionId || "Transacción"}
-                        </p>
-                        <p className="text-[#CBCACA]">
-                          {formatDate(tx.createdAt)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-white font-semibold">
-                          Volumen MXN: {tx.volumeMXN ?? 0}
-                        </p>
-                        <p className="text-[#CBCACA]">
-                          Monto {tx.cryptocurrency}: {tx.receivedAmount ?? 0}
-                        </p>
-                      </div>
-                    </div>
-                    {tx.status && (
-                      <p className="text-[#CBCACA] text-xs mt-2">
-                        Estado: {tx.status}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
         <DialogFooter className="flex flex-col md:flex-row md:justify-between gap-3 pt-4">
           <Button
@@ -175,7 +158,7 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
               onClick={onConfirm}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Solicitando..." : "Solicitar comisión"}
+              {isSubmitting ? "Materializando..." : "Solicitar comisiones por volumen"}
             </Button>
           )}
         </DialogFooter>

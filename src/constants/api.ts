@@ -1,8 +1,8 @@
 // API Configuration
 // Uses VITE_API_URL from environment variables, falls back to localhost for development
 //export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://3.144.137.41:3001";
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "https://dev.kivooapp.co";
-//export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+//export const API_BASE_URL = import.meta.env.VITE_API_URL || "https://dev.kivooapp.co";
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 // API Endpoints
 export const API_ENDPOINTS = {
   AUTH: {
@@ -52,7 +52,12 @@ export const API_ENDPOINTS = {
     TEAM_DETAILS: "/network/team/:teamId/details",
     B2B_COMMISSIONS: "/network/b2c-from-b2b-commissions/available",
     CLAIM_B2B_COMMISSION: "/network/b2c-from-b2b-commissions/claim",
+    MATERIALIZE_B2B_COMMISSION: "/network/b2c-from-b2b-commissions/materialize",
     CLAIM_MLM_TRANSACTION: "/network/mlm-transactions/claim",
+    REQUEST_ALL_CLAIMS: "/network/claims/requestAll",
+    TOTAL_USDT: "/network/claims/total-usdt",
+    ORDERS: "/network/orders",
+    ORDER_CLAIMS: "/network/claim-orders/:id/claims",
   },
   DASHBOARD: {
     METRICS: "/dashboard/metrics",

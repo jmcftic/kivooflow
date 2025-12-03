@@ -132,4 +132,10 @@ html, body, #root {
   .action-text:disabled:hover {
     color: #FFF000;
   }
+
+  /* Clase para fuente Urbanist Medium */
+  .font-urbanist-medium {
+    font-family: 'Urbanist', sans-serif;
+    font-weight: 500; /* Medium */
+  }
 }

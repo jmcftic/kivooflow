@@ -1,18 +1,25 @@
-import React, { useState, useMemo } from "react";
-import { useInfiniteQuery, useQueryClient, useQuery } from "@tanstack/react-query";
+import React, { useState, useMemo, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ClaimItem from "../atoms/ClaimItem";
 import ClaimDetailModal from "../molecules/ClaimDetailModal";
 import B2BCommissionDetailModal from "../molecules/B2BCommissionDetailModal";
 import ClaimSuccessModal from "../molecules/ClaimSuccessModal";
+import NoCardsModal from "../molecules/NoCardsModal";
+import MaterializeSuccessModal from "../molecules/MaterializeSuccessModal";
 import { Spinner } from "@/components/ui/spinner";
-import { getClaims, getB2BCommissions, claimB2BCommission, claimMlmTransaction, getAvailableMlmModels } from "@/services/network";
+import { getClaims, getB2BCommissions, claimB2BCommission, materializeB2BCommission, claimMlmTransaction, getAvailableMlmModels } from "@/services/network";
 import { Claim, B2BCommission } from "@/types/network";
+import { maskCardNumber, maskFullName } from "@/lib/utils";
 
-type CommissionTabId = 'b2c' | 'b2b';
+type CommissionTabId = 'b2c' | 'b2b' | 'b2t';
 
 interface CommissionsListCardProps {
   className?: string;
-  activeTab?: CommissionTabId;
+  activeTab: CommissionTabId;
+  currentPage: number;
+  pageSize: number;
+  onSummaryChange?: (summary: { totalCommissions: number; gainsFromRecharges: number; gainsFromCards: number; totalCommissionsPercentageChange?: number; gainsFromRechargesPercentageChange?: number; gainsFromCardsPercentageChange?: number; totalGananciasPorReclamar?: number; claimedUltimoMes?: number } | null) => void;
+  onPaginationChange?: (data: { totalItems: number; totalPages: number }) => void;
 }
 
 // Mapear Claim del backend al formato esperado por ClaimItem
@@ -25,6 +32,10 @@ interface MappedClaim {
   nivel?: number; // Para comisiones B2B
   originalClaim?: Claim;
   originalB2BCommission?: B2BCommission;
+  userEmail?: string; // Email del usuario que generó la comisión
+  commissionType?: string; // Tipo de comisión: papa, abuelo, bis_abuelo, leader_retention
+  usuarioLabel?: string; // Label para la columna Usuario/Empresa
+  usuarioValue?: string; // Valor a mostrar (correo censurado o teamName)
 }
 
 const mapClaim = (claim: Claim): MappedClaim => {
@@ -38,10 +49,15 @@ const mapClaim = (claim: Claim): MappedClaim => {
     return status;
   };
 
-  // Para tarjeta, usar cryptoTransactionId si existe, sino mostrar un placeholder
-  const tarjeta = claim.cryptoTransactionId 
-    ? `**** ${String(claim.cryptoTransactionId).slice(-4)}`
-    : 'N/A';
+  // Para tarjeta, priorizar calculationDetails.DefaultCard.card_number
+  // Si no existe, usar cryptoTransactionId como fallback
+  let tarjeta = 'N/A';
+  
+  if (claim.calculationDetails?.DefaultCard?.card_number) {
+    tarjeta = maskCardNumber(claim.calculationDetails.DefaultCard.card_number);
+  } else if (claim.cryptoTransactionId) {
+    tarjeta = `**** ${String(claim.cryptoTransactionId).slice(-4)}`;
+  }
 
   // Calcular monto: commissionAmount + leaderMarkupAmount (si existe y no es 0)
   const commissionAmount = typeof claim.commissionAmount === 'number' 
@@ -54,6 +70,34 @@ const mapClaim = (claim: Claim): MappedClaim => {
   
   const monto = commissionAmount + leaderMarkupAmount;
 
+  // Obtener userEmail si está disponible (puede venir en calculationDetails, directamente en el claim, o en generatedBy)
+  // El email puede venir de diferentes lugares según el tipo de comisión
+  // Si no hay email pero hay userFullName, usaremos el userFullName censurado como alternativa
+  let userEmail: string | undefined = undefined;
+  
+  // Intentar obtener el email de diferentes fuentes
+  if ((claim as any).userEmail) {
+    userEmail = (claim as any).userEmail;
+  } else if (claim.calculationDetails && 'userEmail' in claim.calculationDetails) {
+    userEmail = (claim.calculationDetails as any).userEmail;
+  } else if ((claim as any).userEmail || (claim as any).email) {
+    userEmail = (claim as any).userEmail || (claim as any).email;
+  }
+  
+  // Si no hay email pero hay userFullName, usar el userFullName censurado como alternativa
+  if (!userEmail && claim.calculationDetails && 'userFullName' in claim.calculationDetails) {
+    const userFullName = (claim.calculationDetails as any).userFullName;
+    if (userFullName) {
+      userEmail = maskFullName(userFullName);
+    }
+  }
+
+  // Obtener correo censurado del backend si viene (puede venir como userEmail censurado)
+  // Si no viene censurado del backend, usar el userEmail que ya tenemos
+  const usuarioValue = (claim as any).userEmailCensored || (claim.calculationDetails && 'userEmailCensored' in claim.calculationDetails 
+    ? (claim.calculationDetails as any).userEmailCensored 
+    : userEmail);
+
   return {
     id: `CLM-${String(claim.id).padStart(3, '0')}`,
     fecha: claim.createdAt,
@@ -61,6 +105,9 @@ const mapClaim = (claim: Claim): MappedClaim => {
     estado: mapStatus(claim.status),
     monto,
     originalClaim: claim,
+    commissionType: claim.commissionType,
+    userEmail,
+    usuarioValue,
   };
 };
 
@@ -76,10 +123,44 @@ const mapB2BCommission = (commission: B2BCommission): MappedClaim => {
     return status;
   };
 
-  // Usar createdAt para la fecha
-  const fecha = commission.createdAt 
-    ? new Date(commission.createdAt).toLocaleDateString('es-MX')
-    : new Date().toLocaleDateString('es-MX');
+  // Función auxiliar para obtener fecha válida en formato ISO
+  const getValidDate = (dateString: string | null | undefined): string | null => {
+    if (!dateString || typeof dateString !== 'string' || dateString.trim() === '') {
+      return null;
+    }
+    
+    try {
+      const dateObj = new Date(dateString);
+      // Verificar que la fecha es válida
+      if (isNaN(dateObj.getTime())) {
+        return null;
+      }
+      
+      // Retornar la fecha en formato ISO para que ClaimItem la formatee
+      return dateObj.toISOString();
+    } catch (error) {
+      console.warn('Error parseando fecha:', dateString, error);
+      return null;
+    }
+  };
+
+  // Usar createdAt para la fecha con validación, con fallback a periodEndDate o periodStartDate
+  // Retornamos la fecha en formato ISO para que ClaimItem la formatee correctamente
+  let fecha = getValidDate(commission.createdAt);
+  
+  if (!fecha) {
+    fecha = getValidDate(commission.periodEndDate);
+  }
+  
+  if (!fecha) {
+    fecha = getValidDate(commission.periodStartDate);
+  }
+  
+  // Si aún no hay fecha válida, usar una fecha por defecto o 'N/A'
+  // Usamos una fecha por defecto en formato ISO para evitar "Invalid Date" en ClaimItem
+  if (!fecha) {
+    fecha = new Date().toISOString(); // Fecha actual como fallback
+  }
 
   // Si id es null, no mostrar ID
   const id = commission.id !== null 
@@ -94,57 +175,69 @@ const mapB2BCommission = (commission: B2BCommission): MappedClaim => {
     monto: commission.commissionAmount || 0,
     nivel: commission.level,
     originalB2BCommission: commission,
+    userEmail: commission.userEmail,
+    commissionType: commission.commissionType,
   };
 };
 
 // Función para obtener comisiones B2C (claims disponibles) de la API con paginación
 const fetchB2CCommissions = async ({ 
-  pageParam = 1 
+  page = 1,
+  pageSize = 10,
+  claimType
 }: { 
-  pageParam: number;
-}): Promise<{ data: MappedClaim[], nextPage: number | null, totalPages: number }> => {
-  const pageSize = 10;
-  // Filtrar solo por estado "available"
-  const response = await getClaims({ page: pageParam, pageSize, status: 'available' });
+  page: number;
+  pageSize: number;
+  claimType?: 'B2C' | 'B2B' | 'B2T';
+}): Promise<{ data: MappedClaim[], totalItems: number, totalPages: number, summary?: any }> => {
+  // Filtrar solo por estado "available" y agregar claimType
+  const response = await getClaims({ page, pageSize, status: 'available', claimType });
   
   const mappedData = response.items.map(mapClaim);
-  const hasMore = pageParam < response.pagination.totalPages;
   
   return {
     data: mappedData,
-    nextPage: hasMore ? pageParam + 1 : null,
+    totalItems: response.pagination.total,
     totalPages: response.pagination.totalPages,
+    summary: response.summary,
   };
 };
 
 // Función para obtener comisiones B2B de la API con paginación
 const fetchB2BCommissions = async ({ 
-  pageParam = 1 
+  page = 1,
+  pageSize = 20
 }: { 
-  pageParam: number;
-}): Promise<{ data: MappedClaim[], nextPage: number | null, totalPages: number }> => {
-  const limit = 20;
-  const offset = (pageParam - 1) * limit;
+  page: number;
+  pageSize: number;
+}): Promise<{ data: MappedClaim[], totalItems: number, totalPages: number, summary?: any }> => {
+  const limit = pageSize;
+  const offset = (page - 1) * limit;
   
   const response = await getB2BCommissions({ limit, offset });
   
   const mappedData = response.commissions.map(mapB2BCommission);
-  const hasMore = pageParam < response.pagination.totalPages;
   
   return {
     data: mappedData,
-    nextPage: hasMore ? pageParam + 1 : null,
+    totalItems: response.total || response.commissions.length,
     totalPages: response.pagination.totalPages,
+    summary: response.summary, // B2B commissions ahora tiene summary
   };
 };
 
-const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "", activeTab = 'b2c' }) => {
+const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "", activeTab, currentPage, pageSize, onSummaryChange, onPaginationChange }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedClaim, setSelectedClaim] = useState<MappedClaim | null>(null);
   const [modalMode, setModalMode] = useState<'view' | 'claim' | 'claimMlm'>('view');
   const [claiming, setClaiming] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>('');
+  const [showSuccessSubtext, setShowSuccessSubtext] = useState(true);
+  const [noCardsModalOpen, setNoCardsModalOpen] = useState(false);
+  const [materializeSuccessModalOpen, setMaterializeSuccessModalOpen] = useState(false);
+  const [materializeErrorModalOpen, setMaterializeErrorModalOpen] = useState(false);
+  const [materializeErrorMessage, setMaterializeErrorMessage] = useState('');
   const [b2bModalOpen, setB2bModalOpen] = useState(false);
   const [selectedB2BCommission, setSelectedB2BCommission] = useState<B2BCommission | null>(null);
   const [b2bModalMode, setB2bModalMode] = useState<'available' | 'requested'>('available');
@@ -160,46 +253,80 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
   const userModel = userModelData?.my_model?.trim().toLowerCase() || '';
 
   // Determinar qué función usar según el tab y el modelo del usuario
-  // - Si es B2B y está en tab B2B: usar claims (endpoint normal)
-  // - Si es B2C y está en tab B2B: usar b2c-from-b2b-commissions (solo para B2C con empresas hijas)
-  // - Si está en tab B2C: usar claims (endpoint normal)
-  const getQueryFn = () => {
+  // - Si está en tab B2C: usar claims con claimType=B2C
+  // - Si está en tab B2B y el usuario es B2B: usar claims con claimType=B2B
+  // - Si está en tab B2B y el usuario es B2C: usar b2c-from-b2b-commissions (solo para B2C con empresas hijas)
+  // - Si está en tab B2T: usar claims con claimType=B2T (si existe) o similar
+  const queryFn = React.useCallback(async () => {
     if (activeTab === 'b2c') {
-      return fetchB2CCommissions;
+      return fetchB2CCommissions({ page: currentPage, pageSize, claimType: 'B2C' });
+    }
+    
+    if (activeTab === 'b2t') {
+      // Para B2T, usar el mismo endpoint de claims pero con claimType=B2T si el backend lo soporta
+      // Por ahora, usar B2B como fallback hasta que el backend soporte B2T
+      return fetchB2CCommissions({ page: currentPage, pageSize, claimType: 'B2B' });
     }
     
     // Si está en tab B2B
     if (userModel === 'b2b') {
       // Usuario B2B usa el endpoint normal de claims
-      return fetchB2CCommissions;
+      return fetchB2CCommissions({ page: currentPage, pageSize, claimType: 'B2B' });
     } else {
       // Usuario B2C con empresas hijas usa el endpoint b2c-from-b2b-commissions
-      return fetchB2BCommissions;
+      return fetchB2BCommissions({ page: currentPage, pageSize });
     }
-  };
+  }, [activeTab, userModel, currentPage, pageSize]);
 
   const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
+    data: queryData,
     status,
-  } = useInfiniteQuery({
-    queryKey: ['commissions', activeTab, userModel],
-    queryFn: ({ pageParam = 1 }) => getQueryFn()({ pageParam: pageParam as number }),
-    getNextPageParam: (lastPage: { data: MappedClaim[], nextPage: number | null }) => lastPage.nextPage,
-    initialPageParam: 1,
-    enabled: !!userModelData, // Solo ejecutar cuando tengamos el modelo del usuario
+  } = useQuery({
+    queryKey: ['commissions', activeTab, userModel, currentPage, pageSize],
+    queryFn,
+    enabled: !!userModelData && !!activeTab, // Solo ejecutar cuando tengamos el modelo del usuario y el tab activo
   });
 
-  const allCommissions = useMemo(() => {
-    return data?.pages.flatMap((page: { data: MappedClaim[] }) => page.data) || [];
-  }, [data]);
+  const commissions = queryData?.data || [];
+  const totalItems = queryData?.totalItems || 0;
+  const totalPages = queryData?.totalPages || 0;
+
+  // Notificar cambios de paginación al componente padre
+  useEffect(() => {
+    if (onPaginationChange && queryData) {
+      onPaginationChange({
+        totalItems,
+        totalPages,
+      });
+    }
+  }, [queryData, totalItems, totalPages, onPaginationChange]);
+
+  // Extraer summary y notificar al componente padre
+  useEffect(() => {
+    const summary = (queryData as any)?.summary;
+    if (summary && onSummaryChange) {
+      // Mapear el summary de B2B commissions al formato esperado
+      // B2B commissions usa totalGains en lugar de totalCommissions
+      const mappedSummary = {
+        totalCommissions: summary.totalGains ?? summary.totalCommissions ?? 0,
+        gainsFromRecharges: summary.gainsFromRecharges ?? 0,
+        gainsFromCards: summary.gainsFromCards ?? 0,
+        totalCommissionsPercentageChange: summary.totalGainsPercentageChange ?? summary.totalCommissionsPercentageChange,
+        gainsFromRechargesPercentageChange: summary.gainsFromRechargesPercentageChange,
+        gainsFromCardsPercentageChange: summary.gainsFromCardsPercentageChange,
+        totalGananciasPorReclamar: summary.totalGananciasPorReclamar,
+        claimedUltimoMes: summary.claimedUltimoMes,
+      };
+      onSummaryChange(mappedSummary);
+    } else if (!summary && onSummaryChange) {
+      onSummaryChange(null);
+    }
+  }, [queryData, onSummaryChange]);
 
   const handleVerDetalle = (idOrIndex: string | number) => {
     const claim = typeof idOrIndex === 'number' 
-      ? allCommissions[idOrIndex]
-      : allCommissions.find((c: MappedClaim) => c.id === idOrIndex || (idOrIndex === '' && c.originalB2BCommission));
+      ? commissions[idOrIndex]
+      : commissions.find((c: MappedClaim) => c.id === idOrIndex || (idOrIndex === '' && c.originalB2BCommission));
 
     if (!claim) return;
 
@@ -213,7 +340,8 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
 
     setSelectedClaim(claim);
     const originalClaim = claim.originalClaim;
-    const isB2BSource = originalClaim?.calculationDetails?.source === "B2B";
+    const calculationDetails = originalClaim?.calculationDetails;
+    const isB2BSource = calculationDetails && 'source' in calculationDetails && calculationDetails.source === "B2B";
     const isAvailable = claim.estado.toLowerCase() === 'disponible' || originalClaim?.status === 'available';
     
     if (isB2BSource && isAvailable) {
@@ -228,21 +356,67 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
     if (!selectedB2BCommission || claiming) return;
     try {
       setClaiming(true);
-      await claimB2BCommission({
-        teamId: selectedB2BCommission.teamId,
-        level: selectedB2BCommission.level,
-        periodStartDate: selectedB2BCommission.periodStartDate,
-        periodEndDate: selectedB2BCommission.periodEndDate,
-      });
-      await queryClient.invalidateQueries({ queryKey: ['commissions', activeTab, userModel] });
-      setB2bModalOpen(false);
-      setSelectedB2BCommission(null);
-      setSuccessMessage('Comisión solicitada exitosamente');
-      setSuccessModalOpen(true);
+      // Para usuarios B2C en tab B2B, usar materialize en lugar de claim
+      if (userModel === 'b2c' && activeTab === 'b2b') {
+        const response = await materializeB2BCommission({
+          teamId: selectedB2BCommission.teamId,
+          level: selectedB2BCommission.level,
+        });
+        // Recargar la tabla después de materializar
+        await queryClient.invalidateQueries({ queryKey: ['commissions', activeTab, userModel, currentPage, pageSize] });
+        setB2bModalOpen(false);
+        setSelectedB2BCommission(null);
+        // Mostrar el modal de éxito de materialización
+        setMaterializeSuccessModalOpen(true);
+      } else {
+        // Para otros casos, usar el endpoint de claim normal
+        await claimB2BCommission({
+          teamId: selectedB2BCommission.teamId,
+          level: selectedB2BCommission.level,
+          periodStartDate: selectedB2BCommission.periodStartDate,
+          periodEndDate: selectedB2BCommission.periodEndDate,
+        });
+        await queryClient.invalidateQueries({ queryKey: ['commissions', activeTab, userModel, currentPage, pageSize] });
+        setB2bModalOpen(false);
+        setSelectedB2BCommission(null);
+        setSuccessMessage('Comisión solicitada exitosamente');
+        setShowSuccessSubtext(true); // Mostrar subtexto cuando se solicita
+        setSuccessModalOpen(true);
+      }
     } catch (error: any) {
       console.error('Error solicitando comisión:', error);
-      const alreadyRequested = error?.status === 404 || error?.response?.status === 404;
-      alert(alreadyRequested ? (error?.message || 'La comisión ya ha sido solicitada') : 'Error al solicitar la comisión. Por favor, intenta nuevamente.');
+      const errorMessage = error?.message || error?.response?.data?.message || '';
+      const statusCode = error?.response?.status || error?.statusCode || error?.status;
+      
+      // Verificar si es el error específico de no tener tarjetas
+      // El mensaje puede venir en diferentes formatos
+      const messageLower = errorMessage.toLowerCase();
+      if (
+        statusCode === 400 && 
+        (messageLower.includes('no tienes tarjetas disponibles') || 
+         messageLower.includes('debe tener al menos una tarjeta') ||
+         messageLower.includes('tarjetas disponibles'))
+      ) {
+        setB2bModalOpen(false);
+        setNoCardsModalOpen(true);
+      } else {
+        // Para otros errores, verificar si es error de materialización (días 1 y 15)
+        const messageLower = errorMessage.toLowerCase();
+        if (
+          messageLower.includes('solo se pueden materializar') ||
+          messageLower.includes('días 1 y 15') ||
+          messageLower.includes('día 1 y 15') ||
+          messageLower.includes('materializar comisiones')
+        ) {
+          setB2bModalOpen(false);
+          setMaterializeErrorMessage(errorMessage || 'Solo se pueden materializar comisiones los días 1 y 15 de cada mes.');
+          setMaterializeErrorModalOpen(true);
+        } else {
+          // Para otros errores, mostrar alerta
+          const finalErrorMessage = errorMessage || 'Error al procesar la solicitud. Por favor, intenta nuevamente.';
+          alert(finalErrorMessage);
+        }
+      }
     } finally {
       setClaiming(false);
     }
@@ -279,7 +453,7 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
       }
 
       // Invalidar la query para recargar los datos
-      await queryClient.invalidateQueries({ queryKey: ['commissions', activeTab, userModel] });
+      await queryClient.invalidateQueries({ queryKey: ['commissions', activeTab, userModel, currentPage, pageSize] });
       
       // Cerrar modal de detalle
       setModalOpen(false);
@@ -317,45 +491,61 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
               <div className="flex items-center justify-center h-full min-h-[300px]">
                 <span className="text-sm text-[#ff6d64]">Error al cargar comisiones</span>
               </div>
-            ) : allCommissions.length === 0 ? (
+            ) : commissions.length === 0 ? (
               <div className="flex items-center justify-center h-full min-h-[300px]">
                 <span className="text-sm text-[#aaa]">No hay comisiones disponibles</span>
               </div>
             ) : (
               <>
                 {/* Lista de comisiones */}
-                {allCommissions.map((commission: MappedClaim, index: number) => (
-                  <ClaimItem
-                    key={commission.id || `b2b-${index}`}
-                    id={commission.id}
-                    fecha={commission.fecha}
-                    tarjeta={commission.tarjeta}
-                    estado={commission.estado}
-                    monto={commission.monto}
-                    nivel={commission.nivel}
-                    labelEmpresa={!!commission.originalB2BCommission}
-                    onVerDetalle={() => handleVerDetalle(commission.id || index)}
-                  />
-                ))}
-
-                {/* Botón cargar más / Spinner de carga */}
-                {hasNextPage && (
-                  <div className="flex items-center justify-center py-6">
-                    {isFetchingNextPage ? (
-                      <div className="flex items-center gap-2">
-                        <Spinner className="size-4 text-[#FFF000]" />
-                        <span className="text-sm text-[#aaa]">Cargando más comisiones...</span>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => fetchNextPage()}
-                        className="action-text"
-                      >
-                        Cargar más comisiones
-                      </button>
-                    )}
-                  </div>
-                )}
+                {commissions.map((commission: MappedClaim, index: number) => {
+                  // Para usuarios B2C viendo la tab B2B, ocultar ID y Tarjeta, mostrar correo y tipo de comisión
+                  const isB2CViewingB2B = userModel === 'b2c' && activeTab === 'b2b' && !!commission.originalB2BCommission;
+                  // Para usuarios B2C viendo la tab B2C, también ocultar ID y Tarjeta, mostrar correo y tipo de comisión
+                  const isB2CViewingB2C = userModel === 'b2c' && activeTab === 'b2c' && !!commission.originalClaim;
+                  // Para usuarios B2B viendo la tab B2B, también ocultar ID y Tarjeta, mostrar correo y tipo de comisión
+                  const isB2BViewingB2B = userModel === 'b2b' && activeTab === 'b2b' && !!commission.originalClaim;
+                  
+                  // Determinar si se deben aplicar los cambios
+                  const shouldApplyChanges = isB2CViewingB2B || isB2CViewingB2C || isB2BViewingB2B;
+                  
+                  // Determinar label y value para la columna Usuario/Empresa
+                  let usuarioLabel: string | undefined = undefined;
+                  let usuarioValue: string | undefined = undefined;
+                  
+                  if (shouldApplyChanges) {
+                    if (isB2CViewingB2B) {
+                      // B2C viendo B2B: mostrar "Empresa" con teamName
+                      usuarioLabel = 'Empresa';
+                      usuarioValue = commission.originalB2BCommission?.teamName || commission.usuarioValue;
+                    } else {
+                      // B2C viendo B2C o B2B viendo B2B: mostrar "Usuario" con correo censurado
+                      usuarioLabel = 'Usuario';
+                      // El correo censurado viene del backend, usar usuarioValue si está disponible, sino userEmail
+                      usuarioValue = commission.usuarioValue || commission.userEmail;
+                    }
+                  }
+                  
+                  return (
+                    <ClaimItem
+                      key={commission.id || `b2b-${index}`}
+                      id={commission.id}
+                      fecha={commission.fecha}
+                      tarjeta={commission.tarjeta}
+                      estado={commission.estado}
+                      monto={commission.monto}
+                      nivel={commission.nivel}
+                      labelEmpresa={!!commission.originalB2BCommission}
+                      onVerDetalle={() => handleVerDetalle(commission.id || index)}
+                      userEmail={shouldApplyChanges ? commission.userEmail : undefined}
+                      commissionType={shouldApplyChanges ? commission.commissionType : undefined}
+                      hideId={shouldApplyChanges}
+                      hideTarjeta={shouldApplyChanges}
+                      usuarioLabel={usuarioLabel}
+                      usuarioValue={usuarioValue}
+                    />
+                  );
+                })}
               </>
             )}
         </div>
@@ -377,6 +567,28 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
           mode={modalMode === 'claimMlm' ? 'claim' : modalMode}
           onConfirm={modalMode === 'claim' || modalMode === 'claimMlm' ? handleConfirmClaim : undefined}
           isClaiming={claiming}
+          usuario={
+            selectedClaim.originalClaim?.calculationDetails && (selectedClaim.originalClaim.calculationDetails as any)?.userFullName
+              ? (selectedClaim.originalClaim.calculationDetails as any).userFullName
+              : (selectedClaim.originalClaim?.userId ? `Usuario ${selectedClaim.originalClaim.userId}` : 'N/A')
+          }
+          fecha={selectedClaim.fecha}
+          estado={selectedClaim.estado}
+          nivel={
+            selectedClaim.nivel !== undefined 
+              ? selectedClaim.nivel 
+              : (selectedClaim.originalClaim?.calculationDetails && 'ancestorDepth' in selectedClaim.originalClaim.calculationDetails
+                  ? (selectedClaim.originalClaim.calculationDetails as any).ancestorDepth
+                  : undefined)
+          }
+          tipoComision={selectedClaim.originalClaim?.commissionType || 'N/A'}
+          baseAmount={selectedClaim.originalClaim?.baseAmount}
+          commissionPercentage={selectedClaim.originalClaim?.commissionPercentage}
+          commissionAmount={selectedClaim.originalClaim?.commissionAmount !== undefined && selectedClaim.originalClaim?.commissionAmount !== null
+            ? selectedClaim.originalClaim.commissionAmount
+            : undefined}
+          comision={selectedClaim.monto}
+          hideCardSelection={true}
         />
       )}
 
@@ -403,10 +615,48 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
           setSuccessModalOpen(open);
           if (!open) {
             setSuccessMessage('');
+            setShowSuccessSubtext(true); // Resetear a true por defecto
           }
         }}
         message={successMessage}
-        showSubtext={true}
+        showSubtext={showSuccessSubtext}
+      />
+
+      {/* Modal de no tarjetas */}
+      <NoCardsModal
+        open={noCardsModalOpen}
+        onOpenChange={setNoCardsModalOpen}
+        onRequestCard={() => {
+          // Aquí puedes agregar la lógica para redirigir a la página de solicitud de tarjeta
+          console.log('Solicitar tarjeta');
+        }}
+      />
+
+      {/* Modal de error de materialización (días 1 y 15) */}
+      <NoCardsModal
+        open={materializeErrorModalOpen}
+        onOpenChange={(open) => {
+          setMaterializeErrorModalOpen(open);
+          if (!open) {
+            setMaterializeErrorMessage('');
+          }
+        }}
+        onRequestCard={() => {
+          setMaterializeErrorModalOpen(false);
+          setMaterializeErrorMessage('');
+        }}
+        customTitle="NO PUEDES MATERIALIZAR COMISIONES"
+        customMessage={materializeErrorMessage}
+        hideButton={true}
+      />
+
+      {/* Modal de éxito de materialización */}
+      <MaterializeSuccessModal
+        open={materializeSuccessModalOpen}
+        onOpenChange={setMaterializeSuccessModalOpen}
+        onConfirm={() => {
+          // Cualquier lógica adicional después de confirmar
+        }}
       />
     </div>
   );

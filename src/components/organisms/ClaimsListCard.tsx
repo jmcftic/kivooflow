@@ -1,87 +1,72 @@
 import React, { useState, useMemo } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import ClaimItem from "../atoms/ClaimItem";
-import ClaimDetailModal from "../molecules/ClaimDetailModal";
+import { useNavigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
-import { getClaims } from "@/services/network";
-import { Claim } from "@/types/network";
+import { Badge } from "@/components/ui/badge";
+import { getOrders } from "@/services/network";
+import { Order } from "@/types/network";
+import InfoBanner from "../atoms/InfoBanner";
+import OrderArrows from "../atoms/OrderArrows";
 
 interface ClaimsListCardProps {
   className?: string;
+  activeTab?: 'b2c' | 'b2b' | 'b2t' | null;
 }
 
-// Mapear Claim del backend al formato esperado por ClaimItem
-interface MappedClaim {
+// Mapear Order del backend al formato esperado
+interface MappedOrder {
   id: string;
   fecha: string;
-  tarjeta: string;
   estado: string;
   monto: number;
-  originalClaim: Claim;
+  originalOrder: Order;
+  itemsCount: number;
 }
 
-const mapClaim = (claim: Claim): MappedClaim => {
-  // Mapear estado del backend a formato legible
-  const mapStatus = (status: string): string => {
-    const statusLower = status.toLowerCase();
-    if (statusLower === 'claimed') return 'Recibida';
-    if (statusLower === 'processed') return 'Aprobado';
-    if (statusLower === 'pending') return 'Pendiente';
-    if (statusLower === 'available') return 'Disponible';
-    if (statusLower === 'requested') return 'En proceso';
-    if (statusLower === 'rejected' || statusLower === 'cancelled') return 'Rechazado';
-    return status;
-  };
-
-  // Para tarjeta, usar cryptoTransactionId si existe, sino mostrar un placeholder
-  const tarjeta = claim.cryptoTransactionId 
-    ? `**** ${String(claim.cryptoTransactionId).slice(-4)}`
-    : 'N/A';
-
-  // Calcular monto: commissionAmount + leaderMarkupAmount (si existe y no es 0)
-  const commissionAmount = typeof claim.commissionAmount === 'number' 
-    ? claim.commissionAmount 
-    : parseFloat(String(claim.commissionAmount)) || 0;
-  
-  const leaderMarkupAmount = typeof claim.leaderMarkupAmount === 'number' 
-    ? claim.leaderMarkupAmount 
-    : (claim.leaderMarkupAmount ? parseFloat(String(claim.leaderMarkupAmount)) : 0) || 0;
-  
-  const monto = commissionAmount + leaderMarkupAmount;
-
+const mapOrder = (order: Order): MappedOrder => {
   return {
-    id: `CLM-${String(claim.id).padStart(3, '0')}`,
-    fecha: claim.createdAt,
-    tarjeta,
-    estado: mapStatus(claim.status),
-    monto,
-    originalClaim: claim,
+    id: `ORD-${String(order.id).padStart(3, '0')}`,
+    fecha: order.createdAt,
+    estado: order.status, // Mantener el estado original del backend
+    monto: order.totalAmount,
+    originalOrder: order,
+    itemsCount: order.itemsCount,
   };
 };
 
-// Función para obtener claims de la API con paginación
-const fetchClaims = async ({ 
-  pageParam = 1 
+// Función para obtener órdenes de la API con paginación
+const fetchOrders = async ({ 
+  pageParam = 1,
+  claimType
 }: { 
   pageParam: number;
-}): Promise<{ data: MappedClaim[], nextPage: number | null, totalPages: number }> => {
+  claimType?: 'B2C' | 'B2B';
+}): Promise<{ data: MappedOrder[], nextPage: number | null, totalPages: number }> => {
   const pageSize = 10;
-  // Filtrar por estados "claimed" y "requested"
-  const response = await getClaims({ page: pageParam, pageSize, status: ['claimed', 'requested'] });
+  // Filtrar por estados "pending" y "paid" (órdenes pendientes y pagadas)
+  const response = await getOrders({ 
+    page: pageParam, 
+    pageSize, 
+    status: ['pending', 'paid'],
+    claimType
+  });
   
-  const mappedData = response.items.map(mapClaim);
-  const hasMore = pageParam < response.pagination.totalPages;
+  const mappedData = response.data.items.map(mapOrder);
+  const hasMore = pageParam < response.data.totalPages;
   
   return {
     data: mappedData,
     nextPage: hasMore ? pageParam + 1 : null,
-    totalPages: response.pagination.totalPages,
+    totalPages: response.data.totalPages,
   };
 };
 
-const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "" }) => {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedClaim, setSelectedClaim] = useState<MappedClaim | null>(null);
+const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeTab = null }) => {
+  const navigate = useNavigate();
+
+  // Convertir activeTab a claimType (b2c -> B2C, b2b -> B2B)
+  // Nota: B2T no está soportado en órdenes según la documentación
+  const claimType = activeTab && activeTab !== 'b2t' ? (activeTab.toUpperCase() as 'B2C' | 'B2B') : undefined;
 
   const {
     data,
@@ -89,58 +74,153 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "" }) => {
     hasNextPage,
     isFetchingNextPage,
     status,
+    isLoading,
+    isFetching,
   } = useInfiniteQuery({
-    queryKey: ['claims'],
-    queryFn: ({ pageParam = 1 }) => fetchClaims({ pageParam: pageParam as number }),
-    getNextPageParam: (lastPage: { data: MappedClaim[], nextPage: number | null }) => lastPage.nextPage,
+    queryKey: ['orders', activeTab],
+    queryFn: ({ pageParam = 1 }) => fetchOrders({ 
+      pageParam: pageParam as number,
+      claimType
+    }),
+    getNextPageParam: (lastPage: { data: MappedOrder[], nextPage: number | null }) => lastPage.nextPage,
     initialPageParam: 1,
+    enabled: activeTab !== null && activeTab !== 'b2t', // B2T no está soportado en órdenes
   });
 
-  const allClaims = useMemo(() => {
-    return data?.pages.flatMap((page: { data: MappedClaim[] }) => page.data) || [];
+  const allOrders = useMemo(() => {
+    return data?.pages.flatMap((page: { data: MappedOrder[] }) => page.data) || [];
   }, [data]);
 
   const handleVerDetalle = (id: string) => {
-    const claim = allClaims.find((c: MappedClaim) => c.id === id);
-    if (claim) {
-      setSelectedClaim(claim);
-      setModalOpen(true);
+    const order = allOrders.find((o: MappedOrder) => o.id === id);
+    if (order) {
+      // Guardar orderId y claimType en localStorage
+      localStorage.setItem('claimDetailOrderId', order.originalOrder.id.toString());
+      if (claimType) {
+        localStorage.setItem('claimDetailClaimType', claimType);
+      }
+      // Navegar a la página de detalle
+      navigate('/claim/detail');
+    }
+  };
+
+  const formatFecha = (fecha: string): string => {
+    try {
+      const date = new Date(fecha);
+      if (isNaN(date.getTime())) return 'N/A';
+      return date.toLocaleDateString('es-MX', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    } catch {
+      return 'N/A';
+    }
+  };
+
+  const formatMonto = (monto: number): string => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(monto);
+  };
+
+  const getEstadoLabel = (estado: string): string => {
+    switch(estado.toLowerCase()) {
+      case 'paid':
+        return 'Pagada';
+      case 'pending':
+        return 'Pendiente';
+      case 'cancelled':
+        return 'Cancelada';
+      default:
+        return estado;
+    }
+  };
+
+  const getEstadoBadgeVariant = (estado: string): 'yellow' | 'green' | 'red' | 'default' => {
+    switch(estado.toLowerCase()) {
+      case 'paid':
+        return 'green'; // Pagada - verde
+      case 'pending':
+        return 'yellow'; // Pendiente - amarillo
+      case 'cancelled':
+        return 'red'; // Cancelada - rojo
+      default:
+        return 'default';
     }
   };
 
   return (
     <div className={`w-full ${className}`}>
       <div className="w-full flex flex-col">
+        {/* Headers de tabla - estilo Network */}
+        <div className="w-full mb-3">
+          <div className="w-full flex items-center px-6">
+            <div className="flex-1 grid grid-cols-4 gap-4 h-10 items-center text-xs text-white">
+              <div className="flex items-center justify-center gap-1">Fecha <OrderArrows /></div>
+              <div className="flex items-center justify-center gap-1">Monto <OrderArrows /></div>
+              <div className="flex items-center justify-center gap-1">Estado <OrderArrows /></div>
+              <div className="flex items-center justify-center gap-1">Acciones</div>
+            </div>
+          </div>
+        </div>
+
         {/* Contenido scrolleable */}
-        <div className="w-full space-y-4">
-            {status === "pending" ? (
+        <div className="w-full space-y-2">
+            {status === "pending" || isLoading || isFetching ? (
               <div className="flex items-center justify-center h-full min-h-[300px]">
                 <div className="flex flex-col items-center gap-2">
                   <Spinner className="size-6 text-[#FFF000]" />
-                  <span className="text-sm text-[#aaa]">Cargando comisiones...</span>
+                  <span className="text-sm text-[#aaa]">Cargando órdenes...</span>
                 </div>
               </div>
             ) : status === "error" ? (
               <div className="flex items-center justify-center h-full min-h-[300px]">
-                <span className="text-sm text-[#ff6d64]">Error al cargar comisiones</span>
+                <span className="text-sm text-[#ff6d64]">Error al cargar órdenes</span>
               </div>
-            ) : allClaims.length === 0 ? (
+            ) : allOrders.length === 0 ? (
               <div className="flex items-center justify-center h-full min-h-[300px]">
-                <span className="text-sm text-[#aaa]">No hay claims disponibles</span>
+                <span className="text-sm text-[#aaa]">No hay órdenes disponibles</span>
               </div>
             ) : (
               <>
-                {/* Lista de comisiones */}
-                {allClaims.map((claim: MappedClaim) => (
-                  <ClaimItem
-                    key={claim.id}
-                    id={claim.id}
-                    fecha={claim.fecha}
-                    tarjeta={claim.tarjeta}
-                    estado={claim.estado}
-                    monto={claim.monto}
-                    onVerDetalle={undefined}
-                  />
+                {/* Tabla de órdenes - estilo Network */}
+                {allOrders.map((order: MappedOrder) => (
+                  <InfoBanner key={order.id} className="w-full h-16" backgroundColor="#212020">
+                    <div className="w-full flex items-center px-6 py-2">
+                      <div className="flex-1 grid grid-cols-4 gap-4 items-center text-sm text-white">
+                        {/* Fecha */}
+                        <div className="flex items-center justify-center">
+                          <span className="text-white">{formatFecha(order.fecha)}</span>
+                        </div>
+                        {/* Monto */}
+                        <div className="flex items-center justify-center">
+                          <span className="text-white">{formatMonto(order.monto)}</span>
+                        </div>
+                        {/* Estado con badge */}
+                        <div className="flex items-center justify-center">
+                          <Badge 
+                            variant={getEstadoBadgeVariant(order.estado)}
+                            className="text-xs"
+                          >
+                            {getEstadoLabel(order.estado)}
+                          </Badge>
+                        </div>
+                        {/* Acciones */}
+                        <div className="flex items-center justify-center">
+                          <button
+                            onClick={() => handleVerDetalle(order.id)}
+                            className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer text-sm"
+                          >
+                            detalles
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </InfoBanner>
                 ))}
 
                 {/* Botón cargar más / Spinner de carga */}
@@ -149,14 +229,14 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "" }) => {
                     {isFetchingNextPage ? (
                       <div className="flex items-center gap-2">
                         <Spinner className="size-4 text-[#FFF000]" />
-                        <span className="text-sm text-[#aaa]">Cargando más comisiones...</span>
+                        <span className="text-sm text-[#aaa]">Cargando más órdenes...</span>
                       </div>
                     ) : (
                       <button
                         onClick={() => fetchNextPage()}
                         className="action-text"
                       >
-                        Cargar más comisiones
+                        Cargar más órdenes
                       </button>
                     )}
                   </div>
@@ -166,15 +246,6 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "" }) => {
         </div>
       </div>
 
-      {/* Modal de detalle */}
-      {selectedClaim && (
-        <ClaimDetailModal
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-          claimId={selectedClaim.id}
-          monto={selectedClaim.monto}
-        />
-      )}
     </div>
   );
 };

@@ -21,6 +21,12 @@ import {
   ClaimMlmTransactionRequest,
   ClaimMlmTransactionResponse,
   Claim,
+  RequestAllClaimsResponse,
+  TotalToClaimInUSDTResponse,
+  OrdersResponse,
+  Order,
+  OrderClaimsResponse,
+  OrderClaimItem,
 } from '@/types/network';
 
 export interface GetNetworkParams {
@@ -159,6 +165,8 @@ function normalizeLeader(row: any): NetworkLeaderOwnedToB2C {
     card1Url: row?.card1Url ?? row?.card1_url ?? mlm?.card1Url ?? null,
     card2Url: row?.card2Url ?? row?.card2_url ?? mlm?.card2Url ?? null,
     card3Url: row?.card3Url ?? row?.card3_url ?? mlm?.card3Url ?? null,
+    comisiones_generadas: row?.comisiones_generadas != null ? Number(row.comisiones_generadas) : undefined,
+    volumen: row?.volumen != null ? Number(row.volumen) : undefined,
   };
 }
 
@@ -222,53 +230,10 @@ export async function getB2BLeadersOwnedToB2C({ limit = 20, offset = 0 }: GetNet
 
   const result = normalizeLeadersResult(res as unknown as NetworkLeadersResponse, 'B2B', limit, offset);
   
-  // Obtener teamIds únicos de la página actual
-  const uniqueTeamIds = Array.from(
-    new Set(
-      result.leaders
-        .map(leader => leader.teamId)
-        .filter((teamId): teamId is number => teamId !== null && teamId !== undefined)
-    )
-  );
-
-  // Obtener detalles de equipos solo para los teams únicos de esta página (en paralelo)
-  const teamDetailsMap = new Map<number, TeamDetailsData | null>();
+  // No pre-cargar detalles de equipos automáticamente
+  // Los detalles se cargarán solo cuando el usuario haga clic en "Ver detalle"
   
-  if (uniqueTeamIds.length > 0) {
-    try {
-      const teamDetailsPromises = uniqueTeamIds.map(async (teamId) => {
-        try {
-          const details = await getTeamDetails(teamId);
-          return { teamId, details };
-        } catch (error) {
-          // Si hay error (404, 403, etc.), guardar null para ese team
-          console.warn(`Error obteniendo detalles del equipo ${teamId}:`, error);
-          return { teamId, details: null };
-        }
-      });
-
-      const teamDetailsResults = await Promise.all(teamDetailsPromises);
-      
-      // Construir el mapa de teamId -> teamDetails
-      teamDetailsResults.forEach(({ teamId, details }) => {
-        teamDetailsMap.set(teamId, details);
-      });
-    } catch (error) {
-      console.error('Error obteniendo detalles de equipos:', error);
-      // Continuar sin los detalles si hay error general
-    }
-  }
-
-  // Agregar teamDetails a cada líder
-  const leadersWithTeamDetails = result.leaders.map(leader => ({
-    ...leader,
-    teamDetails: leader.teamId ? teamDetailsMap.get(leader.teamId) ?? null : null,
-  }));
-
-  return {
-    ...result,
-    leaders: leadersWithTeamDetails,
-  };
+  return result;
 }
 
 export async function getB2TLeadersOwnedToB2C({ limit = 20, offset = 0 }: GetNetworkLeadersParams = {}): Promise<NetworkLeadersResult> {
@@ -359,9 +324,10 @@ export interface GetClaimsParams {
    * - String con &: 'claimed&requested'
    */
   status?: string | string[];
+  claimType?: 'B2C' | 'B2B' | 'B2T';
 }
 
-export async function getClaims({ page = 1, pageSize = 10, status }: GetClaimsParams = {}): Promise<ClaimsResponse> {
+export async function getClaims({ page = 1, pageSize = 10, status, claimType }: GetClaimsParams = {}): Promise<ClaimsResponse> {
   const query: Record<string, string | string[]> = {
     page: page.toString(),
     pageSize: pageSize.toString(),
@@ -385,6 +351,11 @@ export async function getClaims({ page = 1, pageSize = 10, status }: GetClaimsPa
     }
   }
 
+  // Agregar claimType si se proporciona
+  if (claimType) {
+    query.claimType = claimType;
+  }
+
   const res = await apiService.get<ClaimsApiResponse>(
     API_ENDPOINTS.NETWORK.CLAIMS,
     query,
@@ -394,6 +365,7 @@ export async function getClaims({ page = 1, pageSize = 10, status }: GetClaimsPa
   const data = payload?.data ?? payload;
 
   return {
+    summary: data?.summary ?? null,
     items: data?.items ?? [],
     pagination: data?.pagination ?? {
       page: page,
@@ -433,6 +405,42 @@ export async function getB2BCommissions({ limit = 20, offset = 0 }: GetB2BCommis
       hasNextPage: false,
       hasPreviousPage: false,
     },
+    summary: data?.summary ?? null,
+  };
+}
+
+export interface MaterializeB2BCommissionRequest {
+  teamId: number;
+  level: number;
+}
+
+export async function materializeB2BCommission(request: MaterializeB2BCommissionRequest): Promise<B2BCommission> {
+  const res = await apiService.post<{ statusCode: number; message: string; data: B2BCommission }>(
+    API_ENDPOINTS.NETWORK.MATERIALIZE_B2B_COMMISSION,
+    request,
+  );
+
+  const payload: any = res;
+  const data = payload?.data ?? payload;
+
+  return {
+    id: data?.id ?? null,
+    teamId: data?.teamId ?? 0,
+    teamName: data?.teamName ?? '',
+    level: data?.level ?? 0,
+    commissionPercentage: data?.commissionPercentage ?? 0,
+    periodType: data?.periodType ?? 'monthly',
+    periodStartDate: data?.periodStartDate ?? '',
+    periodEndDate: data?.periodEndDate ?? '',
+    totalVolume: data?.totalVolume ?? 0,
+    commissionAmount: data?.commissionAmount ?? 0,
+    totalTransactions: data?.totalTransactions ?? 0,
+    currency: data?.currency ?? 'MXN',
+    status: data?.status ?? '',
+    calculationDetails: data?.calculationDetails,
+    createdAt: data?.createdAt ?? new Date().toISOString(),
+    commissionType: data?.commissionType,
+    userEmail: data?.userEmail || data?.calculationDetails?.userEmail,
   };
 }
 
@@ -461,6 +469,8 @@ export async function claimB2BCommission(request: ClaimB2BCommissionRequest): Pr
     status: data?.status ?? '',
     calculationDetails: data?.calculationDetails,
     createdAt: data?.createdAt ?? new Date().toISOString(),
+    commissionType: data?.commissionType,
+    userEmail: data?.userEmail || data?.calculationDetails?.userEmail,
   };
 }
 
@@ -493,6 +503,171 @@ export async function claimMlmTransaction(request: ClaimMlmTransactionRequest): 
   return {
     claim,
     message,
+  };
+}
+
+export async function requestAllClaims(): Promise<RequestAllClaimsResponse> {
+  const res = await apiService.post<RequestAllClaimsResponse>(
+    API_ENDPOINTS.NETWORK.REQUEST_ALL_CLAIMS,
+    {},
+  );
+
+  const payload: any = res;
+  const data = payload?.data ?? payload;
+
+  return {
+    statusCode: payload?.statusCode ?? 200,
+    message: payload?.message ?? 'Comisiones solicitadas exitosamente',
+    data: {
+      success: data?.success ?? true,
+      message: data?.message ?? '',
+      mlmTransactionsRequested: data?.mlmTransactionsRequested ?? 0,
+      b2cFromB2BCommissionsRequested: data?.b2cFromB2BCommissionsRequested ?? 0,
+      totalRequested: data?.totalRequested ?? 0,
+      errors: data?.errors ?? [],
+    },
+  };
+}
+
+export async function getTotalToClaimInUSDT(): Promise<TotalToClaimInUSDTResponse> {
+  const res = await apiService.get<TotalToClaimInUSDTResponse>(
+    API_ENDPOINTS.NETWORK.TOTAL_USDT,
+  );
+  const payload: any = res;
+  const data = payload?.data ?? payload;
+  return {
+    statusCode: payload?.statusCode ?? 200,
+    message: payload?.message ?? 'Total calculado exitosamente',
+    data: {
+      totalInUSDT: data?.totalInUSDT ?? 0,
+      mlmTransactionsTotal: data?.mlmTransactionsTotal ?? 0,
+      b2cCommissionsTotalMXN: data?.b2cCommissionsTotalMXN ?? 0,
+      b2cCommissionsTotalUSDT: data?.b2cCommissionsTotalUSDT ?? 0,
+      mlmTransactionsCount: data?.mlmTransactionsCount ?? 0,
+      b2cCommissionsCount: data?.b2cCommissionsCount ?? 0,
+      exchangeRateMXNToUSDT: data?.exchangeRateMXNToUSDT ?? 17.5,
+    },
+  };
+}
+
+export interface GetOrdersParams {
+  page?: number;
+  pageSize?: number;
+  /**
+   * Estado o estados a filtrar. Soporta múltiples formatos:
+   * - Array: ['pending', 'paid']
+   * - String con comas: 'pending,paid'
+   */
+  status?: string | string[];
+  claimType?: 'B2C' | 'B2B';
+}
+
+export async function getOrders({ 
+  page = 1, 
+  pageSize = 10, 
+  status, 
+  claimType 
+}: GetOrdersParams = {}): Promise<OrdersResponse> {
+  const query: Record<string, string | string[]> = {
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+  };
+
+  // Agregar status si se proporciona
+  if (status) {
+    if (Array.isArray(status)) {
+      query.status = status;
+    } else if (typeof status === 'string') {
+      const statusArray = status.split(',').map(s => s.trim()).filter(s => s.length > 0);
+      if (statusArray.length > 0) {
+        query.status = statusArray;
+      }
+    }
+  }
+
+  // Agregar claimType si se proporciona
+  if (claimType) {
+    query.claimType = claimType;
+  }
+
+  const res = await apiService.get<OrdersResponse>(
+    API_ENDPOINTS.NETWORK.ORDERS,
+    query,
+  );
+
+  return res as unknown as OrdersResponse;
+}
+
+export interface GetOrderClaimsParams {
+  orderId: number;
+  claimType?: 'B2C' | 'B2B';
+  /**
+   * Estado o estados a filtrar. Soporta múltiples formatos:
+   * - Array: ['available', 'requested', 'claimed']
+   * - String con comas: 'available,requested'
+   */
+  status?: string | string[];
+}
+
+export async function getOrderClaims({ 
+  orderId, 
+  claimType, 
+  status 
+}: GetOrderClaimsParams): Promise<OrderClaimsResponse> {
+  const query: Record<string, string | string[]> = {};
+
+  // Agregar claimType si se proporciona
+  if (claimType) {
+    query.claimType = claimType;
+  }
+
+  // Agregar status si se proporciona
+  if (status) {
+    if (Array.isArray(status)) {
+      query.status = status;
+    } else if (typeof status === 'string') {
+      const statusArray = status.split(',').map(s => s.trim()).filter(s => s.length > 0);
+      if (statusArray.length > 0) {
+        query.status = statusArray;
+      }
+    }
+  }
+
+  const endpoint = apiService.buildEndpoint(API_ENDPOINTS.NETWORK.ORDER_CLAIMS, { id: orderId });
+  const res = await apiService.get<any>(endpoint, query);
+
+  const payload: any = res;
+  const data = payload?.data ?? payload;
+
+  // Mapear la respuesta del API a nuestro tipo
+  return {
+    statusCode: payload?.statusCode ?? 200,
+    message: payload?.message ?? 'Claims de la orden obtenidas exitosamente',
+    data: {
+      orderId: data?.orderId ?? orderId,
+      orderStatus: data?.orderStatus ?? 'pending',
+      orderTotalAmount: data?.orderTotalAmount ?? 0,
+      items: (data?.items ?? []).map((item: any) => ({
+        id: item.id ?? 0,
+        baseTransactionId: item.baseTransactionId ?? null,
+        cryptoTransactionId: item.cryptoTransactionId ?? null,
+        userId: item.userId ?? 0,
+        teamId: item.teamId ?? null,
+        commissionType: item.commissionType ?? '',
+        baseAmount: item.baseAmount ?? 0,
+        commissionPercentage: item.commissionPercentage ?? null,
+        commissionAmount: item.commissionAmount ?? 0,
+        markupPercentage: item.markupPercentage ?? null,
+        leaderMarkupAmount: item.leaderMarkupAmount ?? null,
+        currency: item.currency ?? 'MXN',
+        status: item.status ?? 'available',
+        processedAt: item.processedAt ?? null,
+        createdAt: item.createdAt ?? new Date().toISOString(),
+        origin: item.origin ?? (item.mlmTransactionId ? 'mlm_transaction' : 'b2c_from_b2b_commission'),
+        calculationDetails: item.calculationDetails ?? {},
+      })),
+      total: data?.total ?? 0,
+    },
   };
 }
 

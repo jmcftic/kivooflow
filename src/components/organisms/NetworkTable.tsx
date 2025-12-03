@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import InfoBanner from '../atoms/InfoBanner';
 import DropDownTringle from '../atoms/DropDownTringle';
 import LevelOneTag from '../atoms/LevelOneTag';
@@ -6,6 +7,25 @@ import LevelTwoTag from '../atoms/LevelTwoTag';
 import LevelThreeTag from '../atoms/LevelThreeTag';
 import LevelFourPlusTag from '../atoms/LevelFourPlusTag';
 import { Spinner } from '@/components/ui/spinner';
+
+// Función para truncar a 3 decimales sin redondear y mostrar con coma
+// Si los 3 decimales son 0, no mostrar decimales
+const truncateTo3Decimals = (value: number | string | undefined): string => {
+  if (value === undefined || value === null) return '0';
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(numValue)) return '0';
+  const valueStr = numValue.toString();
+  const [integerPart, decimalPart = ''] = valueStr.split('.');
+  const truncatedDecimals = decimalPart.slice(0, 3).padEnd(3, '0');
+  
+  // Si los 3 decimales son todos ceros, retornar solo la parte entera
+  if (truncatedDecimals === '000') {
+    return integerPart;
+  }
+  
+  // Si hay decimales diferentes de cero, mostrarlos con coma
+  return `${integerPart},${truncatedDecimals}`;
+};
 
 interface NetworkTableProps {
   items: Array<{
@@ -19,11 +39,13 @@ interface NetworkTableProps {
     levelInSubtree?: number;
     level?: number;
     profileIconUrl?: string; // Para mostrar icono en líderes B2B
+    comisionesGeneradas?: number;
+    volumen?: number;
   }>;
   activeTab: 'b2c' | 'b2b' | 'b2t';
   activeLevel: 1 | 2 | 3;
   onToggleExpand?: (userId: number, level: number) => void;
-  childrenByParent?: Record<number, Array<{ id: number; name: string; email?: string; createdAt?: string; totalDescendants?: number; hasDescendants?: boolean }>>;
+  childrenByParent?: Record<number, Array<{ id: number; name: string; email?: string; createdAt?: string; totalDescendants?: number; hasDescendants?: boolean; comisionesGeneradas?: number; volumen?: number }>>;
   childIndentPx?: number;
   onViewTree?: (userId: number) => void;
   onViewDetail?: (userId: number) => void;
@@ -38,9 +60,24 @@ interface NetworkTableProps {
   parentErrors?: Record<number, string>;
   hasDepthLimit?: boolean;
   maxDepth?: number;
+  hideResumenColumn?: boolean;
 }
 
-const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLevel, onToggleExpand, childrenByParent = {}, childIndentPx = 30, onViewTree, onViewDetail, disableExpand = false, disableViewTree = false, isLeaderTab = false, onLoadMoreChildren, parentHasMore = {}, parentLoading = {}, loadingTreeUserId = null, parentExhausted = {}, parentErrors = {}, hasDepthLimit = true, maxDepth = 3 }) => {
+const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLevel, onToggleExpand, childrenByParent = {}, childIndentPx = 30, onViewTree, onViewDetail, disableExpand = false, disableViewTree = false, isLeaderTab = false, onLoadMoreChildren, parentHasMore = {}, parentLoading = {}, loadingTreeUserId = null, parentExhausted = {}, parentErrors = {}, hasDepthLimit = true, maxDepth = 3, hideResumenColumn = false }) => {
+  const navigate = useNavigate();
+
+  const handleViewTree = (userId: number) => {
+    if (onViewTree) {
+      // Si se pasa onViewTree como prop, usarlo (para compatibilidad con Network.tsx)
+      onViewTree(userId);
+    } else {
+      // Guardar el ID del árbol en sessionStorage antes de navegar
+      sessionStorage.setItem('networkTreeUserId', userId.toString());
+      // Navegar a la ruta del árbol (sin parámetro en la URL)
+      navigate('/network/tree');
+    }
+  };
+
   return (
     <div className="space-y-4">
       {items.map((item) => {
@@ -63,7 +100,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
           {/** Determinar si el padre está expandido para resaltar su red */}
           <InfoBanner className="w-full h-16" backgroundColor={isExpanded ? "#3c3c3c" : "#212020"}>
             <div className="w-full flex items-center px-6 py-2">
-              <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm text-white">
+              <div className={`flex-1 grid ${hideResumenColumn ? 'grid-cols-5' : 'grid-cols-6'} gap-4 items-center text-sm text-white`}>
                 <div className="relative flex items-center justify-center pl-6 gap-2">
                   {canExpand && (
                     <DropDownTringle 
@@ -123,8 +160,16 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                     return <LevelFourPlusTag level={authLevel} />;
                   })()}
                 </div>
-                <div className="text-center">Resumen</div>
-                <div className="text-center">$0.00</div>
+                {!hideResumenColumn && (
+                  <div className="text-center">Resumen</div>
+                )}
+                <div className="text-center">
+                  {typeof item.volumen === 'number' || (typeof item.volumen === 'string' && item.volumen !== '')
+                    ? `$${truncateTo3Decimals(item.volumen)}`
+                    : (typeof item.comisionesGeneradas === 'number' 
+                        ? `$${item.comisionesGeneradas.toFixed(2)}` 
+                        : '$0.00')}
+                </div>
                 <div className="text-right pr-6">
                   {isLeaderTab && onViewDetail ? (
                     <div className="flex items-center justify-end gap-2">
@@ -137,7 +182,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                     </div>
                   ) : canViewTree ? (
                     <div className="flex items-center justify-end gap-2">
-                      <span className={`text-[#FFF100] ${isLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !isLoading && onViewTree && onViewTree(item.id)}>
+                      <span className={`text-[#FFF100] ${isLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !isLoading && handleViewTree(item.id)}>
                         Ver árbol
                       </span>
                       {isLoading && <Spinner className="size-4 text-[#FFF100]" />}
@@ -166,7 +211,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                 <div key={child.id} className="space-y-2">
                   <InfoBanner className="w-full h-16" backgroundColor="#3c3c3c">
                     <div className="w-full flex items-center px-6 py-2">
-                      <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm text-white">
+                      <div className={`flex-1 grid ${hideResumenColumn ? 'grid-cols-5' : 'grid-cols-6'} gap-4 items-center text-sm text-white`}>
                         <div className="relative flex items-center justify-center pl-6">
                           {childCanExpand && (
                             <DropDownTringle 
@@ -192,12 +237,20 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                           {childAuthLevel === 3 && <LevelThreeTag />}
                           {childAuthLevel > 3 && <LevelFourPlusTag level={childAuthLevel} />}
                         </div>
-                        <div className="text-center">Resumen</div>
-                        <div className="text-center">$0.00</div>
+                        {!hideResumenColumn && (
+                          <div className="text-center">Resumen</div>
+                        )}
+                        <div className="text-center">
+                          {typeof (child as any).volumen === 'number' || (typeof (child as any).volumen === 'string' && (child as any).volumen !== '')
+                            ? `$${truncateTo3Decimals((child as any).volumen)}`
+                            : (typeof child.comisionesGeneradas === 'number' 
+                                ? `$${child.comisionesGeneradas.toFixed(2)}` 
+                                : '$0.00')}
+                        </div>
                         <div className="text-right pr-6">
                           {childCanViewTree ? (
                             <div className="flex items-center justify-end gap-2">
-                              <span className={`text-[#FFF100] ${childIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !childIsLoading && onViewTree && onViewTree(child.id)}>
+                              <span className={`text-[#FFF100] ${childIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !childIsLoading && handleViewTree(child.id)}>
                                 Ver árbol
                               </span>
                               {childIsLoading && <Spinner className="size-4 text-[#FFF100]" />}
@@ -225,7 +278,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                             <div key={grand.id} className="space-y-2">
                               <InfoBanner className="w-full h-16" backgroundColor="#3c3c3c">
                                 <div className="w-full flex items-center px-6 py-2">
-                                  <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm text-white">
+                                  <div className={`flex-1 grid ${hideResumenColumn ? 'grid-cols-5' : 'grid-cols-6'} gap-4 items-center text-sm text-white`}>
                                     <div className="relative flex items-center justify-center pl-6">
                                       {grandCanExpand && (
                                         <DropDownTringle 
@@ -251,12 +304,20 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                       {grandAuthLevel === 3 && <LevelThreeTag />}
                                       {grandAuthLevel > 3 && <LevelFourPlusTag level={grandAuthLevel} />}
                                     </div>
-                                    <div className="text-center">Resumen</div>
-                                    <div className="text-center">$0.00</div>
+                                    {!hideResumenColumn && (
+                                      <div className="text-center">Resumen</div>
+                                    )}
+                                    <div className="text-center">
+                                      {typeof (grand as any).volumen === 'number' || (typeof (grand as any).volumen === 'string' && (grand as any).volumen !== '')
+                                        ? `$${truncateTo3Decimals((grand as any).volumen)}`
+                                        : (typeof (grand as any).comisionesGeneradas === 'number' 
+                                            ? `$${(grand as any).comisionesGeneradas.toFixed(2)}` 
+                                            : '$0.00')}
+                                    </div>
                                     <div className="text-right pr-6">
                                       {grandCanViewTree ? (
                                         <div className="flex items-center justify-end gap-2">
-                                          <span className={`text-[#FFF100] ${grandIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !grandIsLoading && onViewTree && onViewTree(grand.id)}>
+                                          <span className={`text-[#FFF100] ${grandIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !grandIsLoading && handleViewTree(grand.id)}>
                                             Ver árbol
                                           </span>
                                           {grandIsLoading && <Spinner className="size-4 text-[#FFF100]" />}
@@ -282,7 +343,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                       <div key={greatGrand.id} className="space-y-2">
                                         <InfoBanner className="w-full h-16" backgroundColor="#3c3c3c">
                                           <div className="w-full flex items-center px-6 py-2">
-                                            <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm text-white">
+                                            <div className={`flex-1 grid ${hideResumenColumn ? 'grid-cols-5' : 'grid-cols-6'} gap-4 items-center text-sm text-white`}>
                                               <div className="relative flex items-center justify-center pl-6">
                                                 {greatGrandCanExpand && (
                                                   <DropDownTringle 
@@ -308,12 +369,20 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                                 {greatGrandAuthLevel === 3 && <LevelThreeTag />}
                                                 {greatGrandAuthLevel > 3 && <LevelFourPlusTag level={greatGrandAuthLevel} />}
                                               </div>
-                                              <div className="text-center">Resumen</div>
-                                              <div className="text-center">$0.00</div>
+                                              {!hideResumenColumn && (
+                                                <div className="text-center">Resumen</div>
+                                              )}
+                                              <div className="text-center">
+                                                {typeof (greatGrand as any).volumen === 'number' || (typeof (greatGrand as any).volumen === 'string' && (greatGrand as any).volumen !== '')
+                                                  ? `$${truncateTo3Decimals((greatGrand as any).volumen)}`
+                                                  : (typeof (greatGrand as any).comisionesGeneradas === 'number' 
+                                                      ? `$${(greatGrand as any).comisionesGeneradas.toFixed(2)}` 
+                                                      : '$0.00')}
+                                              </div>
                                               <div className="text-right pr-6">
                                                 {greatGrandCanViewTree ? (
                                                   <div className="flex items-center justify-end gap-2">
-                                                    <span className={`text-[#FFF100] ${greatGrandIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !greatGrandIsLoading && onViewTree && onViewTree(greatGrand.id)}>
+                                                    <span className={`text-[#FFF100] ${greatGrandIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !greatGrandIsLoading && handleViewTree(greatGrand.id)}>
                                                       Ver árbol
                                                     </span>
                                                     {greatGrandIsLoading && <Spinner className="size-4 text-[#FFF100]" />}
@@ -329,7 +398,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                             {childrenByParent[greatGrand.id].map(greatGreatGrand => (
                                               <InfoBanner key={greatGreatGrand.id} className="w-full h-16" backgroundColor="#3c3c3c">
                                                 <div className="w-full flex items-center px-6 py-2">
-                                                  <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm text-white">
+                                                  <div className={`flex-1 grid ${hideResumenColumn ? 'grid-cols-5' : 'grid-cols-6'} gap-4 items-center text-sm text-white`}>
                                                     <div className="relative pl-10 text-left truncate" title={greatGreatGrand.email || `${greatGreatGrand.name}@email.com`}>{greatGreatGrand.email || `${greatGreatGrand.name}@email.com`}</div>
                                                     <div className="text-center">{greatGreatGrand.createdAt ? new Date(greatGreatGrand.createdAt).toISOString().slice(0,10) : '—'}</div>
                                                     <div className="flex items-center justify-center">
@@ -341,8 +410,16 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                                         return <LevelFourPlusTag level={greatGreatGrandLevel} />;
                                                       })()}
                                                     </div>
-                                                    <div className="text-center">Resumen</div>
-                                                    <div className="text-center">$0.00</div>
+                                                    {!hideResumenColumn && (
+                                                      <div className="text-center">Resumen</div>
+                                                    )}
+                                                    <div className="text-center">
+                                                      {typeof (greatGreatGrand as any).volumen === 'number' || (typeof (greatGreatGrand as any).volumen === 'string' && (greatGreatGrand as any).volumen !== '')
+                                                        ? `$${truncateTo3Decimals((greatGreatGrand as any).volumen)}`
+                                                        : (typeof (greatGreatGrand as any).comisionesGeneradas === 'number' 
+                                                            ? `$${(greatGreatGrand as any).comisionesGeneradas.toFixed(2)}` 
+                                                            : '$0.00')}
+                                                    </div>
                                                     <div className="text-right">{/* Nivel 5+ no tiene "Ver red" */}</div>
                                                   </div>
                                                 </div>

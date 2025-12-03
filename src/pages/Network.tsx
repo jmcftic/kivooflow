@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import SidebarApp from '../components/organisms/SidebarApp';
 import DashboardNavbar from '../components/atoms/DashboardNavbar';
@@ -11,7 +12,7 @@ import NetworkTableHeader from '../components/organisms/NetworkTableHeader';
 import MiniBaner from '../components/atoms/MiniBaner';
 import SingleArrowHistory from '../components/atoms/SingleArrowHistory';
 import MoneyIcon from '../components/atoms/MoneyIcon';
-import { Spinner } from '@/components/ui/spinner';
+import { LottieLoader } from '@/components/ui/lottie-loader';
 import {
   getNetwork,
   getDescendantSubtree,
@@ -31,6 +32,7 @@ import {
 type NetworkTabId = 'b2c' | 'b2b' | 'b2t';
 
 const Network: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<NetworkTabId>('b2c');
   const [activeLevel, setActiveLevel] = useState<1 | 2 | 3>(1);
   const [searchFilter, setSearchFilter] = useState('');
@@ -81,7 +83,50 @@ const Network: React.FC = () => {
   const historyReadyRef = useRef(false);
   const suppressHistoryPushRef = useRef(false);
   const skipNextSubtreeFetchRef = useRef(false);
+  const networkLoadingStartTimeRef = useRef<number | null>(null);
+  const leadersLoadingStartTimeRef = useRef<number | null>(null);
   const isLeaderTab = userModel === 'b2c' && (activeTab === 'b2b' || activeTab === 'b2t');
+
+  // Helper para garantizar que el loading dure al menos 3 segundos
+  const setNetworkLoadingWithMinTime = useCallback((value: boolean) => {
+    if (value) {
+      networkLoadingStartTimeRef.current = Date.now();
+      setNetworkLoading(true);
+    } else {
+      const elapsed = networkLoadingStartTimeRef.current ? Date.now() - networkLoadingStartTimeRef.current : 0;
+      const remainingTime = Math.max(0, 3000 - elapsed);
+      
+      if (remainingTime > 0) {
+        setTimeout(() => {
+          setNetworkLoading(false);
+          networkLoadingStartTimeRef.current = null;
+        }, remainingTime);
+      } else {
+        setNetworkLoading(false);
+        networkLoadingStartTimeRef.current = null;
+      }
+    }
+  }, []);
+
+  const setLeadersLoadingWithMinTime = useCallback((value: boolean) => {
+    if (value) {
+      leadersLoadingStartTimeRef.current = Date.now();
+      setLeadersLoading(true);
+    } else {
+      const elapsed = leadersLoadingStartTimeRef.current ? Date.now() - leadersLoadingStartTimeRef.current : 0;
+      const remainingTime = Math.max(0, 3000 - elapsed);
+      
+      if (remainingTime > 0) {
+        setTimeout(() => {
+          setLeadersLoading(false);
+          leadersLoadingStartTimeRef.current = null;
+        }, remainingTime);
+      } else {
+        setLeadersLoading(false);
+        leadersLoadingStartTimeRef.current = null;
+      }
+    }
+  }, []);
   
   // Usuario B2B en tab B2B no tiene límite de profundidad
   const hasDepthLimit = useMemo(() => {
@@ -122,6 +167,13 @@ const Network: React.FC = () => {
   useEffect(() => {
     setUsersOffset((currentPage - 1) * usersLimit);
   }, [currentPage, usersLimit]);
+
+  // Inicializar el tiempo de inicio del loading cuando el componente se monta
+  useEffect(() => {
+    if (networkLoading) {
+      networkLoadingStartTimeRef.current = Date.now();
+    }
+  }, []);
 
   // Usar el endpoint available-model para TODOS los tipos de usuarios
   useEffect(() => {
@@ -209,12 +261,12 @@ const Network: React.FC = () => {
       // Esperar a que se haya obtenido el modelo del usuario desde el endpoint available-model
       // para evitar ejecutar el endpoint incorrecto (getNetwork) antes de saber el tipo de usuario
       if (!hasFetchedAvailableModelsRef.current || !userModel) {
-        setNetworkLoading(true);
+        setNetworkLoadingWithMinTime(true);
         return;
       }
       
       try {
-        setNetworkLoading(true);
+        setNetworkLoadingWithMinTime(true);
         // Lógica según tipo de usuario y tab activo
         // Usuario B2C: tab B2C usa excluding, tabs B2B/B2T usan owned
         // Usuario B2B: tab B2B usa single-level
@@ -252,6 +304,16 @@ const Network: React.FC = () => {
                 direct_referrals: u.direct_referrals,
                 total_descendants_of_user: u.total_descendants_of_user,
                 has_descendants: u.has_descendants,
+                comisiones_generadas: typeof u.comisiones_generadas === 'number' 
+                  ? u.comisiones_generadas 
+                  : (typeof u.comisiones_generadas === 'string' 
+                      ? parseFloat(u.comisiones_generadas) || 0 
+                      : (u.comisiones_generadas ?? 0)),
+                volumen: typeof (u as any).volumen === 'number' 
+                  ? (u as any).volumen 
+                  : (typeof (u as any).volumen === 'string' 
+                      ? parseFloat((u as any).volumen) || 0 
+                      : ((u as any).volumen ?? 0)),
               })),
             };
             setLevels([b2cLevel]);
@@ -268,7 +330,7 @@ const Network: React.FC = () => {
             setSubtreePage(1);
             setParentExhausted({});
             setParentErrors({});
-            setNetworkLoading(false);
+            setNetworkLoadingWithMinTime(false);
           }
         } 
         // Usuario B2C en tabs B2B/B2T: usar owned
@@ -287,7 +349,7 @@ const Network: React.FC = () => {
           setParentExhausted({});
           setParentErrors({});
 
-          setLeadersLoading(true);
+          setLeadersLoadingWithMinTime(true);
           setLeadersError(null);
 
           const fetchFn = leaderTab === 'b2b' ? getB2BLeadersOwnedToB2C : getB2TLeadersOwnedToB2C;
@@ -306,12 +368,12 @@ const Network: React.FC = () => {
               offset: result.offset,
             },
           }));
-          setLeadersLoading(false);
-          setNetworkLoading(false);
+          setLeadersLoadingWithMinTime(false);
+          setNetworkLoadingWithMinTime(false);
         } 
         // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
         else if ((userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
-          setLeadersLoading(false);
+          setLeadersLoadingWithMinTime(false);
           setLeadersError(null);
           const res = await getSingleLevelNetwork({
             level: activeLevel,
@@ -341,6 +403,8 @@ const Network: React.FC = () => {
                 direct_referrals: u.direct_referrals,
                 total_descendants_of_user: u.total_descendants_of_user,
                 has_descendants: u.has_descendants,
+                comisiones_generadas: u.comisiones_generadas,
+                volumen: (u as any).volumen ?? 0,
               })),
             };
             setLevels([singleLevel]);
@@ -357,13 +421,13 @@ const Network: React.FC = () => {
             setSubtreePage(1);
             setParentExhausted({});
             setParentErrors({});
-            setNetworkLoading(false);
+            setNetworkLoadingWithMinTime(false);
           }
         } 
         // Fallback: usar el endpoint original para otros casos (no debería ejecutarse normalmente)
         else {
           console.warn('Usando endpoint fallback getNetwork - esto no debería ocurrir si userModel está establecido correctamente', { userModel, activeTab });
-          setLeadersLoading(false);
+          setLeadersLoadingWithMinTime(false);
           setLeadersError(null);
           const res = await getNetwork({
             levelStart: 1,
@@ -383,7 +447,7 @@ const Network: React.FC = () => {
             setSubtreePage(1);
             setParentExhausted({});
             setParentErrors({});
-            setNetworkLoading(false);
+            setNetworkLoadingWithMinTime(false);
           }
         }
       } catch (e) {
@@ -394,10 +458,10 @@ const Network: React.FC = () => {
         if (isLeaderTab) {
           const message = (e as any)?.message ?? 'No se pudieron obtener los líderes.';
           setLeadersError(typeof message === 'string' ? message : 'No se pudieron obtener los líderes.');
-          setLeadersLoading(false);
+          setLeadersLoadingWithMinTime(false);
         }
       } finally {
-        setNetworkLoading(false);
+        setNetworkLoadingWithMinTime(false);
       }
     };
     load();
@@ -471,6 +535,7 @@ const Network: React.FC = () => {
             authLevel: childrenLevel,
             totalDescendants: u.total_descendants_of_user || 0,
             hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
+            volumen: u.volumen ?? 0,
           }));
           
           setSubtreeUsers(users);
@@ -523,6 +588,7 @@ const Network: React.FC = () => {
               authLevel,
               totalDescendants: u.totalDescendants || 0,
               hasDescendants: u.hasDescendants ?? (u.totalDescendants || 0) > 0,
+              volumen: u.volumen ?? 0,
             };
           });
           
@@ -561,6 +627,8 @@ const Network: React.FC = () => {
         totalDescendants: 0,
         leader,
         profileIconUrl: leader.profileIconUrl || undefined, // Para mostrar el icono, convertir null a undefined
+        comisionesGeneradas: leader.comisiones_generadas,
+        volumen: (leader as any).volumen ?? 0,
       };
     });
   }, [isLeaderTab, leaderState, activeTab]);
@@ -580,6 +648,8 @@ const Network: React.FC = () => {
         authLevel: levelGroup.level,
         totalDescendants: u.total_descendants_of_user || 0,
         hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
+        comisionesGeneradas: u.comisiones_generadas ?? 0,
+        volumen: (u as any).volumen ?? 0,
       }))
     );
   }, [isLeaderTab, leaderItems, levels]);
@@ -706,6 +776,8 @@ const Network: React.FC = () => {
           authLevel: nextLevel,
           totalDescendants: u.total_descendants_of_user || 0,
           hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
+          comisionesGeneradas: u.comisiones_generadas ?? 0,
+          volumen: u.volumen ?? 0,
         }));
         
         setChildrenByParent(prev => ({ ...prev, [parentUserId]: users }));
@@ -733,8 +805,10 @@ const Network: React.FC = () => {
             levelInSubtree: 1,
             level: authLevel,
             authLevel,
+            volumen: u.volumen ?? 0,
             totalDescendants: u.totalDescendants || 0,
             hasDescendants: u.hasDescendants ?? (u.totalDescendants || 0) > 0,
+            comisionesGeneradas: u.comisiones_generadas,
           };
         });
         setChildrenByParent(prev => ({ ...prev, [parentUserId]: users }));
@@ -805,6 +879,8 @@ const Network: React.FC = () => {
             authLevel: nextLevel,
             totalDescendants: u.total_descendants_of_user || 0,
             hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
+            comisionesGeneradas: u.comisiones_generadas ?? 0,
+            volumen: u.volumen ?? 0,
           }));
           
           setChildrenByParent(prev => {
@@ -875,6 +951,8 @@ const Network: React.FC = () => {
             authLevel: nextLevel,
             totalDescendants: u.total_descendants_of_user || 0,
             hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
+            comisionesGeneradas: u.comisiones_generadas ?? 0,
+            volumen: u.volumen ?? 0,
           }));
           
           setChildrenByParent(prev => {
@@ -913,6 +991,8 @@ const Network: React.FC = () => {
             authLevel,
             totalDescendants: u.totalDescendants || 0,
             hasDescendants: u.hasDescendants ?? (u.totalDescendants || 0) > 0,
+            comisionesGeneradas: u.comisiones_generadas,
+            volumen: u.volumen ?? 0,
           };
         });
         setChildrenByParent(prev => {
@@ -1035,6 +1115,8 @@ const Network: React.FC = () => {
               authLevel: displayLevel,
               totalDescendants: u.total_descendants_of_user || 0,
               hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
+              comisionesGeneradas: u.comisiones_generadas,
+              volumen: u.volumen ?? 0,
             }));
             
             // Tomar solo los primeros usuarios según el límite para la primera página
@@ -1116,6 +1198,8 @@ const Network: React.FC = () => {
             authLevel,
             totalDescendants: u.totalDescendants || 0,
             hasDescendants: u.hasDescendants ?? (u.totalDescendants || 0) > 0,
+            comisionesGeneradas: u.comisiones_generadas,
+            volumen: u.volumen ?? 0,
           };
         });
         
@@ -1152,34 +1236,10 @@ const Network: React.FC = () => {
   }, [activeLevel, activeTab, allLevelItems, baseItems, subtreeMode, usersLimit, hasDepthLimit, maxDepth, childrenByParent]);
 
   const handleViewTree = (userId: number) => {
-    const lookupDataset = subtreeMode ? baseItems : allLevelItems;
-    let userItem = lookupDataset.find(item => item.id === userId);
-    
-    // Si no se encuentra en el dataset principal, buscar en childrenByParent
-    if (!userItem) {
-      const allChildren = Object.values(childrenByParent).flat();
-      userItem = allChildren.find(item => item.id === userId);
-    }
-    
-    if (!userItem) {
-      return;
-    }
-    const userLevel = (userItem as any)?.authLevel ?? (userItem as any)?.level ?? activeLevel;
-    const hasDescendants = (userItem as any)?.hasDescendants ?? ((userItem as any)?.totalDescendants ?? 0) > 0;
-
-    // Permitir ver árbol si tiene descendientes, incluso en nivel 3
-    // Solo bloquear si no hay descendientes
-    if (!hasDescendants) {
-      return;
-    }
-
-    if (searchFilter.trim()) {
-      setSearchFilter('');
-      setPendingTreeUserId(userId);
-      return;
-    }
-
-    void loadTreeForUser(userId);
+    // Guardar el ID del árbol en sessionStorage antes de navegar
+    sessionStorage.setItem('networkTreeUserId', userId.toString());
+    // Navegar a la ruta del árbol (sin parámetro en la URL)
+    navigate('/network/tree');
   };
 
   const handleViewDetail = (userId: number) => {
@@ -1326,6 +1386,12 @@ const Network: React.FC = () => {
 
       {/* Contenido principal */}
       <div className="flex-1 relative flex flex-col pl-6 pr-6 overflow-y-hidden pb-0 pt-16 lg:pt-0">
+        {/* Overlay con animación Lottie cuando está cargando - solo cubre el área de contenido */}
+        {(networkLoading || leadersLoading) && (
+          <div className="absolute inset-0 bg-[#2a2a2a] z-[9999] flex items-center justify-center">
+            <LottieLoader className="w-32 h-32 lg:w-48 lg:h-48" />
+          </div>
+        )}
         {/* Navbar responsivo */}
         <DashboardNavbar title={subtreeMode && subtreeRootName ? `Red de ${subtreeRootName}` : "Red"} />
 
@@ -1405,17 +1471,12 @@ const Network: React.FC = () => {
           {/* Contenido scrollable de la tabla */}
           <div className="flex-1 min-h-0 overflow-y-auto">
             {/* Header de columnas */}
-            <NetworkTableHeader activeTab={activeTab} />
+            <NetworkTableHeader activeTab={activeTab} hideResumenColumn={userModel === 'b2c'} userModel={userModel} />
 
             {/* Tabla con filas */}
             {isLeaderTab && leadersError ? (
               <div className="py-10 text-center text-sm text-[#FF7A7A] px-4">
                 {leadersError}
-              </div>
-            ) : (isLeaderTab && leadersLoading) || (networkLoading && !isLeaderTab) ? (
-              <div className="py-10 text-center text-sm text-white/60 flex items-center justify-center gap-2">
-                <Spinner className="size-4 text-[#FFF100]" />
-                <span>Cargando</span>
               </div>
             ) : displayedItems.length > 0 ? (
               <NetworkTable 
@@ -1438,6 +1499,7 @@ const Network: React.FC = () => {
                 loadingTreeUserId={loadingTreeUserId}
                 parentExhausted={isLeaderTab ? {} : parentExhausted}
                 parentErrors={isLeaderTab ? {} : parentErrors}
+                hideResumenColumn={userModel === 'b2c'}
               />
             ) : (
               <div className="py-10 text-center text-sm text-white/60">

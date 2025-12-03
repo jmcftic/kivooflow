@@ -24,6 +24,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { DateFilter, WeeklyData } from "@/types/dashboard";
+import { getAvailableMlmModels } from "@/services/network";
 
 interface ResumenCardProps {
   className?: string;
@@ -82,24 +83,58 @@ const ResumenCard: React.FC<ResumenCardProps> = ({
   currentDateFilter = "last_2_months",
   model
 }) => {
-  // Obtener el modelo del usuario desde localStorage
-  const getUserModel = (): string | null => {
+  // Obtener el modelo del usuario - inicializar desde localStorage primero para evitar delay
+  const getInitialUserModel = (): string | null => {
     try {
       const userStr = localStorage.getItem('user');
       if (userStr) {
         const userData = JSON.parse(userStr);
-        return userData?.mlmModel || userData?.mlm_model || userData?.networkModel || userData?.network_model || null;
+        const fallbackModel = userData?.mlmModel || userData?.mlm_model || userData?.networkModel || userData?.network_model || null;
+        if (fallbackModel) {
+          return fallbackModel.trim().toLowerCase();
+        }
       }
     } catch (error) {
-      console.error('Error obteniendo modelo del usuario:', error);
+      // Ignorar errores en la inicialización
     }
     return null;
   };
 
-  const userModel = getUserModel();
+  const [userModel, setUserModel] = useState<string | null>(getInitialUserModel());
+  
+  useEffect(() => {
+    const fetchUserModel = async () => {
+      try {
+        const data = await getAvailableMlmModels();
+        const model = data.my_model?.trim().toLowerCase() || '';
+        if (model === 'b2c' || model === 'b2b' || model === 'b2t') {
+          setUserModel(model);
+        } else {
+          // Fallback a localStorage
+          const fallbackModel = getInitialUserModel();
+          if (fallbackModel) {
+            setUserModel(fallbackModel);
+          }
+        }
+      } catch (error) {
+        console.error('Error obteniendo modelo del usuario:', error);
+        // Fallback a localStorage
+        const fallbackModel = getInitialUserModel();
+        if (fallbackModel) {
+          setUserModel(fallbackModel);
+        }
+      }
+    };
+    void fetchUserModel();
+  }, []);
   
   // Detectar si es B2C viendo la pestaña B2B
   const isB2CViewingB2B = userModel?.toLowerCase() === 'b2c' && model?.toLowerCase() === 'b2b';
+  
+  // Debug: verificar valores
+  if (process.env.NODE_ENV === 'development') {
+    console.log('ResumenCard debug:', { userModel, model, isB2CViewingB2B });
+  }
   
   // Si es B2C viendo B2B, solo mostrar recargas
   const filteredChartConfig = isB2CViewingB2B 
@@ -461,7 +496,25 @@ const ResumenCard: React.FC<ResumenCardProps> = ({
                 stroke="var(--color-recargas)"
                 strokeWidth={2}
               />
-              <ChartLegend content={<ChartLegendContent />} />
+              {/* Leyenda: para B2C viendo B2B, mostrar solo Recargas; para otros casos, mostrar todos */}
+              {isB2CViewingB2B ? (
+                // Para B2C viendo B2B, mostrar solo el label de Recargas manualmente
+                // No usar ChartLegend de Recharts, solo mostrar nuestra leyenda personalizada
+                <div className="flex items-center justify-center gap-4 pt-3">
+                  <div className="flex items-center gap-1.5">
+                    <div
+                      className="h-2 w-2 shrink-0 rounded-[2px]"
+                      style={{
+                        backgroundColor: chartConfig.recargas.color,
+                      }}
+                    />
+                    <span className="text-[#FFF100]">{chartConfig.recargas.label}</span>
+                  </div>
+                </div>
+              ) : (
+                // Para otros casos, usar la leyenda normal de Recharts
+                <ChartLegend content={<ChartLegendContent />} />
+              )}
             </AreaChart>
           </ChartContainer>
           )}

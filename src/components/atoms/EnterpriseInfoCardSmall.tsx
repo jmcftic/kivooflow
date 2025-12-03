@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils"
 import React from "react"
+import IncreaseArrow from "./IncreaseArrow"
+import DecreaseArrow from "./DecreaseArrow"
 
 interface EnterpriseInfoCardSmallProps {
   primaryText: string;
@@ -9,32 +11,47 @@ interface EnterpriseInfoCardSmallProps {
   backgroundColor?: string;
   height?: number;
   showChart?: boolean;
+  percentageChange?: number | null;
+  secondaryTextColor?: 'white' | 'gray' | 'black';
+  forceSmallFont?: boolean; // Forzar tamaño de fuente pequeño
 }
 
-// SVG Background para el componente pequeño - escalado proporcionalmente desde 541x172
-// Ratio: 129/172 = 0.75
-const SmallCardSVG = () => {
+// SVG Background para el componente pequeño con path decorativo invertido
+const SmallCardSVG = ({ backgroundColor = "#2d2d2d", gradientColor = "#fff000", uniqueId }: { backgroundColor?: string; gradientColor?: string; uniqueId: string }) => {
+  const gradientId = `paint0_linear_small_${uniqueId}`;
+  
   return (
     <svg 
       width="100%" 
       height="100%" 
-      viewBox="0 0 541 172"
+      viewBox="0 0 199 50"
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="none"
+      className="w-full h-full"
     >
-      <mask id="path-1-inside-1_small" fill="white">
-        <path d="M541 0.049407C541 0.0766229 540.978 0.0987137 540.951 0.0988136L501.922 0.242188C501.051 0.219151 500.473 0.247381 500.46 0.248047L501.922 0.242188C503.578 0.285987 506.295 0.517753 508.209 1.49023C511.141 2.98017 528.107 18.6244 533.553 23.5908C539.679 29.1781 540.54 35.3956 540.656 36.7364C540.664 36.824 540.781 36.8546 540.833 36.7837C540.886 36.7118 541 36.7492 541 36.8386V164C541 168.418 537.418 172 533 172H8.21778C3.7995 172 0.217773 168.418 0.217773 164V8C0.217773 3.58173 3.7995 0 8.21777 0H540.951C540.978 0 541 0.0221203 541 0.049407Z"/>
-      </mask>
-      <path d="M541 0.049407C541 0.0766229 540.978 0.0987137 540.951 0.0988136L501.922 0.242188C501.051 0.219151 500.473 0.247381 500.46 0.248047L501.922 0.242188C503.578 0.285987 506.295 0.517753 508.209 1.49023C511.141 2.98017 528.107 18.6244 533.553 23.5908C539.679 29.1781 540.54 35.3956 540.656 36.7364C540.664 36.824 540.781 36.8546 540.833 36.7837C540.886 36.7118 541 36.7492 541 36.8386V164C541 168.418 537.418 172 533 172H8.21778C3.7995 172 0.217773 168.418 0.217773 164V8C0.217773 3.58173 3.7995 0 8.21777 0H540.951C540.978 0 541 0.0221203 541 0.049407Z" fill="#212020"/>
-      <path d="M541 0.049407C541 0.0766229 540.978 0.0987137 540.951 0.0988136L501.922 0.242188C501.051 0.219151 500.473 0.247381 500.46 0.248047L501.922 0.242188C503.578 0.285987 506.295 0.517753 508.209 1.49023C511.141 2.98017 528.107 18.6244 533.553 23.5908C539.679 29.1781 540.54 35.3956 540.656 36.7364C540.664 36.824 540.781 36.8546 540.833 36.7837C540.886 36.7118 541 36.7492 541 36.8386V164C541 168.418 537.418 172 533 172H8.21778C3.7995 172 0.217773 168.418 0.217773 164V8C0.217773 3.58173 3.7995 0 8.21777 0H540.951C540.978 0 541 0.0221203 541 0.049407Z" fill="url(#paint0_linear_small)" fillOpacity="0.2"/>
-      <path d="M500.46 0.248047L500.409 -0.750662L500.464 1.24804L500.46 0.248047ZM508.209 1.49023L508.662 0.598721L508.662 0.598714L508.209 1.49023ZM533.553 23.5908L534.227 22.852L534.227 22.852L533.553 23.5908ZM540.833 36.7837L541.638 37.3763L540.833 36.7837ZM540.656 36.7364L541.652 36.6498L540.656 36.7364ZM540.951 0.0988136L540.947 -0.90118L540.951 0.0988136ZM540.951 0.0988136L540.947 -0.90118L501.918 -0.757806L501.922 0.242188L501.926 1.24218L540.954 1.09881L540.951 0.0988136ZM501.922 0.242188L501.948 -0.757463C501.046 -0.781331 500.442 -0.752312 500.409 -0.750662L500.46 0.248047L500.511 1.24676C500.504 1.24707 501.056 1.21963 501.895 1.24184L501.922 0.242188ZM500.46 0.248047L500.464 1.24804L501.926 1.24218L501.922 0.242188L501.918 -0.757804L500.456 -0.751945L500.46 0.248047ZM501.922 0.242188L501.895 1.24184C503.542 1.28538 506.059 1.51934 507.756 2.38176L508.209 1.49023L508.662 0.598714C506.531 -0.483832 503.614 -0.713402 501.948 -0.757463L501.922 0.242188ZM508.209 1.49023L507.756 2.38175C508.029 2.52067 508.548 2.87361 509.307 3.45699C510.046 4.02447 510.958 4.76681 511.997 5.63934C514.074 7.38356 516.631 9.62624 519.273 11.9831C524.556 16.6963 530.152 21.8425 532.879 24.3297L533.553 23.5908L534.227 22.852C531.508 20.3727 525.898 15.2136 520.604 10.4906C517.957 8.12933 515.383 5.8712 513.283 4.10788C512.234 3.22665 511.297 2.46354 510.526 1.87089C509.775 1.29414 509.122 0.832278 508.662 0.598721L508.209 1.49023ZM533.553 23.5908L532.879 24.3297C538.753 29.6872 539.556 35.6257 539.66 36.823L540.656 36.7364L541.652 36.6498C541.523 35.1655 540.605 28.6689 534.227 22.852L533.553 23.5908ZM541 36.8386H540V164H541H542V36.8386H541ZM533 172V171H8.21778V172V173H533V172ZM0.217773 164H1.21777V8H0.217773H-0.782227V164H0.217773ZM8.21777 0V1H540.951V0V-1H8.21777V0ZM540.951 0V1C540.425 1 540 0.573724 540 0.049407H541H542C542 -0.529483 541.531 -1 540.951 -1V0ZM0.217773 8H1.21777C1.21777 4.13401 4.35178 1 8.21777 1V0V-1C3.24721 -1 -0.782227 3.02944 -0.782227 8H0.217773ZM8.21778 172V171C4.35179 171 1.21777 167.866 1.21777 164H0.217773H-0.782227C-0.782227 168.971 3.24722 173 8.21778 173V172ZM541 164H540C540 167.866 536.866 171 533 171V172V173C537.971 173 542 168.971 542 164H541ZM540.833 36.7837L541.638 37.3763C541.119 38.0822 540 37.7149 540 36.8386H541H542C542 35.7835 540.653 35.3413 540.027 36.1911L540.833 36.7837ZM540.656 36.7364L539.66 36.823C539.752 37.884 541.072 38.1457 541.638 37.3763L540.833 36.7837L540.027 36.1911C540.279 35.8488 540.683 35.773 540.984 35.8529C541.289 35.9338 541.614 36.2095 541.652 36.6498L540.656 36.7364ZM540.951 0.0988136L540.954 1.09881C541.533 1.09668 542 0.627474 542 0.049407H541H540C540 -0.474228 540.423 -0.899256 540.947 -0.90118L540.951 0.0988136Z" fill="#3C3C3C" mask="url(#path-1-inside-1_small)"/>
       <defs>
-        <linearGradient id="paint0_linear_small" x1="270.609" y1="172" x2="270.609" y2="0" gradientUnits="userSpaceOnUse">
+        <linearGradient id={gradientId} x1="0" y1="0" x2="199" y2="50" gradientUnits="userSpaceOnUse">
           <stop stopOpacity="0"/>
-          <stop offset="1" stopColor="#FFF100" stopOpacity="0.28"/>
+          <stop offset="1" stopColor={gradientColor} stopOpacity="0.28"/>
         </linearGradient>
       </defs>
+      {/* Path decorativo invertido en la esquina superior derecha como forma visible - reducido 20% */}
+      <g transform="translate(199, 0) scale(-1, 1)">
+        <g transform="translate(19.9, 5) scale(0.8)">
+          <path
+            d="M0.110056 19.6483C0.113891 18.6249 0.509132 17.6425 1.21594 16.9024C5.69946 12.2078 10.9553 6.72622 16.2842 1.27238C17.0391 0.499794 18.0752 0.0670555 19.1553 0.0711037L194.182 0.727087C196.391 0.735367 198.176 2.53293 198.167 4.74205L198.014 45.7418C198.005 47.9509 196.208 49.735 193.999 49.7267L4.00002 49.0146C1.7909 49.0064 0.00676175 47.2088 0.0150413 44.9997L0.110056 19.6483Z"
+            fill={backgroundColor}
+            stroke="none"
+          />
+          <path
+            d="M0.110056 19.6483C0.113891 18.6249 0.509132 17.6425 1.21594 16.9024C5.69946 12.2078 10.9553 6.72622 16.2842 1.27238C17.0391 0.499794 18.0752 0.0670555 19.1553 0.0711037L194.182 0.727087C196.391 0.735367 198.176 2.53293 198.167 4.74205L198.014 45.7418C198.005 47.9509 196.208 49.735 193.999 49.7267L4.00002 49.0146C1.7909 49.0064 0.00676175 47.2088 0.0150413 44.9997L0.110056 19.6483Z"
+            fill={`url(#${gradientId})`}
+            fillOpacity="0.2"
+            stroke="none"
+          />
+        </g>
+      </g>
     </svg>
   );
 };
@@ -69,7 +86,31 @@ export function EnterpriseInfoCardSmall({
   backgroundColor = "#2d2d2d",
   height = 129,
   showChart = false,
+  percentageChange,
+  secondaryTextColor = 'gray',
+  forceSmallFont = false,
 }: EnterpriseInfoCardSmallProps) {
+  const hasPercentageChange = percentageChange != null && !isNaN(percentageChange);
+  const isPositive = hasPercentageChange && percentageChange >= 0;
+  const isNegative = hasPercentageChange && percentageChange < 0;
+  
+  // Contar dígitos numéricos en el texto (sin contar el símbolo $ y puntos decimales)
+  const countDigits = (text: string): number => {
+    // Remover símbolos no numéricos excepto el punto decimal
+    const numericText = text.replace(/[^0-9.]/g, '');
+    // Contar solo los dígitos (no el punto decimal)
+    return numericText.replace(/\./g, '').length;
+  };
+  
+  const digitCount = countDigits(primaryText);
+  const shouldReduceFontSize = forceSmallFont || digitCount > 6;
+  const fontSize = shouldReduceFontSize ? '20px' : '40px'; // Reducir 50% si tiene más de 6 cifras o si se fuerza
+  
+  // Generar un ID único para este componente usando useMemo para evitar regeneraciones
+  const uniqueId = React.useMemo(() => {
+    return Math.random().toString(36).substr(2, 9);
+  }, []);
+
   return (
     <div 
       className={cn("relative w-full overflow-hidden isolate", className)} 
@@ -77,35 +118,60 @@ export function EnterpriseInfoCardSmall({
     >
       {/* SVG Background - mantiene dimensiones proporcionales aunque el contenedor se estire */}
       <div className="absolute inset-0" style={{ pointerEvents: 'none' }}>
-        <SmallCardSVG />
+        <SmallCardSVG backgroundColor={backgroundColor} gradientColor={gradientColor} uniqueId={uniqueId} />
       </div>
 
       {/* Content container */}
-      <div className="relative z-10 h-full flex flex-col px-6 py-4">
+      <div className="relative z-10 h-full flex flex-col px-3 py-2.5 overflow-hidden w-full">
         {/* Texto principal - alineado a la izquierda arriba */}
-        <div className="flex-1 flex flex-col justify-start">
+        <div className="flex-1 flex flex-col justify-start min-w-0 w-full">
           <div 
-            className="text-white"
+            className={backgroundColor === '#FFF100' || backgroundColor === '#fced00' ? 'text-black' : 'text-white'}
             style={{ 
               height: '40px',
               display: 'flex',
               alignItems: 'flex-start',
               fontFamily: 'Archivo, sans-serif',
-              fontSize: '40px',
-              lineHeight: '1'
+              fontSize: fontSize,
+              lineHeight: '1',
+              width: '100%',
+              maxWidth: '100%'
             }}
           >
-            {primaryText}
+            <span className="truncate flex-1 min-w-0" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{primaryText}</span>
+            {hasPercentageChange && (
+              <div className="flex items-center gap-1 flex-shrink-0 ml-2" style={{ fontSize: '16px', lineHeight: '1' }}>
+                {isPositive ? (
+                  <IncreaseArrow width={17} height={16} />
+                ) : (
+                  <DecreaseArrow width={17} height={16} />
+                )}
+                <span style={{ color: isPositive ? '#198500' : '#C94740' }}>
+                  {isPositive ? '+' : ''}{percentageChange.toFixed(1)}%
+                </span>
+              </div>
+            )}
           </div>
           
           {/* Texto secundario - debajo del principal */}
           <div 
-            className="text-gray-400 mt-1"
+            className={
+              secondaryTextColor === 'white' 
+                ? 'text-white' 
+                : secondaryTextColor === 'black'
+                ? 'text-black'
+                : 'text-gray-400'
+            }
             style={{ 
               height: '18px',
               fontFamily: 'Archivo, sans-serif',
               fontSize: '14px',
-              lineHeight: '1.29'
+              lineHeight: '1.29',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              width: '100%',
+              maxWidth: '100%'
             }}
           >
             {secondaryText}

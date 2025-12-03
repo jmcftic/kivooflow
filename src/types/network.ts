@@ -13,6 +13,8 @@ export interface NetworkUser {
   direct_referrals: number;
   total_descendants_of_user: number;
   has_descendants?: boolean;
+  comisiones_generadas?: number;
+  volumen?: number;
 }
 
 export interface NetworkLevel {
@@ -50,6 +52,13 @@ export interface DescendantSubtreeUser {
   directReferrals: number;
   totalDescendants: number;
   levelInSubtree: number;
+  comisiones_generadas?: number;
+}
+
+export interface DescendantSubtreeSummary {
+  activeReferrals: number;
+  lastMonthCommissions: number;
+  totalVolume: number;
 }
 
 export interface DescendantSubtreeResponse {
@@ -57,6 +66,8 @@ export interface DescendantSubtreeResponse {
   requesterLevelToDescendant: number | null;
   totalLevels: number;
   totalDescendants: number;
+  hasMore?: boolean;
+  summary?: DescendantSubtreeSummary;
   users: DescendantSubtreeUser[];
 }
 
@@ -75,6 +86,8 @@ export interface B2CNetworkUser {
   direct_referrals: number;
   total_descendants_of_user: number;
   has_descendants: boolean;
+  comisiones_generadas?: number;
+  volumen?: number;
 }
 
 export interface B2CNetworkResponse {
@@ -137,6 +150,8 @@ export interface NetworkLeaderOwnedToB2C {
   card1Url: string | null;
   card2Url: string | null;
   card3Url: string | null;
+  comisiones_generadas?: number;
+  volumen?: number;
 }
 
 export interface NetworkLeadersPagination {
@@ -165,15 +180,16 @@ export interface Claim {
   id: number;
   userId: number;
   commissionType: string; // papa, abuelo, bis_abuelo, leader_retention
-  baseAmount: number;
-  commissionPercentage: number;
-  commissionAmount: number;
+  baseAmount: number | string; // Puede venir como string desde el backend
+  commissionPercentage: number | string; // Puede venir como string desde el backend
+  commissionAmount: number | string; // Puede venir como string desde el backend
   leaderMarkupAmount?: number | null;
   markupPercentage?: number | null;
   currency: string;
   status: string; // pending, processed, etc.
   cryptoTransactionId?: number | null;
   createdAt: string;
+  calculationDetails?: B2BCommissionCalculationDetails | MlmTransactionCalculationDetails;
   [key: string]: any; // Para otros campos adicionales
 }
 
@@ -184,7 +200,19 @@ export interface ClaimsPagination {
   totalPages: number;
 }
 
+export interface ClaimsSummary {
+  totalCommissions: number;
+  gainsFromRecharges: number;
+  gainsFromCards: number;
+  totalCommissionsPercentageChange?: number;
+  gainsFromRechargesPercentageChange?: number;
+  gainsFromCardsPercentageChange?: number;
+  totalGananciasPorReclamar?: number;
+  claimedUltimoMes?: number;
+}
+
 export interface ClaimsResponse {
+  summary?: ClaimsSummary | null;
   items: Claim[];
   pagination: ClaimsPagination;
 }
@@ -206,6 +234,15 @@ export interface B2BCommissionTransaction {
   status: string;
 }
 
+export interface DefaultCard {
+  id: number;
+  payco_card_id: string;
+  card_number: string;
+  holder_name: string;
+  nomina: string;
+  is_default: boolean;
+}
+
 export interface B2BCommissionCalculationDetails {
   userCreatedAt: string;
   originalJoinDate: string;
@@ -216,6 +253,20 @@ export interface B2BCommissionCalculationDetails {
   commissionPercentage: number;
   commissionAmount: number;
   calculatedAt: string;
+  userFullName?: string | null;
+  DefaultCard?: DefaultCard | null;
+}
+
+export interface MlmTransactionCalculationDetails {
+  generatedBy: number;
+  ancestorDepth: number;
+  ancestorLevelName: string;
+  ancestorRelativeLevel: number;
+  ancestorMlmCode: string;
+  source: string;
+  generatedAt: string;
+  userFullName?: string | null;
+  DefaultCard?: DefaultCard | null;
 }
 
 export interface B2BCommission {
@@ -234,6 +285,8 @@ export interface B2BCommission {
   status: string;
   calculationDetails?: B2BCommissionCalculationDetails;
   createdAt: string;
+  commissionType?: string; // papa, abuelo, bis_abuelo, leader_retention
+  userEmail?: string; // Email del usuario que generó la comisión
 }
 
 export interface ClaimB2BCommissionRequest {
@@ -259,17 +312,56 @@ export interface B2BCommissionsPagination {
   hasPreviousPage: boolean;
 }
 
+export interface B2BCommissionsSummary {
+  totalGains: number;
+  gainsFromRecharges: number;
+  gainsFromCards: number;
+  totalGainsPercentageChange?: number;
+  gainsFromRechargesPercentageChange?: number;
+  gainsFromCardsPercentageChange?: number;
+  totalGananciasPorReclamar?: number;
+  claimedUltimoMes?: number;
+}
+
 export interface B2BCommissionsData {
   total: number;
   available: number;
   commissions: B2BCommission[];
   pagination: B2BCommissionsPagination;
+  summary?: B2BCommissionsSummary | null;
 }
 
 export interface B2BCommissionsResponse {
   statusCode: number;
   message: string;
   data: B2BCommissionsData;
+}
+
+export interface RequestAllClaimsResponse {
+  statusCode: number;
+  message: string;
+  data: {
+    success: boolean;
+    message: string;
+    mlmTransactionsRequested: number;
+    b2cFromB2BCommissionsRequested: number;
+    totalRequested: number;
+    errors: string[];
+  };
+}
+
+export interface TotalToClaimInUSDTResponse {
+  statusCode: number;
+  message: string;
+  data: {
+    totalInUSDT: number;
+    mlmTransactionsTotal: number;
+    b2cCommissionsTotalMXN: number;
+    b2cCommissionsTotalUSDT: number;
+    mlmTransactionsCount: number;
+    b2cCommissionsCount: number;
+    exchangeRateMXNToUSDT: number;
+  };
 }
 
 export interface TeamDetailsData {
@@ -288,5 +380,122 @@ export interface TeamDetailsResponse {
   statusCode: number;
   message: string;
   data: TeamDetailsData;
+}
+
+// Tipos para órdenes de claims
+export interface Order {
+  id: number;
+  userId: number;
+  status: 'pending' | 'paid' | 'cancelled';
+  totalAmount: number;
+  currency: string;
+  paymentReference: string | null;
+  notes: string | null;
+  paidAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  itemsCount: number;
+}
+
+export interface OrdersPagination {
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface OrdersResponse {
+  statusCode: number;
+  message: string;
+  data: {
+    items: Order[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  };
+}
+
+// Tipos para claims dentro de una orden (estructura real del API)
+export interface OrderClaimItem {
+  id: number;
+  baseTransactionId: number | null;
+  cryptoTransactionId: string | null;
+  userId: number;
+  teamId: number | null;
+  commissionType: string;
+  baseAmount: number;
+  commissionPercentage: number | null;
+  commissionAmount: number;
+  markupPercentage: number | null;
+  leaderMarkupAmount: number | null;
+  currency: string;
+  status: 'available' | 'requested' | 'claimed';
+  processedAt: string | null;
+  createdAt: string;
+  origin: 'mlm_transaction' | 'b2c_from_b2b_commission';
+  calculationDetails: OrderClaimCalculationDetails;
+}
+
+// Tipo unión para calculationDetails que puede ser de mlm_transaction o b2c_from_b2b_commission
+export type OrderClaimCalculationDetails = 
+  | MlmTransactionOrderCalculationDetails 
+  | B2BCommissionOrderCalculationDetails;
+
+// CalculationDetails para mlm_transaction en órdenes
+export interface MlmTransactionOrderCalculationDetails {
+  source: string;
+  DefaultCard?: DefaultCard | null;
+  generatedAt?: string;
+  generatedBy?: number;
+  userFullName?: string | null;
+  userEmail?: string;
+  ancestorDepth?: number;
+  ancestorMlmCode?: string;
+  ancestorLevelName?: string;
+  ancestorRelativeLevel?: string;
+  // Campos adicionales para B2B
+  markupOnly?: boolean;
+  exchangeRate?: number;
+  isRootLeader?: boolean;
+  baseAmountFiat?: number;
+  cryptocurrency?: string;
+  leaderInAncestors?: boolean;
+  leaderMarkupAmountFiat?: number;
+  commissionAmountFiat?: number;
+  usesCustomDistribution?: boolean;
+  customCommissionPercentage?: number;
+  standardCommissionPercentage?: number;
+}
+
+// CalculationDetails para b2c_from_b2b_commission en órdenes
+export interface B2BCommissionOrderCalculationDetails {
+  DefaultCard?: DefaultCard | null;
+  totalVolume?: number;
+  calculatedAt?: string;
+  transactions?: B2BCommissionTransaction[];
+  userFullName?: string | null;
+  periodEndDate?: string;
+  userCreatedAt?: string;
+  periodStartDate?: string;
+  commissionAmount?: number;
+  originalJoinDate?: string;
+  commissionPercentage?: number;
+  source: string;
+  teamId?: number;
+  teamName?: string;
+  level?: number;
+}
+
+export interface OrderClaimsResponse {
+  statusCode: number;
+  message: string;
+  data: {
+    orderId: number;
+    orderStatus: 'pending' | 'paid' | 'cancelled';
+    orderTotalAmount: number;
+    items: OrderClaimItem[];
+    total: number;
+  };
 }
 

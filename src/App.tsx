@@ -13,7 +13,9 @@ import Example from "./pages/Example";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Claims from "./pages/Claims";
+import ClaimDetail from "./pages/ClaimDetail";
 import Network from "./pages/Network";
+import NetworkTree from "./pages/NetworkTree";
 import EnterpriseDetail from "./pages/EnterpriseDetail";
 import CardAcquisition from "./pages/CardAcquisition";
 import Commissions from "./pages/Commissions";
@@ -97,6 +99,10 @@ function App() {
         title = "Kivoo Web - Claims";
         metaDescription = "Gestiona tus claims en Kivoo";
         break;
+      case "/claim/detail":
+        title = "Kivoo Web - Detalle de Orden";
+        metaDescription = "Detalle de orden de claims en Kivoo";
+        break;
       case "/network":
         title = "Kivoo Web - Red";
         metaDescription = "Gestiona tu red en Kivoo";
@@ -178,10 +184,26 @@ function App() {
           }
         />
         <Route
+          path="/claim/detail"
+          element={
+            <ProtectedRoute>
+              <ClaimDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/network"
           element={
             <ProtectedRoute>
               <Network />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/network/tree"
+          element={
+            <ProtectedRoute>
+              <NetworkTree />
             </ProtectedRoute>
           }
         />

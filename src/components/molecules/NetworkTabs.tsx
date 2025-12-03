@@ -8,9 +8,10 @@ interface NetworkTabsProps {
   activeTab: NetworkTabId;
   onTabChange: (tab: NetworkTabId) => void;
   availableTabs?: Record<NetworkTabId, boolean>;
+  tabHeight?: number;
 }
 
-const NetworkTabs: React.FC<NetworkTabsProps> = ({ activeTab, onTabChange, availableTabs }) => {
+const NetworkTabs: React.FC<NetworkTabsProps> = ({ activeTab, onTabChange, availableTabs, tabHeight = 52 }) => {
   const availability: Record<NetworkTabId, boolean> = availableTabs ?? {
     b2c: true,
     b2b: false,
@@ -27,7 +28,7 @@ const NetworkTabs: React.FC<NetworkTabsProps> = ({ activeTab, onTabChange, avail
   const availableTabsList = tabs.filter((tab) => availability[tab.id]);
 
   return (
-    <div className="flex items-start">
+    <div className="flex items-start w-full">
       <div className="flex" style={{ gap: '1px' }}>
         {availableTabsList.map((tab) => {
           return (
@@ -38,7 +39,7 @@ const NetworkTabs: React.FC<NetworkTabsProps> = ({ activeTab, onTabChange, avail
               style={{ width: '158px' }}
             >
               <FoldedTabCard
-                height={52}
+                height={tabHeight}
                 gradientColor={activeTab === tab.id ? '#FFF100' : '#333333'}
                 backgroundColor={activeTab === tab.id ? '#FFF100' : '#2d2d2d'}
               >
