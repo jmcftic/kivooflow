@@ -13,11 +13,14 @@ import SuperiorClaimCard from '../components/atoms/SuperiorClaimCard';
 import NetworkPaginationBar from '../components/organisms/NetworkPaginationBar';
 import { getAvailableMlmModels, requestAllClaims, getTotalToClaimInUSDT } from '@/services/network';
 import { getMisTarjetas } from '@/services/cards';
+import { formatCurrencyWithThreeDecimals } from '@/lib/utils';
 import { Spinner } from '@/components/ui/spinner';
+import { LottieLoader } from '@/components/ui/lottie-loader';
 import ErrorModal from '@/components/atoms/ErrorModal';
 import ClaimSuccessModal from '@/components/molecules/ClaimSuccessModal';
 import NoCardsModal from '@/components/molecules/NoCardsModal';
 import ClaimAllScreen from '@/components/organisms/ClaimAllScreen';
+import { useMinimumLoading } from '../hooks/useMinimumLoading';
 
 type CommissionTabId = 'b2c' | 'b2b' | 'b2t';
 
@@ -25,7 +28,7 @@ const Commissions: React.FC = () => {
   const queryClient = useQueryClient();
   
   // Usar la misma query de React Query que CommissionsListCard para evitar duplicados
-  const { data: availableModelsData } = useQuery({
+  const { data: availableModelsData, isLoading: isLoadingModels } = useQuery({
     queryKey: ['availableMlmModels'],
     queryFn: getAvailableMlmModels,
     staleTime: 5 * 60 * 1000, // Cache por 5 minutos
@@ -38,6 +41,7 @@ const Commissions: React.FC = () => {
     b2t: false,
   });
   const [hasSetInitialTab, setHasSetInitialTab] = useState(false);
+  const [isChangingTab, setIsChangingTab] = useState(false);
   const [summary, setSummary] = useState<{
     totalCommissions: number;
     gainsFromRecharges: number;
@@ -60,7 +64,9 @@ const Commissions: React.FC = () => {
     mlmTransactionsCount: number;
     b2cCommissionsCount: number;
     exchangeRateMXNToUSDT: number;
+    userEmail?: string;
   } | null>(null);
+  const [userEmail, setUserEmail] = useState<string | undefined>(undefined);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorModalMessage, setErrorModalMessage] = useState('');
   const [noCardsModalOpen, setNoCardsModalOpen] = useState(false);
@@ -96,6 +102,20 @@ const Commissions: React.FC = () => {
     }
   }, [activeTab]);
 
+  // Detectar cuando cambia el tab para mostrar loader
+  useEffect(() => {
+    if (activeTab !== null) {
+      setIsChangingTab(true);
+      const timer = setTimeout(() => {
+        setIsChangingTab(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab]);
+
+  const isLoading = isLoadingModels || isChangingTab || !hasSetInitialTab;
+  const showLoader = useMinimumLoading(isLoading, 3000);
+
   const handleRequestAllClaims = async () => {
     setIsLoadingTotal(true);
     try {
@@ -105,8 +125,16 @@ const Commissions: React.FC = () => {
         (card) => card.cardStatus === "ACTIVA"
       );
       
-      // Si no hay tarjetas activas, mostrar el modal de no tarjetas
+      // Si no hay tarjetas activas, obtener el email del usuario antes de mostrar el modal
       if (tarjetasActivas.length === 0) {
+        try {
+          // Obtener el email del usuario para el mensaje de WhatsApp
+          const response = await getTotalToClaimInUSDT();
+          setUserEmail(response.data.userEmail);
+        } catch (emailError) {
+          // Si falla obtener el email, continuar sin él
+          console.warn('No se pudo obtener el email del usuario:', emailError);
+        }
         setNoCardsModalOpen(true);
         setIsLoadingTotal(false);
         return;
@@ -117,6 +145,8 @@ const Commissions: React.FC = () => {
       
       // Guardar los datos del total
       setTotalToClaimData(response.data);
+      // Guardar el email del usuario para el mensaje de WhatsApp
+      setUserEmail(response.data.userEmail);
       
       // Mostrar la pantalla completa con el SVG
       setShowClaimAllScreen(true);
@@ -157,6 +187,12 @@ const Commissions: React.FC = () => {
 
       {/* Contenido principal */}
       <div className="flex-1 relative flex flex-col pt-16 lg:pt-0 overflow-hidden">
+        {/* Overlay con animación Lottie cuando está cargando */}
+        {showLoader && (
+          <div className="absolute inset-0 bg-[#2a2a2a] z-[9999] flex items-center justify-center">
+            <LottieLoader className="w-32 h-32 lg:w-48 lg:h-48" />
+          </div>
+        )}
         {/* Área scrolleable con padding */}
         <div className="flex-1 min-h-0 overflow-y-auto pl-6 pr-6 pb-8" style={{ paddingBottom: '84px' }}>
           {/* Navbar responsivo */}
@@ -236,7 +272,7 @@ const Commissions: React.FC = () => {
                 <>
                   <div className="w-full md:flex-1 min-w-0">
                     <SuperiorClaimCard
-                      primaryText={summary && typeof summary.totalCommissions === 'number' ? `$${summary.totalCommissions.toFixed(2)}` : '$0.00'}
+                      primaryText={summary && typeof summary.totalCommissions === 'number' ? `$${formatCurrencyWithThreeDecimals(summary.totalCommissions)}` : '$0'}
                       secondaryText="Comisiones totales"
                       height={129}
                       className="w-full"
@@ -246,7 +282,7 @@ const Commissions: React.FC = () => {
                   </div>
                   <div className="w-full md:flex-1 min-w-0">
                     <SuperiorClaimCard
-                      primaryText={summary && typeof summary.gainsFromRecharges === 'number' ? `$${summary.gainsFromRecharges.toFixed(2)}` : '$0.00'}
+                      primaryText={summary && typeof summary.gainsFromRecharges === 'number' ? `$${formatCurrencyWithThreeDecimals(summary.gainsFromRecharges)}` : '$0'}
                       secondaryText="Comisiones por recargas"
                       height={129}
                       className="w-full"
@@ -256,7 +292,7 @@ const Commissions: React.FC = () => {
                   </div>
                   <div className="w-full md:flex-1 min-w-0">
                     <SuperiorClaimCard
-                      primaryText={summary && typeof summary.gainsFromCards === 'number' ? `$${summary.gainsFromCards.toFixed(2)}` : '$0.00'}
+                      primaryText={summary && typeof summary.gainsFromCards === 'number' ? `$${formatCurrencyWithThreeDecimals(summary.gainsFromCards)}` : '$0'}
                       secondaryText="Comisiones por venta de tarjetas"
                       height={129}
                       className="w-full"
@@ -320,6 +356,7 @@ const Commissions: React.FC = () => {
           // Aquí puedes agregar la lógica para redirigir a la página de solicitud de tarjeta
           console.log('Solicitar tarjeta');
         }}
+        userEmail={userEmail}
       />
 
       {/* Modal de error */}

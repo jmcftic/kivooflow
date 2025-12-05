@@ -287,6 +287,7 @@ export interface B2BCommission {
   createdAt: string;
   commissionType?: string; // papa, abuelo, bis_abuelo, leader_retention
   userEmail?: string; // Email del usuario que generó la comisión
+  isMaterialized?: boolean; // Indica si la comisión ya está materializada
 }
 
 export interface ClaimB2BCommissionRequest {
@@ -361,6 +362,7 @@ export interface TotalToClaimInUSDTResponse {
     mlmTransactionsCount: number;
     b2cCommissionsCount: number;
     exchangeRateMXNToUSDT: number;
+    userEmail?: string; // Email del usuario para el mensaje de WhatsApp
   };
 }
 

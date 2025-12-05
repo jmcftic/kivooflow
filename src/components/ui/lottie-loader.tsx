@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Lottie from 'lottie-react';
 import { cn } from '@/lib/utils';
+import { loadLottieAnimation } from '@/utils/lottie-cache';
 
 interface LottieLoaderProps {
   className?: string;
@@ -11,8 +12,8 @@ function LottieLoader({ className, size }: LottieLoaderProps) {
   const [animationData, setAnimationData] = useState<any>(null);
 
   useEffect(() => {
-    fetch('/animations/LoaderLottie.json')
-      .then((res) => res.json())
+    // Usar el cache singleton para cargar la animación
+    loadLottieAnimation()
       .then((data) => setAnimationData(data))
       .catch((err) => {
         console.error('Error loading Lottie animation:', err);

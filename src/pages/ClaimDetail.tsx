@@ -7,6 +7,7 @@ import DashboardNavbar from '../components/atoms/DashboardNavbar';
 import KivoMainBg from '../components/atoms/KivoMainBg';
 import { getOrderClaims, getAvailableMlmModels } from '@/services/network';
 import { OrderClaimItem } from '@/types/network';
+import { formatCurrencyWithThreeDecimals } from '@/lib/utils';
 import { Spinner } from '@/components/ui/spinner';
 import InfoBanner from '../components/atoms/InfoBanner';
 import { Badge } from '@/components/ui/badge';
@@ -85,12 +86,9 @@ const ClaimDetail: React.FC = () => {
   };
 
   const formatCurrency = (amount: number, currency: string): string => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: currency === 'USDT' ? 'USD' : currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
+    const formatted = formatCurrencyWithThreeDecimals(amount);
+    const symbol = currency === 'USDT' ? 'USDT' : '$';
+    return `${symbol}${formatted}`;
   };
 
   const getStatusColor = (status: string): string => {

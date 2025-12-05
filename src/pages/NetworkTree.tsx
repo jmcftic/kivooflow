@@ -11,6 +11,9 @@ import MiniBaner from '../components/atoms/MiniBaner';
 import SingleArrowHistory from '../components/atoms/SingleArrowHistory';
 import MoneyIcon from '../components/atoms/MoneyIcon';
 import { Spinner } from '@/components/ui/spinner';
+import { LottieLoader } from '@/components/ui/lottie-loader';
+import { useMinimumLoading } from '@/hooks/useMinimumLoading';
+import { formatCurrencyWithThreeDecimals } from '@/lib/utils';
 import {
   getDescendantSubtree,
   getSingleLevelNetwork,
@@ -54,6 +57,7 @@ const NetworkTree: React.FC = () => {
   const [parentErrors, setParentErrors] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const showLoader = useMinimumLoading(loading, 3000);
   const [subtreeMode, setSubtreeMode] = useState(false);
   const usersLimit = 10;
 
@@ -429,11 +433,13 @@ const NetworkTree: React.FC = () => {
           title={subtreeRootName ? `Red de ${subtreeRootName}` : "Red de..."}
         />
 
-        {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <Spinner className="size-8 text-[#FFF100]" />
+        {/* Overlay con animación Lottie cuando está cargando */}
+        {showLoader && (
+          <div className="absolute inset-0 bg-[#2a2a2a] z-[9999] flex items-center justify-center">
+            <LottieLoader className="w-32 h-32 lg:w-48 lg:h-48" />
           </div>
-        ) : error ? (
+        )}
+        {loading ? null : error ? (
           <div className="flex items-center justify-center h-full">
             <span className="text-[#ff6d64]">{error}</span>
           </div>
@@ -478,13 +484,13 @@ const NetworkTree: React.FC = () => {
               <MiniBaner 
                 className="h-[90px] md:h-[100px] lg:h-[110px]"
                 icon={<MoneyIcon size={24} />}
-                detail={subtreeSummary ? subtreeSummary.lastMonthCommissions.toFixed(2) : "0.00"}
+                detail={subtreeSummary ? formatCurrencyWithThreeDecimals(subtreeSummary.lastMonthCommissions) : "0"}
                 subtitle="Comisiones último mes"
               />
               <MiniBaner 
                 className="h-[90px] md:h-[100px] lg:h-[110px]"
                 icon={<MoneyIcon size={24} />}
-                detail={subtreeSummary ? subtreeSummary.totalVolume.toFixed(2) : "0.00"}
+                detail={subtreeSummary ? formatCurrencyWithThreeDecimals(subtreeSummary.totalVolume) : "0"}
                 subtitle="Volumen total"
               />
             </div>

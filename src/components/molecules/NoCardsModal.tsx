@@ -16,6 +16,7 @@ interface NoCardsModalProps {
   customMessage?: string;
   hideButton?: boolean;
   buttonText?: string;
+  userEmail?: string; // Email del usuario para agregar al mensaje de WhatsApp
 }
 
 const NoCardsModal: React.FC<NoCardsModalProps> = ({
@@ -26,6 +27,7 @@ const NoCardsModal: React.FC<NoCardsModalProps> = ({
   customMessage,
   hideButton = false,
   buttonText = 'Solicitar tarjeta',
+  userEmail,
 }) => {
   const handleRequestCard = () => {
     if (onRequestCard) {
@@ -38,7 +40,11 @@ const NoCardsModal: React.FC<NoCardsModalProps> = ({
     // Número de WhatsApp de soporte (formato: código de país + número sin espacios, guiones o +)
     // +52 1 55 4057 6890 (México) -> 5215540576890
     const supportPhoneNumber = '5215540576890';
-    const message = 'Deseo adquirir mi tarjeta kivoo para poder recibir mis comisiones';
+    let message = 'Deseo adquirir mi tarjeta kivoo para poder recibir mis comisiones';
+    // Agregar el correo al final del mensaje si está disponible
+    if (userEmail) {
+      message += `. Mi correo en kivoo es ${userEmail}`;
+    }
     // Usar api.whatsapp.com en lugar de wa.me para mejor compatibilidad con el mensaje precargado
     const whatsappUrl = `https://api.whatsapp.com/send?phone=${supportPhoneNumber}&text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');

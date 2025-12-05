@@ -12,7 +12,7 @@ import {
   MlmTransactionOrderCalculationDetails,
   B2BCommissionOrderCalculationDetails 
 } from "@/types/network";
-import { maskCardNumber } from "@/lib/utils";
+import { maskCardNumber, formatCurrencyWithThreeDecimals } from "@/lib/utils";
 
 interface OrderClaimsModalProps {
   open: boolean;
@@ -50,12 +50,9 @@ const OrderClaimsModal: React.FC<OrderClaimsModalProps> = ({
   };
 
   const formatCurrency = (amount: number, currency: string): string => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: currency === 'USDT' ? 'USD' : currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
+    const formatted = formatCurrencyWithThreeDecimals(amount);
+    const symbol = currency === 'USDT' ? 'USDT' : '$';
+    return `${symbol}${formatted}`;
   };
 
   const getStatusColor = (status: string): string => {

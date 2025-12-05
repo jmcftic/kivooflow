@@ -11,14 +11,17 @@ import ResumenCard from '../components/organisms/ResumenCard';
 import TransaccionesRecientesCard from '../components/organisms/TransaccionesRecientesCard';
 import ModelSelector from '../components/molecules/ModelSelector';
 import KivoMainBg from '../components/atoms/KivoMainBg';
+import { LottieLoader } from '@/components/ui/lottie-loader';
 import { User } from '../types/auth';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
+import { useMinimumLoading } from '../hooks/useMinimumLoading';
 
 const Dashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [referralLink, setReferralLink] = useState<string>('');
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const { metrics, loading: metricsLoading, error: metricsError, updateResume } = useDashboardMetrics(selectedModel);
+  const showLoader = useMinimumLoading(metricsLoading, 3000);
 
   useEffect(() => {
     // Cargar información del usuario del localStorage
@@ -93,6 +96,12 @@ const Dashboard: React.FC = () => {
 
       {/* Contenido principal */}
       <div className="flex-1 relative flex flex-col pl-6 pr-6 overflow-y-auto pb-8 pt-16 lg:pt-0">
+        {/* Overlay con animación Lottie cuando está cargando */}
+        {showLoader && (
+          <div className="absolute inset-0 bg-[#2a2a2a] z-[9999] flex items-center justify-center">
+            <LottieLoader className="w-32 h-32 lg:w-48 lg:h-48" />
+          </div>
+        )}
         {/* Navbar responsivo */}
         <DashboardNavbar />
 

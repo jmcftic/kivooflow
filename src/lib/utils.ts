@@ -54,3 +54,24 @@ export function maskFullName(fullName: string): string {
   return maskedWords.join(' ');
 }
 
+/**
+ * Formatea un número con 3 decimales, pero oculta los decimales si todos son 0
+ * @param value - Valor numérico a formatear
+ * @returns String formateado (ej: "100" o "100.001" o "100.123")
+ */
+export function formatCurrencyWithThreeDecimals(value: number | string | null | undefined): string {
+  if (value === null || value === undefined) return '0';
+  
+  const numericValue = typeof value === 'number' ? value : parseFloat(String(value)) || 0;
+  
+  // Formatear a 3 decimales
+  const formatted = numericValue.toFixed(3);
+  
+  // Si los 3 decimales son 0, removerlos
+  if (formatted.endsWith('.000')) {
+    return formatted.slice(0, -4);
+  }
+  
+  return formatted;
+}
+

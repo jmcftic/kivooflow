@@ -7,6 +7,7 @@ import { getOrders } from "@/services/network";
 import { Order } from "@/types/network";
 import InfoBanner from "../atoms/InfoBanner";
 import OrderArrows from "../atoms/OrderArrows";
+import { formatCurrencyWithThreeDecimals } from "@/lib/utils";
 
 interface ClaimsListCardProps {
   className?: string;
@@ -119,12 +120,7 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeT
   };
 
   const formatMonto = (monto: number): string => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(monto);
+    return `$${formatCurrencyWithThreeDecimals(monto)}`;
   };
 
   const getEstadoLabel = (estado: string): string => {

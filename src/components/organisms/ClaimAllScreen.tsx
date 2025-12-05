@@ -3,8 +3,10 @@ import BackButtonPath from '../atoms/BackButtonPath';
 import Logo from '../atoms/Logo';
 import AdmirationCircleIcon from '../atoms/AdmirationCircleIcon';
 import Button from '../atoms/Button';
+import KryptoAnimation from '../atoms/KryptoAnimation';
 import { requestAllClaims } from '@/services/network';
 import { RequestAllClaimsResponse } from '@/types/network';
+import '../../styles/krypto-animation.css';
 
 interface ClaimAllScreenProps {
   onBack: () => void;
@@ -156,17 +158,9 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
             }}
           />
           
-          {/* Icono centrado */}
+          {/* Animación de Krypto centrada */}
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50" style={{ zIndex: 2 }}>
-            <img 
-              src="/icons/Dashboard/FinalIconCenter.svg" 
-              alt="Final Icon"
-              style={{
-                height: '90px',
-                width: 'auto',
-                display: 'block'
-              }}
-            />
+            <KryptoAnimation />
           </div>
 
           {/* Contenido en la parte inferior */}

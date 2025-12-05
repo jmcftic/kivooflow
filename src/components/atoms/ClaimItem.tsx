@@ -1,6 +1,7 @@
 import React, { FunctionComponent } from "react";
 import FoldedCard from "./FoldedCard";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrencyWithThreeDecimals } from "@/lib/utils";
 
 export type ClaimItemType = {
   id: string;
@@ -79,10 +80,7 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
 
   const formatMonto = (value: number | string): string => {
     const numericValue = toNumber(value);
-    const valueStr = numericValue.toString();
-    const [integerPart, decimalPart = ""] = valueStr.split(".");
-    const truncatedDecimals = decimalPart.slice(0, 2);
-    return truncatedDecimals ? `${integerPart}.${truncatedDecimals}` : integerPart;
+    return formatCurrencyWithThreeDecimals(numericValue);
   };
 
   // Color del estado

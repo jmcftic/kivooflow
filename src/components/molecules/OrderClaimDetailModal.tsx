@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import FoldedCard from "../atoms/FoldedCard";
 import { OrderClaimItem } from "@/types/network";
-import { maskCardNumber } from "@/lib/utils";
+import { maskCardNumber, formatCurrencyWithThreeDecimals } from "@/lib/utils";
 
 interface OrderClaimDetailModalProps {
   open: boolean;
@@ -41,12 +41,9 @@ const OrderClaimDetailModal: React.FC<OrderClaimDetailModalProps> = ({
   };
 
   const formatCurrency = (amount: number, currency: string): string => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: currency === 'USDT' ? 'USD' : currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
+    const formatted = formatCurrencyWithThreeDecimals(amount);
+    const symbol = currency === 'USDT' ? 'USDT' : '$';
+    return `${symbol}${formatted}`;
   };
 
   const getStatusColor = (status: string): string => {
@@ -167,7 +164,7 @@ const OrderClaimDetailModal: React.FC<OrderClaimDetailModalProps> = ({
                   <span className="text-white text-sm">
                     {showEmpresa && teamName 
                       ? teamName 
-                      : (censorEmail(userEmail) || 'N/A')}
+                      : (userFullName || censorEmail(userEmail) || 'N/A')}
                   </span>
                 </div>
                 

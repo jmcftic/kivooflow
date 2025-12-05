@@ -13,6 +13,7 @@ import MiniBaner from '../components/atoms/MiniBaner';
 import SingleArrowHistory from '../components/atoms/SingleArrowHistory';
 import MoneyIcon from '../components/atoms/MoneyIcon';
 import { LottieLoader } from '@/components/ui/lottie-loader';
+import { useMinimumLoading } from '@/hooks/useMinimumLoading';
 import {
   getNetwork,
   getDescendantSubtree,
@@ -80,53 +81,16 @@ const Network: React.FC = () => {
   const [leadersLoading, setLeadersLoading] = useState(false);
   const [leadersError, setLeadersError] = useState<string | null>(null);
   const [networkLoading, setNetworkLoading] = useState(true);
+  const [isChangingTab, setIsChangingTab] = useState(false);
   const historyReadyRef = useRef(false);
   const suppressHistoryPushRef = useRef(false);
   const skipNextSubtreeFetchRef = useRef(false);
-  const networkLoadingStartTimeRef = useRef<number | null>(null);
-  const leadersLoadingStartTimeRef = useRef<number | null>(null);
   const isLeaderTab = userModel === 'b2c' && (activeTab === 'b2b' || activeTab === 'b2t');
 
-  // Helper para garantizar que el loading dure al menos 3 segundos
-  const setNetworkLoadingWithMinTime = useCallback((value: boolean) => {
-    if (value) {
-      networkLoadingStartTimeRef.current = Date.now();
-      setNetworkLoading(true);
-    } else {
-      const elapsed = networkLoadingStartTimeRef.current ? Date.now() - networkLoadingStartTimeRef.current : 0;
-      const remainingTime = Math.max(0, 3000 - elapsed);
-      
-      if (remainingTime > 0) {
-        setTimeout(() => {
-          setNetworkLoading(false);
-          networkLoadingStartTimeRef.current = null;
-        }, remainingTime);
-      } else {
-        setNetworkLoading(false);
-        networkLoadingStartTimeRef.current = null;
-      }
-    }
-  }, []);
-
-  const setLeadersLoadingWithMinTime = useCallback((value: boolean) => {
-    if (value) {
-      leadersLoadingStartTimeRef.current = Date.now();
-      setLeadersLoading(true);
-    } else {
-      const elapsed = leadersLoadingStartTimeRef.current ? Date.now() - leadersLoadingStartTimeRef.current : 0;
-      const remainingTime = Math.max(0, 3000 - elapsed);
-      
-      if (remainingTime > 0) {
-        setTimeout(() => {
-          setLeadersLoading(false);
-          leadersLoadingStartTimeRef.current = null;
-        }, remainingTime);
-      } else {
-        setLeadersLoading(false);
-        leadersLoadingStartTimeRef.current = null;
-      }
-    }
-  }, []);
+  // Usar el hook para garantizar mínimo 3 segundos
+  const showNetworkLoader = useMinimumLoading(networkLoading || isChangingTab, 3000);
+  const showLeadersLoader = useMinimumLoading(leadersLoading, 3000);
+  const showLoader = showNetworkLoader || showLeadersLoader;
   
   // Usuario B2B en tab B2B no tiene límite de profundidad
   const hasDepthLimit = useMemo(() => {
@@ -168,12 +132,6 @@ const Network: React.FC = () => {
     setUsersOffset((currentPage - 1) * usersLimit);
   }, [currentPage, usersLimit]);
 
-  // Inicializar el tiempo de inicio del loading cuando el componente se monta
-  useEffect(() => {
-    if (networkLoading) {
-      networkLoadingStartTimeRef.current = Date.now();
-    }
-  }, []);
 
   // Usar el endpoint available-model para TODOS los tipos de usuarios
   useEffect(() => {
@@ -239,6 +197,17 @@ const Network: React.FC = () => {
     setB2cPagination(null);
   }, [activeLevel, activeTab]);
 
+  // Detectar cuando cambia el tab para mostrar loader
+  useEffect(() => {
+    if (userModel) {
+      setIsChangingTab(true);
+      const timer = setTimeout(() => {
+        setIsChangingTab(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, userModel]);
+
   useEffect(() => {
     if (!subtreeMode && searchFilter.trim().length > 0) {
       setChildrenByParent({});
@@ -261,12 +230,12 @@ const Network: React.FC = () => {
       // Esperar a que se haya obtenido el modelo del usuario desde el endpoint available-model
       // para evitar ejecutar el endpoint incorrecto (getNetwork) antes de saber el tipo de usuario
       if (!hasFetchedAvailableModelsRef.current || !userModel) {
-        setNetworkLoadingWithMinTime(true);
+        setNetworkLoading(true);
         return;
       }
       
       try {
-        setNetworkLoadingWithMinTime(true);
+        setNetworkLoading(true);
         // Lógica según tipo de usuario y tab activo
         // Usuario B2C: tab B2C usa excluding, tabs B2B/B2T usan owned
         // Usuario B2B: tab B2B usa single-level
@@ -330,7 +299,7 @@ const Network: React.FC = () => {
             setSubtreePage(1);
             setParentExhausted({});
             setParentErrors({});
-            setNetworkLoadingWithMinTime(false);
+            setNetworkLoading(false);
           }
         } 
         // Usuario B2C en tabs B2B/B2T: usar owned
@@ -349,7 +318,7 @@ const Network: React.FC = () => {
           setParentExhausted({});
           setParentErrors({});
 
-          setLeadersLoadingWithMinTime(true);
+          setLeadersLoading(true);
           setLeadersError(null);
 
           const fetchFn = leaderTab === 'b2b' ? getB2BLeadersOwnedToB2C : getB2TLeadersOwnedToB2C;
@@ -368,12 +337,12 @@ const Network: React.FC = () => {
               offset: result.offset,
             },
           }));
-          setLeadersLoadingWithMinTime(false);
-          setNetworkLoadingWithMinTime(false);
+          setLeadersLoading(false);
+          setNetworkLoading(false);
         } 
         // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
         else if ((userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
-          setLeadersLoadingWithMinTime(false);
+          setLeadersLoading(false);
           setLeadersError(null);
           const res = await getSingleLevelNetwork({
             level: activeLevel,
@@ -421,13 +390,13 @@ const Network: React.FC = () => {
             setSubtreePage(1);
             setParentExhausted({});
             setParentErrors({});
-            setNetworkLoadingWithMinTime(false);
+            setNetworkLoading(false);
           }
         } 
         // Fallback: usar el endpoint original para otros casos (no debería ejecutarse normalmente)
         else {
           console.warn('Usando endpoint fallback getNetwork - esto no debería ocurrir si userModel está establecido correctamente', { userModel, activeTab });
-          setLeadersLoadingWithMinTime(false);
+          setLeadersLoading(false);
           setLeadersError(null);
           const res = await getNetwork({
             levelStart: 1,
@@ -447,7 +416,7 @@ const Network: React.FC = () => {
             setSubtreePage(1);
             setParentExhausted({});
             setParentErrors({});
-            setNetworkLoadingWithMinTime(false);
+            setNetworkLoading(false);
           }
         }
       } catch (e) {
@@ -458,10 +427,10 @@ const Network: React.FC = () => {
         if (isLeaderTab) {
           const message = (e as any)?.message ?? 'No se pudieron obtener los líderes.';
           setLeadersError(typeof message === 'string' ? message : 'No se pudieron obtener los líderes.');
-          setLeadersLoadingWithMinTime(false);
+          setLeadersLoading(false);
         }
       } finally {
-        setNetworkLoadingWithMinTime(false);
+        setNetworkLoading(false);
       }
     };
     load();
@@ -1387,7 +1356,7 @@ const Network: React.FC = () => {
       {/* Contenido principal */}
       <div className="flex-1 relative flex flex-col pl-6 pr-6 overflow-y-hidden pb-0 pt-16 lg:pt-0">
         {/* Overlay con animación Lottie cuando está cargando - solo cubre el área de contenido */}
-        {(networkLoading || leadersLoading) && (
+        {showLoader && (
           <div className="absolute inset-0 bg-[#2a2a2a] z-[9999] flex items-center justify-center">
             <LottieLoader className="w-32 h-32 lg:w-48 lg:h-48" />
           </div>
@@ -1471,7 +1440,7 @@ const Network: React.FC = () => {
           {/* Contenido scrollable de la tabla */}
           <div className="flex-1 min-h-0 overflow-y-auto">
             {/* Header de columnas */}
-            <NetworkTableHeader activeTab={activeTab} hideResumenColumn={userModel === 'b2c'} userModel={userModel} />
+            <NetworkTableHeader activeTab={activeTab} userModel={userModel} />
 
             {/* Tabla con filas */}
             {isLeaderTab && leadersError ? (
@@ -1499,7 +1468,6 @@ const Network: React.FC = () => {
                 loadingTreeUserId={loadingTreeUserId}
                 parentExhausted={isLeaderTab ? {} : parentExhausted}
                 parentErrors={isLeaderTab ? {} : parentErrors}
-                hideResumenColumn={userModel === 'b2c'}
               />
             ) : (
               <div className="py-10 text-center text-sm text-white/60">

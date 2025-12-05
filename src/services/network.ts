@@ -441,6 +441,7 @@ export async function materializeB2BCommission(request: MaterializeB2BCommission
     createdAt: data?.createdAt ?? new Date().toISOString(),
     commissionType: data?.commissionType,
     userEmail: data?.userEmail || data?.calculationDetails?.userEmail,
+    isMaterialized: data?.isMaterialized ?? false,
   };
 }
 
@@ -471,6 +472,7 @@ export async function claimB2BCommission(request: ClaimB2BCommissionRequest): Pr
     createdAt: data?.createdAt ?? new Date().toISOString(),
     commissionType: data?.commissionType,
     userEmail: data?.userEmail || data?.calculationDetails?.userEmail,
+    isMaterialized: data?.isMaterialized ?? false,
   };
 }
 
@@ -546,6 +548,7 @@ export async function getTotalToClaimInUSDT(): Promise<TotalToClaimInUSDTRespons
       mlmTransactionsCount: data?.mlmTransactionsCount ?? 0,
       b2cCommissionsCount: data?.b2cCommissionsCount ?? 0,
       exchangeRateMXNToUSDT: data?.exchangeRateMXNToUSDT ?? 17.5,
+      userEmail: data?.userEmail,
     },
   };
 }

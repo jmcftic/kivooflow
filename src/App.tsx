@@ -6,6 +6,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { preloadLottieAnimation } from '@/utils/lottie-cache';
 import Home from "./pages/Home";
 import Home2 from "./pages/Home2";
 import Home3 from "./pages/Home3";
@@ -45,6 +46,11 @@ function App() {
   const location = useLocation();
   const pathname = location.pathname;
   const [sessionExpired, setSessionExpired] = useState(false);
+
+  // Precargar la animación Lottie al inicio de la app
+  useEffect(() => {
+    preloadLottieAnimation();
+  }, []);
 
   useEffect(() => {
     if (action !== "POP") {

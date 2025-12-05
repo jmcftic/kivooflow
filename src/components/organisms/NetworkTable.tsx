@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { formatCurrencyWithThreeDecimals } from '@/lib/utils';
 import InfoBanner from '../atoms/InfoBanner';
 import DropDownTringle from '../atoms/DropDownTringle';
 import LevelOneTag from '../atoms/LevelOneTag';
@@ -60,10 +61,9 @@ interface NetworkTableProps {
   parentErrors?: Record<number, string>;
   hasDepthLimit?: boolean;
   maxDepth?: number;
-  hideResumenColumn?: boolean;
 }
 
-const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLevel, onToggleExpand, childrenByParent = {}, childIndentPx = 30, onViewTree, onViewDetail, disableExpand = false, disableViewTree = false, isLeaderTab = false, onLoadMoreChildren, parentHasMore = {}, parentLoading = {}, loadingTreeUserId = null, parentExhausted = {}, parentErrors = {}, hasDepthLimit = true, maxDepth = 3, hideResumenColumn = false }) => {
+const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLevel, onToggleExpand, childrenByParent = {}, childIndentPx = 30, onViewTree, onViewDetail, disableExpand = false, disableViewTree = false, isLeaderTab = false, onLoadMoreChildren, parentHasMore = {}, parentLoading = {}, loadingTreeUserId = null, parentExhausted = {}, parentErrors = {}, hasDepthLimit = true, maxDepth = 3 }) => {
   const navigate = useNavigate();
 
   const handleViewTree = (userId: number) => {
@@ -100,7 +100,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
           {/** Determinar si el padre está expandido para resaltar su red */}
           <InfoBanner className="w-full h-16" backgroundColor={isExpanded ? "#3c3c3c" : "#212020"}>
             <div className="w-full flex items-center px-6 py-2">
-              <div className={`flex-1 grid ${hideResumenColumn ? 'grid-cols-5' : 'grid-cols-6'} gap-4 items-center text-sm text-white`}>
+              <div className="flex-1 grid grid-cols-5 gap-4 items-center text-sm text-white">
                 <div className="relative flex items-center justify-center pl-6 gap-2">
                   {canExpand && (
                     <DropDownTringle 
@@ -160,14 +160,11 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                     return <LevelFourPlusTag level={authLevel} />;
                   })()}
                 </div>
-                {!hideResumenColumn && (
-                  <div className="text-center">Resumen</div>
-                )}
                 <div className="text-center">
                   {typeof item.volumen === 'number' || (typeof item.volumen === 'string' && item.volumen !== '')
                     ? `$${truncateTo3Decimals(item.volumen)}`
                     : (typeof item.comisionesGeneradas === 'number' 
-                        ? `$${item.comisionesGeneradas.toFixed(2)}` 
+                        ? `$${formatCurrencyWithThreeDecimals(item.comisionesGeneradas)}` 
                         : '$0.00')}
                 </div>
                 <div className="text-right pr-6">
@@ -211,7 +208,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                 <div key={child.id} className="space-y-2">
                   <InfoBanner className="w-full h-16" backgroundColor="#3c3c3c">
                     <div className="w-full flex items-center px-6 py-2">
-                      <div className={`flex-1 grid ${hideResumenColumn ? 'grid-cols-5' : 'grid-cols-6'} gap-4 items-center text-sm text-white`}>
+                      <div className="flex-1 grid grid-cols-5 gap-4 items-center text-sm text-white">
                         <div className="relative flex items-center justify-center pl-6">
                           {childCanExpand && (
                             <DropDownTringle 
@@ -237,9 +234,6 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                           {childAuthLevel === 3 && <LevelThreeTag />}
                           {childAuthLevel > 3 && <LevelFourPlusTag level={childAuthLevel} />}
                         </div>
-                        {!hideResumenColumn && (
-                          <div className="text-center">Resumen</div>
-                        )}
                         <div className="text-center">
                           {typeof (child as any).volumen === 'number' || (typeof (child as any).volumen === 'string' && (child as any).volumen !== '')
                             ? `$${truncateTo3Decimals((child as any).volumen)}`
@@ -278,7 +272,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                             <div key={grand.id} className="space-y-2">
                               <InfoBanner className="w-full h-16" backgroundColor="#3c3c3c">
                                 <div className="w-full flex items-center px-6 py-2">
-                                  <div className={`flex-1 grid ${hideResumenColumn ? 'grid-cols-5' : 'grid-cols-6'} gap-4 items-center text-sm text-white`}>
+                                  <div className="flex-1 grid grid-cols-5 gap-4 items-center text-sm text-white">
                                     <div className="relative flex items-center justify-center pl-6">
                                       {grandCanExpand && (
                                         <DropDownTringle 
@@ -304,9 +298,6 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                       {grandAuthLevel === 3 && <LevelThreeTag />}
                                       {grandAuthLevel > 3 && <LevelFourPlusTag level={grandAuthLevel} />}
                                     </div>
-                                    {!hideResumenColumn && (
-                                      <div className="text-center">Resumen</div>
-                                    )}
                                     <div className="text-center">
                                       {typeof (grand as any).volumen === 'number' || (typeof (grand as any).volumen === 'string' && (grand as any).volumen !== '')
                                         ? `$${truncateTo3Decimals((grand as any).volumen)}`
@@ -343,7 +334,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                       <div key={greatGrand.id} className="space-y-2">
                                         <InfoBanner className="w-full h-16" backgroundColor="#3c3c3c">
                                           <div className="w-full flex items-center px-6 py-2">
-                                            <div className={`flex-1 grid ${hideResumenColumn ? 'grid-cols-5' : 'grid-cols-6'} gap-4 items-center text-sm text-white`}>
+                                            <div className="flex-1 grid grid-cols-5 gap-4 items-center text-sm text-white">
                                               <div className="relative flex items-center justify-center pl-6">
                                                 {greatGrandCanExpand && (
                                                   <DropDownTringle 
@@ -369,9 +360,6 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                                 {greatGrandAuthLevel === 3 && <LevelThreeTag />}
                                                 {greatGrandAuthLevel > 3 && <LevelFourPlusTag level={greatGrandAuthLevel} />}
                                               </div>
-                                              {!hideResumenColumn && (
-                                                <div className="text-center">Resumen</div>
-                                              )}
                                               <div className="text-center">
                                                 {typeof (greatGrand as any).volumen === 'number' || (typeof (greatGrand as any).volumen === 'string' && (greatGrand as any).volumen !== '')
                                                   ? `$${truncateTo3Decimals((greatGrand as any).volumen)}`
@@ -398,7 +386,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                             {childrenByParent[greatGrand.id].map(greatGreatGrand => (
                                               <InfoBanner key={greatGreatGrand.id} className="w-full h-16" backgroundColor="#3c3c3c">
                                                 <div className="w-full flex items-center px-6 py-2">
-                                                  <div className={`flex-1 grid ${hideResumenColumn ? 'grid-cols-5' : 'grid-cols-6'} gap-4 items-center text-sm text-white`}>
+                                                  <div className="flex-1 grid grid-cols-5 gap-4 items-center text-sm text-white">
                                                     <div className="relative pl-10 text-left truncate" title={greatGreatGrand.email || `${greatGreatGrand.name}@email.com`}>{greatGreatGrand.email || `${greatGreatGrand.name}@email.com`}</div>
                                                     <div className="text-center">{greatGreatGrand.createdAt ? new Date(greatGreatGrand.createdAt).toISOString().slice(0,10) : '—'}</div>
                                                     <div className="flex items-center justify-center">
@@ -410,9 +398,6 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                                         return <LevelFourPlusTag level={greatGreatGrandLevel} />;
                                                       })()}
                                                     </div>
-                                                    {!hideResumenColumn && (
-                                                      <div className="text-center">Resumen</div>
-                                                    )}
                                                     <div className="text-center">
                                                       {typeof (greatGreatGrand as any).volumen === 'number' || (typeof (greatGreatGrand as any).volumen === 'string' && (greatGreatGrand as any).volumen !== '')
                                                         ? `$${truncateTo3Decimals((greatGreatGrand as any).volumen)}`

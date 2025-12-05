@@ -15,6 +15,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import FoldedCard from "../atoms/FoldedCard";
+import { formatCurrencyWithThreeDecimals } from "@/lib/utils";
 import Input from "../atoms/Input";
 import MoneyCircleIcon from "../atoms/MoneyCircleIcon";
 import { getMisTarjetas } from "@/services/cards";
@@ -280,11 +281,11 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                       ${(() => {
                         if (commissionAmount !== undefined && commissionAmount !== null) {
                           const commissionAmountNum = typeof commissionAmount === 'string' ? parseFloat(commissionAmount) : commissionAmount;
-                          return isNaN(commissionAmountNum) ? '0.00' : commissionAmountNum.toFixed(2);
+                          return isNaN(commissionAmountNum) ? '0' : formatCurrencyWithThreeDecimals(commissionAmountNum);
                         }
                         // Fallback a comision si commissionAmount no está disponible
                         if (comision !== undefined && comision !== null) {
-                          return typeof comision === 'number' ? comision.toFixed(2) : '0.00';
+                          return typeof comision === 'number' ? formatCurrencyWithThreeDecimals(comision) : '0';
                         }
                         return '0.00';
                       })()}

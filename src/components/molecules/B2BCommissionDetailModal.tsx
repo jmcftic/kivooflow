@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { B2BCommission } from "@/types/network";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrencyWithThreeDecimals } from "@/lib/utils";
 
 interface B2BCommissionDetailModalProps {
   open: boolean;
@@ -31,13 +31,7 @@ const formatDate = (value?: string) => {
 
 const formatCurrency = (value?: number) => {
   if (value === undefined || value === null) return "$0";
-  // Truncar a 2 decimales sin redondear
-  const numericValue = typeof value === 'number' ? value : parseFloat(String(value)) || 0;
-  const valueStr = numericValue.toString();
-  const [integerPart, decimalPart = ""] = valueStr.split(".");
-  const truncatedDecimals = decimalPart.slice(0, 2);
-  const formattedValue = truncatedDecimals ? `${integerPart}.${truncatedDecimals}` : integerPart;
-  return `$${formattedValue}`;
+  return `$${formatCurrencyWithThreeDecimals(value)}`;
 };
 
 const formatVolume = (value?: number) => {
@@ -70,6 +64,7 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
     periodStartDate,
     periodEndDate,
     commissionPercentage,
+    isMaterialized,
   } = commission;
 
   return (
@@ -151,7 +146,7 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
           >
             Cerrar
           </Button>
-          {mode === "available" && onConfirm && (
+          {mode === "available" && onConfirm && !isMaterialized && (
             <Button
               variant="yellow"
               className="w-full md:w-auto font-semibold"

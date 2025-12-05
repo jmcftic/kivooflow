@@ -1,0 +1,18 @@
+/* CSS específico para la animación de Krypto - Scoped para no afectar el CSS global */
+
+/* Contenedor principal de la animación */
+.krypto-animation-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* En pantallas grandes (lg y superiores), reducir a 65% del tamaño original (35% más pequeña) */
+@media (min-width: 1024px) {
+  .krypto-animation-wrapper {
+    width: 260px !important; /* 400px * 0.65 = 260px */
+    height: 195px !important; /* 300px * 0.65 = 195px */
+  }
+}
+
