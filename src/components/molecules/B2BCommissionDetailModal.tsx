@@ -21,9 +21,19 @@ interface B2BCommissionDetailModalProps {
 
 const formatDate = (value?: string) => {
   if (!value) return "—";
+  
+  // Si la fecha viene en formato "YYYY-MM-DD" (sin hora), parsearla directamente
+  // para evitar problemas de zona horaria con new Date()
+  const dateOnlyMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    return `${day}/${month}/${year}`;
+  }
+  
+  // Si viene con hora, usar métodos UTC
   const date = new Date(value);
-  // Usar métodos UTC para evitar problemas de zona horaria
-  // Extraer año, mes y día en UTC para mostrar la fecha correcta
+  if (isNaN(date.getTime())) return "—";
+  
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, '0');
   const day = String(date.getUTCDate()).padStart(2, '0');

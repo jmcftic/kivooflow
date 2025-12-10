@@ -53,9 +53,18 @@ const OrderClaimsModal: React.FC<OrderClaimsModalProps> = ({
   const formatPeriodDate = (dateString?: string): string => {
     if (!dateString) return 'N/A';
     try {
+      // Si la fecha viene en formato "YYYY-MM-DD" (sin hora), parsearla directamente
+      // para evitar problemas de zona horaria con new Date()
+      const dateOnlyMatch = dateString.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (dateOnlyMatch) {
+        const [, year, month, day] = dateOnlyMatch;
+        return `${day}/${month}/${year}`;
+      }
+      
+      // Si viene con hora, usar métodos UTC
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return 'N/A';
-      // Usar métodos UTC para evitar problemas de zona horaria
+      
       const year = date.getUTCFullYear();
       const month = String(date.getUTCMonth() + 1).padStart(2, '0');
       const day = String(date.getUTCDate()).padStart(2, '0');
