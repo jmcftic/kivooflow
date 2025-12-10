@@ -412,6 +412,8 @@ export async function getB2BCommissions({ limit = 20, offset = 0 }: GetB2BCommis
 export interface MaterializeB2BCommissionRequest {
   teamId: number;
   level: number;
+  periodStartDate: string;
+  periodEndDate: string;
 }
 
 export async function materializeB2BCommission(request: MaterializeB2BCommissionRequest): Promise<B2BCommission> {

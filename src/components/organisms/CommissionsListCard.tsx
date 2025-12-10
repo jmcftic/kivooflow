@@ -354,6 +354,15 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
 
   const handleConfirmB2BCommission = async () => {
     if (!selectedB2BCommission || claiming) return;
+    
+    // Validar que las fechas estén presentes (requeridas por el backend)
+    if (!selectedB2BCommission.periodStartDate || !selectedB2BCommission.periodEndDate) {
+      console.error('Error: Las fechas del período son requeridas para materializar la comisión');
+      setMaterializeErrorMessage('Error: No se encontraron las fechas del período. Por favor, intenta nuevamente.');
+      setMaterializeErrorModalOpen(true);
+      return;
+    }
+    
     try {
       setClaiming(true);
       // Para usuarios B2C en tab B2B, usar materialize en lugar de claim
@@ -361,6 +370,8 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
         const response = await materializeB2BCommission({
           teamId: selectedB2BCommission.teamId,
           level: selectedB2BCommission.level,
+          periodStartDate: selectedB2BCommission.periodStartDate,
+          periodEndDate: selectedB2BCommission.periodEndDate,
         });
         // Recargar la tabla después de materializar
         await queryClient.invalidateQueries({ queryKey: ['commissions', activeTab, userModel, currentPage, pageSize] });
