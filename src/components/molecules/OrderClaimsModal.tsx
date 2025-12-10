@@ -49,6 +49,22 @@ const OrderClaimsModal: React.FC<OrderClaimsModalProps> = ({
     }
   };
 
+  // Función para formatear fechas de período (solo fecha, sin hora) usando UTC
+  const formatPeriodDate = (dateString?: string): string => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'N/A';
+      // Usar métodos UTC para evitar problemas de zona horaria
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      return `${day}/${month}/${year}`;
+    } catch {
+      return 'N/A';
+    }
+  };
+
   const formatCurrency = (amount: number, currency: string): string => {
     const formatted = formatCurrencyWithThreeDecimals(amount);
     const symbol = currency === 'USDT' ? 'USDT' : '$';
@@ -303,7 +319,7 @@ const OrderClaimsModal: React.FC<OrderClaimsModalProps> = ({
                                   <div className="col-span-2 md:col-span-3">
                                     <span className="text-white/60 block mb-1">Período</span>
                                     <span className="text-white">
-                                      {formatDate(b2bDetails.periodStartDate)} - {formatDate(b2bDetails.periodEndDate)}
+                                      {formatPeriodDate(b2bDetails.periodStartDate)} - {formatPeriodDate(b2bDetails.periodEndDate)}
                                     </span>
                                   </div>
                                 )}

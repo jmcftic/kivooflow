@@ -22,11 +22,12 @@ interface B2BCommissionDetailModalProps {
 const formatDate = (value?: string) => {
   if (!value) return "—";
   const date = new Date(value);
-  return date.toLocaleDateString("es-MX", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  // Usar métodos UTC para evitar problemas de zona horaria
+  // Extraer año, mes y día en UTC para mostrar la fecha correcta
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${day}/${month}/${year}`;
 };
 
 const formatCurrency = (value?: number) => {
