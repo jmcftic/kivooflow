@@ -13,6 +13,7 @@ import MiniBaner from '../components/atoms/MiniBaner';
 import SingleArrowHistory from '../components/atoms/SingleArrowHistory';
 import MoneyIcon from '../components/atoms/MoneyIcon';
 import { LottieLoader } from '@/components/ui/lottie-loader';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMinimumLoading } from '@/hooks/useMinimumLoading';
 import {
   getNetwork,
@@ -85,6 +86,8 @@ const Network: React.FC = () => {
   const historyReadyRef = useRef(false);
   const suppressHistoryPushRef = useRef(false);
   const skipNextSubtreeFetchRef = useRef(false);
+  const prevTabRef = useRef<NetworkTabId | null>(null);
+  const prevLevelRef = useRef<1 | 2 | 3 | null>(null);
   const isLeaderTab = userModel === 'b2c' && (activeTab === 'b2b' || activeTab === 'b2t');
 
   // Usar el hook para garantizar mínimo 3 segundos
@@ -131,6 +134,7 @@ const Network: React.FC = () => {
   useEffect(() => {
     setUsersOffset((currentPage - 1) * usersLimit);
   }, [currentPage, usersLimit]);
+
 
 
   // Usar el endpoint available-model para TODOS los tipos de usuarios
@@ -234,8 +238,18 @@ const Network: React.FC = () => {
         return;
       }
       
+      // Detectar si es solo un cambio de paginación (usersLimit o usersOffset)
+      const isOnlyPaginationChange = 
+        prevTabRef.current === activeTab && 
+        prevLevelRef.current === activeLevel &&
+        prevTabRef.current !== null &&
+        prevLevelRef.current !== null;
+      
       try {
-        setNetworkLoading(true);
+        // Solo activar el loader si no es un cambio de paginación
+        if (!isOnlyPaginationChange) {
+          setNetworkLoading(true);
+        }
         // Lógica según tipo de usuario y tab activo
         // Usuario B2C: tab B2C usa excluding, tabs B2B/B2T usan owned
         // Usuario B2B: tab B2B usa single-level
@@ -318,7 +332,17 @@ const Network: React.FC = () => {
           setParentExhausted({});
           setParentErrors({});
 
-          setLeadersLoading(true);
+          // Detectar si es solo un cambio de paginación
+          const isOnlyPaginationChange = 
+            prevTabRef.current === activeTab && 
+            prevLevelRef.current === activeLevel &&
+            prevTabRef.current !== null &&
+            prevLevelRef.current !== null;
+          
+          // Solo activar el loader si no es un cambio de paginación
+          if (!isOnlyPaginationChange) {
+            setLeadersLoading(true);
+          }
           setLeadersError(null);
 
           const fetchFn = leaderTab === 'b2b' ? getB2BLeadersOwnedToB2C : getB2TLeadersOwnedToB2C;
@@ -432,6 +456,10 @@ const Network: React.FC = () => {
       } finally {
         setNetworkLoading(false);
       }
+      
+      // Actualizar refs después de cargar
+      prevTabRef.current = activeTab;
+      prevLevelRef.current = activeLevel;
     };
     load();
   }, [activeTab, activeLevel, usersLimit, usersOffset, subtreeMode, isLeaderTab, tabAvailability, userModel]);
@@ -1438,47 +1466,49 @@ const Network: React.FC = () => {
           </div>
 
           {/* Contenido scrollable de la tabla */}
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            {/* Header de columnas */}
-            <NetworkTableHeader activeTab={activeTab} userModel={userModel} />
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="pr-4">
+              {/* Header de columnas */}
+              <NetworkTableHeader activeTab={activeTab} userModel={userModel} />
 
-            {/* Tabla con filas */}
-            {isLeaderTab && leadersError ? (
-              <div className="py-10 text-center text-sm text-[#FF7A7A] px-4">
-                {leadersError}
-              </div>
-            ) : displayedItems.length > 0 ? (
-              <NetworkTable 
-                items={displayedItems} 
-                activeTab={activeTab}
-                activeLevel={activeLevel}
-                onToggleExpand={handleToggleExpand}
-                childrenByParent={(isLeaderTab || hasSearch) ? {} : childrenByParent}
-                childIndentPx={30}
-                onViewTree={handleViewTree}
-                onViewDetail={isLeaderTab ? handleViewDetail : undefined}
-                disableExpand={hasSearch || isLeaderTab}
-                disableViewTree={isLeaderTab}
-                isLeaderTab={isLeaderTab}
-                hasDepthLimit={hasDepthLimit}
-                maxDepth={maxDepth}
-                onLoadMoreChildren={isLeaderTab ? undefined : handleLoadMoreChildren}
-                parentHasMore={isLeaderTab ? {} : parentHasMore}
-                parentLoading={isLeaderTab ? {} : parentLoading}
-                loadingTreeUserId={loadingTreeUserId}
-                parentExhausted={isLeaderTab ? {} : parentExhausted}
-                parentErrors={isLeaderTab ? {} : parentErrors}
-              />
-            ) : (
-              <div className="py-10 text-center text-sm text-white/60">
-                {hasSearch
-                  ? 'Sin resultados para tu búsqueda.'
-                  : isLeaderTab
-                    ? 'No hay líderes disponibles.'
-                    : 'No hay usuarios disponibles.'}
-              </div>
-            )}
-          </div>
+              {/* Tabla con filas */}
+              {isLeaderTab && leadersError ? (
+                <div className="py-10 text-center text-sm text-[#FF7A7A] px-4">
+                  {leadersError}
+                </div>
+              ) : displayedItems.length > 0 ? (
+                <NetworkTable 
+                  items={displayedItems} 
+                  activeTab={activeTab}
+                  activeLevel={activeLevel}
+                  onToggleExpand={handleToggleExpand}
+                  childrenByParent={(isLeaderTab || hasSearch) ? {} : childrenByParent}
+                  childIndentPx={30}
+                  onViewTree={handleViewTree}
+                  onViewDetail={isLeaderTab ? handleViewDetail : undefined}
+                  disableExpand={hasSearch || isLeaderTab}
+                  disableViewTree={isLeaderTab}
+                  isLeaderTab={isLeaderTab}
+                  hasDepthLimit={hasDepthLimit}
+                  maxDepth={maxDepth}
+                  onLoadMoreChildren={isLeaderTab ? undefined : handleLoadMoreChildren}
+                  parentHasMore={isLeaderTab ? {} : parentHasMore}
+                  parentLoading={isLeaderTab ? {} : parentLoading}
+                  loadingTreeUserId={loadingTreeUserId}
+                  parentExhausted={isLeaderTab ? {} : parentExhausted}
+                  parentErrors={isLeaderTab ? {} : parentErrors}
+                />
+              ) : (
+                <div className="py-10 text-center text-sm text-white/60">
+                  {hasSearch
+                    ? 'Sin resultados para tu búsqueda.'
+                    : isLeaderTab
+                      ? 'No hay líderes disponibles.'
+                      : 'No hay usuarios disponibles.'}
+                </div>
+              )}
+            </div>
+          </ScrollArea>
 
           {/* Paginación al fondo fija dentro del área de contenido */}
           <div className="pt-3 pb-6">

@@ -59,7 +59,7 @@ const NetworkTree: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const showLoader = useMinimumLoading(loading, 3000);
   const [subtreeMode, setSubtreeMode] = useState(false);
-  const usersLimit = 10;
+  const [usersLimit, setUsersLimit] = useState(10);
 
   // Usuario B2B en tab B2B no tiene límite de profundidad
   const hasDepthLimit = useMemo(() => {
@@ -115,12 +115,12 @@ const NetworkTree: React.FC = () => {
       // Usar getDescendantSubtree que funciona para todos los modelos (B2C, B2B, B2T)
       const allDirectUsers: any[] = [];
       let backendOffset = 0;
-      const backendLimit = usersLimit * 3;
+      const backendLimit = 100; // Usar un límite fijo para cargar todos los usuarios inicialmente
       let firstData: any = null;
       let rootUserName = 'Usuario';
 
       // Hacer múltiples llamadas para obtener todos los hijos directos
-      while (allDirectUsers.length < usersLimit) {
+      while (true) {
         const res = await getDescendantSubtree({
           descendantId: targetUserId,
           maxDepth: maxDepth,
@@ -163,6 +163,7 @@ const NetworkTree: React.FC = () => {
         const directUsers = users.filter((u: any) => (u.levelInSubtree ?? 1) === 1);
         allDirectUsers.push(...directUsers);
 
+        // Si recibimos menos usuarios que el límite solicitado, no hay más
         if (users.length < backendLimit) break;
         backendOffset += backendLimit;
       }
@@ -187,11 +188,17 @@ const NetworkTree: React.FC = () => {
           totalDescendants: u.totalDescendants || 0,
           hasDescendants: u.hasDescendants ?? (u.totalDescendants || 0) > 0,
           comisionesGeneradas: u.comisiones_generadas,
+          volumen: typeof u.volumen === 'number' 
+            ? u.volumen 
+            : (typeof u.volumen === 'string' 
+                ? parseFloat(u.volumen) || 0 
+                : (u.volumen ?? 0)),
         };
       });
 
-      // Obtener usuarios de la primera página
-      const pageUsers = allUsers.slice(0, usersLimit);
+      // Obtener usuarios de la primera página usando el límite actual
+      const initialLimit = usersLimit;
+      const pageUsers = allUsers.slice(0, initialLimit);
 
       setSubtreeMode(true);
       setSubtreeRootId(targetUserId);
@@ -220,7 +227,7 @@ const NetworkTree: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [userModel, hasDepthLimit, maxDepth, usersLimit]);
+  }, [userModel, hasDepthLimit, maxDepth]);
 
   // Verificar si hay un ID válido al montar o cuando cambie
   useEffect(() => {
@@ -289,6 +296,11 @@ const NetworkTree: React.FC = () => {
           totalDescendants: u.totalDescendants || 0,
           hasDescendants: u.hasDescendants ?? (u.totalDescendants || 0) > 0,
           comisionesGeneradas: u.comisiones_generadas,
+          volumen: typeof u.volumen === 'number' 
+            ? u.volumen 
+            : (typeof u.volumen === 'string' 
+                ? parseFloat(u.volumen) || 0 
+                : (u.volumen ?? 0)),
         };
       });
       setChildrenByParent(prev => ({ ...prev, [parentUserId]: users }));
@@ -364,6 +376,11 @@ const NetworkTree: React.FC = () => {
           totalDescendants: u.totalDescendants || 0,
           hasDescendants: u.hasDescendants ?? (u.totalDescendants || 0) > 0,
           comisionesGeneradas: u.comisiones_generadas,
+          volumen: typeof u.volumen === 'number' 
+            ? u.volumen 
+            : (typeof u.volumen === 'string' 
+                ? parseFloat(u.volumen) || 0 
+                : (u.volumen ?? 0)),
         };
       });
 
@@ -527,7 +544,7 @@ const NetworkTree: React.FC = () => {
             </div>
 
             {/* Paginación */}
-            {subtreeTotal > usersLimit && (
+            {subtreeTotal > 0 && (
               <div className="relative z-20 mb-4">
                 <NetworkPaginationBar
                   currentPage={subtreePage}
@@ -540,8 +557,11 @@ const NetworkTree: React.FC = () => {
                     setSubtreeUsers(pageUsers);
                   }}
                   onChangeLimit={(limit: number) => {
-                    // Actualizar el límite si es necesario
-                    // Por ahora, no hacemos nada ya que usersLimit es constante
+                    setUsersLimit(limit);
+                    setSubtreePage(1);
+                    // Recalcular la primera página con el nuevo límite
+                    const pageUsers = allSubtreeUsers.slice(0, limit);
+                    setSubtreeUsers(pageUsers);
                   }}
                 />
               </div>

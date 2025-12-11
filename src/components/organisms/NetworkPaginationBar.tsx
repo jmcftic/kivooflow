@@ -10,7 +10,7 @@ interface NetworkPaginationBarProps {
   onChangeLimit: (limit: number) => void;
 }
 
-const allowedLimits = [2, 10, 20, 50] as const;
+const allowedLimits = [10, 20, 50] as const;
 
 const NetworkPaginationBar: React.FC<NetworkPaginationBarProps> = ({ totalItems, currentPage, usersLimit, onChangePage, onChangeLimit }) => {
   const effectiveLimit = allowedLimits.includes(usersLimit as (typeof allowedLimits)[number]) ? usersLimit : allowedLimits[0];
