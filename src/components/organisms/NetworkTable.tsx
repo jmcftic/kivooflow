@@ -162,10 +162,10 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                 </div>
                 <div className="text-center">
                   {typeof item.volumen === 'number' || (typeof item.volumen === 'string' && item.volumen !== '')
-                    ? `$${truncateTo3Decimals(item.volumen)}`
+                    ? `USDT ${truncateTo3Decimals(item.volumen)}`
                     : (typeof item.comisionesGeneradas === 'number' 
-                        ? `$${formatCurrencyWithThreeDecimals(item.comisionesGeneradas)}` 
-                        : '$0.00')}
+                        ? `USDT ${formatCurrencyWithThreeDecimals(item.comisionesGeneradas)}` 
+                        : 'USDT 0.00')}
                 </div>
                 <div className="text-right pr-6">
                   {isLeaderTab && onViewDetail ? (

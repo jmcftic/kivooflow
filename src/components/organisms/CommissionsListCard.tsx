@@ -5,9 +5,8 @@ import ClaimDetailModal from "../molecules/ClaimDetailModal";
 import B2BCommissionDetailModal from "../molecules/B2BCommissionDetailModal";
 import ClaimSuccessModal from "../molecules/ClaimSuccessModal";
 import NoCardsModal from "../molecules/NoCardsModal";
-import MaterializeSuccessModal from "../molecules/MaterializeSuccessModal";
 import { Spinner } from "@/components/ui/spinner";
-import { getClaims, getB2BCommissions, claimB2BCommission, materializeB2BCommission, claimMlmTransaction, getAvailableMlmModels } from "@/services/network";
+import { getClaims, getB2BCommissions, claimB2BCommission, claimMlmTransaction, getAvailableMlmModels } from "@/services/network";
 import { Claim, B2BCommission } from "@/types/network";
 import { maskCardNumber, maskFullName } from "@/lib/utils";
 
@@ -162,10 +161,8 @@ const mapB2BCommission = (commission: B2BCommission): MappedClaim => {
     fecha = new Date().toISOString(); // Fecha actual como fallback
   }
 
-  // Si id es null, no mostrar ID
-  const id = commission.id !== null 
-    ? `B2B-${String(commission.id).padStart(3, '0')}` 
-    : '—';
+  // id siempre tiene valor ahora (ya no es nullable)
+  const id = `B2B-${String(commission.id).padStart(3, '0')}`;
 
   return {
     id,
@@ -235,9 +232,6 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [showSuccessSubtext, setShowSuccessSubtext] = useState(true);
   const [noCardsModalOpen, setNoCardsModalOpen] = useState(false);
-  const [materializeSuccessModalOpen, setMaterializeSuccessModalOpen] = useState(false);
-  const [materializeErrorModalOpen, setMaterializeErrorModalOpen] = useState(false);
-  const [materializeErrorMessage, setMaterializeErrorMessage] = useState('');
   const [b2bModalOpen, setB2bModalOpen] = useState(false);
   const [selectedB2BCommission, setSelectedB2BCommission] = useState<B2BCommission | null>(null);
   const [b2bModalMode, setB2bModalMode] = useState<'available' | 'requested'>('available');
@@ -305,11 +299,12 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
   useEffect(() => {
     const summary = (queryData as any)?.summary;
     if (summary && onSummaryChange) {
-      // Mapear el summary de B2B commissions al formato esperado
-      // B2B commissions usa totalGains en lugar de totalCommissions
+      // Mapear el summary al formato esperado
+      // - Para B2B commissions: usa totalGains en lugar de totalCommissions
+      // - Para claims (B2C/B2B/B2T): usa totalCommissions y gainsFromRecharges directamente
       const mappedSummary = {
         totalCommissions: summary.totalGains ?? summary.totalCommissions ?? 0,
-        gainsFromRecharges: summary.gainsFromRecharges ?? 0,
+        gainsFromRecharges: summary.gainsFromRecharges ?? 0, // Mapeado desde el endpoint /network/claims
         gainsFromCards: summary.gainsFromCards ?? 0,
         totalCommissionsPercentageChange: summary.totalGainsPercentageChange ?? summary.totalCommissionsPercentageChange,
         gainsFromRechargesPercentageChange: summary.gainsFromRechargesPercentageChange,
@@ -357,50 +352,32 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
     
     // Validar que las fechas estén presentes (requeridas por el backend)
     if (!selectedB2BCommission.periodStartDate || !selectedB2BCommission.periodEndDate) {
-      console.error('Error: Las fechas del período son requeridas para materializar la comisión');
-      setMaterializeErrorMessage('Error: No se encontraron las fechas del período. Por favor, intenta nuevamente.');
-      setMaterializeErrorModalOpen(true);
+      console.error('Error: Las fechas del período son requeridas para reclamar la comisión');
+      alert('Error: No se encontraron las fechas del período. Por favor, intenta nuevamente.');
       return;
     }
     
     try {
       setClaiming(true);
-      // Para usuarios B2C en tab B2B, usar materialize en lugar de claim
-      if (userModel === 'b2c' && activeTab === 'b2b') {
-        const response = await materializeB2BCommission({
-          teamId: selectedB2BCommission.teamId,
-          level: selectedB2BCommission.level,
-          periodStartDate: selectedB2BCommission.periodStartDate,
-          periodEndDate: selectedB2BCommission.periodEndDate,
-        });
-        // Recargar la tabla después de materializar
-        await queryClient.invalidateQueries({ queryKey: ['commissions', activeTab, userModel, currentPage, pageSize] });
-        setB2bModalOpen(false);
-        setSelectedB2BCommission(null);
-        // Mostrar el modal de éxito de materialización
-        setMaterializeSuccessModalOpen(true);
-      } else {
-        // Para otros casos, usar el endpoint de claim normal
-        await claimB2BCommission({
-          teamId: selectedB2BCommission.teamId,
-          level: selectedB2BCommission.level,
-          periodStartDate: selectedB2BCommission.periodStartDate,
-          periodEndDate: selectedB2BCommission.periodEndDate,
-        });
-        await queryClient.invalidateQueries({ queryKey: ['commissions', activeTab, userModel, currentPage, pageSize] });
-        setB2bModalOpen(false);
-        setSelectedB2BCommission(null);
-        setSuccessMessage('Comisión solicitada exitosamente');
-        setShowSuccessSubtext(true); // Mostrar subtexto cuando se solicita
-        setSuccessModalOpen(true);
-      }
+      // Todas las comisiones ahora se reclaman directamente (ya no hay materialización)
+      await claimB2BCommission({
+        teamId: selectedB2BCommission.teamId,
+        level: selectedB2BCommission.level,
+        periodStartDate: selectedB2BCommission.periodStartDate,
+        periodEndDate: selectedB2BCommission.periodEndDate,
+      });
+      await queryClient.invalidateQueries({ queryKey: ['commissions', activeTab, userModel, currentPage, pageSize] });
+      setB2bModalOpen(false);
+      setSelectedB2BCommission(null);
+      setSuccessMessage('Comisión solicitada exitosamente');
+      setShowSuccessSubtext(true); // Mostrar subtexto cuando se solicita
+      setSuccessModalOpen(true);
     } catch (error: any) {
       console.error('Error solicitando comisión:', error);
       const errorMessage = error?.message || error?.response?.data?.message || '';
       const statusCode = error?.response?.status || error?.statusCode || error?.status;
       
       // Verificar si es el error específico de no tener tarjetas
-      // El mensaje puede venir en diferentes formatos
       const messageLower = errorMessage.toLowerCase();
       if (
         statusCode === 400 && 
@@ -411,22 +388,9 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
         setB2bModalOpen(false);
         setNoCardsModalOpen(true);
       } else {
-        // Para otros errores, verificar si es error de materialización (días 1 y 15)
-        const messageLower = errorMessage.toLowerCase();
-        if (
-          messageLower.includes('solo se pueden materializar') ||
-          messageLower.includes('días 1 y 15') ||
-          messageLower.includes('día 1 y 15') ||
-          messageLower.includes('materializar comisiones')
-        ) {
-          setB2bModalOpen(false);
-          setMaterializeErrorMessage(errorMessage || 'Solo se pueden materializar comisiones los días 1 y 15 de cada mes.');
-          setMaterializeErrorModalOpen(true);
-        } else {
-          // Para otros errores, mostrar alerta
-          const finalErrorMessage = errorMessage || 'Error al procesar la solicitud. Por favor, intenta nuevamente.';
-          alert(finalErrorMessage);
-        }
+        // Para otros errores, mostrar alerta
+        const finalErrorMessage = errorMessage || 'Error al procesar la solicitud. Por favor, intenta nuevamente.';
+        alert(finalErrorMessage);
       }
     } finally {
       setClaiming(false);
@@ -643,32 +607,6 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
         }}
       />
 
-      {/* Modal de error de materialización (días 1 y 15) */}
-      <NoCardsModal
-        open={materializeErrorModalOpen}
-        onOpenChange={(open) => {
-          setMaterializeErrorModalOpen(open);
-          if (!open) {
-            setMaterializeErrorMessage('');
-          }
-        }}
-        onRequestCard={() => {
-          setMaterializeErrorModalOpen(false);
-          setMaterializeErrorMessage('');
-        }}
-        customTitle="NO PUEDES MATERIALIZAR COMISIONES"
-        customMessage={materializeErrorMessage}
-        hideButton={true}
-      />
-
-      {/* Modal de éxito de materialización */}
-      <MaterializeSuccessModal
-        open={materializeSuccessModalOpen}
-        onOpenChange={setMaterializeSuccessModalOpen}
-        onConfirm={() => {
-          // Cualquier lógica adicional después de confirmar
-        }}
-      />
     </div>
   );
 };

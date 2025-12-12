@@ -120,7 +120,7 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeT
   };
 
   const formatMonto = (monto: number): string => {
-    return `$${formatCurrencyWithThreeDecimals(monto)}`;
+    return `USDT ${formatCurrencyWithThreeDecimals(monto)}`;
   };
 
   const getEstadoLabel = (estado: string): string => {

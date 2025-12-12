@@ -133,7 +133,7 @@ const Claims: React.FC = () => {
           {/* Primera card - Amarilla con totalGananciasPorReclamar */}
           <div className="w-full md:flex-1 min-w-0">
             <SuperiorClaimCard
-              primaryText={summaryData && typeof summaryData.totalGananciasPorReclamar === 'number' ? `$${formatCurrencyWithThreeDecimals(summaryData.totalGananciasPorReclamar)}` : '$0'}
+              primaryText={summaryData && typeof summaryData.totalGananciasPorReclamar === 'number' ? `USDT ${formatCurrencyWithThreeDecimals(summaryData.totalGananciasPorReclamar)}` : 'USDT 0'}
               secondaryText="Ganancias por reclamar"
               height={129}
               className="w-full"
@@ -146,8 +146,8 @@ const Claims: React.FC = () => {
           {/* Segunda card - Claimed último mes */}
           <div className="w-full md:flex-1 min-w-0">
             <SuperiorClaimCard
-              primaryText={summaryData && typeof summaryData.claimedUltimoMes === 'number' ? `$${formatCurrencyWithThreeDecimals(summaryData.claimedUltimoMes)}` : '$0'}
-              secondaryText="Reclamadao último mes"
+              primaryText={summaryData && typeof summaryData.claimedUltimoMes === 'number' ? `USDT ${formatCurrencyWithThreeDecimals(summaryData.claimedUltimoMes)}` : 'USDT 0'}
+              secondaryText="Reclamado último mes"
               height={129}
               className="w-full"
               secondaryTextColor="white"

@@ -130,6 +130,8 @@ const TransaccionesRecientesCard: React.FC<TransaccionesRecientesCardProps> = ({
   };
 
   const userModel = getUserModel();
+  // Ocultar moneda local (MXN) para todos los usuarios en transacciones recientes
+  const hideLocalCurrency = true;
 
   // Mapear transacciones iniciales
   const initialMapped = useMemo(() => {
@@ -197,14 +199,14 @@ const TransaccionesRecientesCard: React.FC<TransaccionesRecientesCardProps> = ({
       backgroundColor="#212020"
       variant="2xl"
     >
-      <div className="w-full h-full flex flex-col pt-10">
+      <div className="w-full h-full flex flex-col pt-10 overflow-hidden">
         {/* Header con título */}
-        <div className="mb-6">
+        <div className="mb-6 flex-shrink-0">
           <h3 className="text-[#FFF000] text-xl font-bold uppercase">TRANSACCIONES RECIENTES</h3>
         </div>
 
         {/* Contenido scrolleable */}
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="pr-4">
           {status === "pending" ? (
             <div className="flex items-center justify-center h-full">
@@ -245,6 +247,8 @@ const TransaccionesRecientesCard: React.FC<TransaccionesRecientesCardProps> = ({
                           tipo={transaction.tipo}
                           cryptocurrency={transaction.cryptocurrency}
                           localCurrency={transaction.localCurrency}
+                          hideLocalCurrency={hideLocalCurrency}
+                          fecha={transaction.fecha}
                         />
                       ))}
                     </div>
@@ -263,6 +267,8 @@ const TransaccionesRecientesCard: React.FC<TransaccionesRecientesCardProps> = ({
                           tipo={transaction.tipo}
                           cryptocurrency={transaction.cryptocurrency}
                           localCurrency={transaction.localCurrency}
+                          hideLocalCurrency={hideLocalCurrency}
+                          fecha={transaction.fecha}
                         />
                       ))}
                     </div>
@@ -280,6 +286,8 @@ const TransaccionesRecientesCard: React.FC<TransaccionesRecientesCardProps> = ({
                           tipo={transaction.tipo}
                           cryptocurrency={transaction.cryptocurrency}
                           localCurrency={transaction.localCurrency}
+                          hideLocalCurrency={hideLocalCurrency}
+                          fecha={transaction.fecha}
                         />
                       ))}
                     </div>

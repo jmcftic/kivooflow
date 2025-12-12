@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import Logo from '../components/atoms/Logo';
 import SidebarApp from '../components/organisms/SidebarApp';
@@ -17,6 +18,7 @@ import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 import { useMinimumLoading } from '../hooks/useMinimumLoading';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [referralLink, setReferralLink] = useState<string>('');
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
@@ -43,7 +45,7 @@ const Dashboard: React.FC = () => {
   }, []);
 
   // Función para formatear valores monetarios (solo número, sin símbolo)
-  const formatCurrency = (amount: number, currency: string = 'MXN'): string => {
+  const formatCurrency = (amount: number, currency: string = 'USDT'): string => {
     return new Intl.NumberFormat('es-MX', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -117,7 +119,12 @@ const Dashboard: React.FC = () => {
         {/* Full Banner - Link de referido - Debajo del Info Banner */}
         <div className="relative z-20 mt-6 mb-2">
           <FullBanner
-            title="Link de referido"
+            title={
+              <>
+                Link de{' '}
+                <span className="font-bold">{user?.full_name || 'Usuario'}</span>
+              </>
+            }
             linkText={referralLink || 'Cargando...'}
             linkHref={referralLink}
             onLinkClick={() => {
@@ -144,18 +151,31 @@ const Dashboard: React.FC = () => {
         <div className="relative z-20 grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 mt-6">
           <MiniBaner 
             className="h-[90px] md:h-[100px] lg:h-[110px]"
-            detail={metricsLoading ? "Cargando..." : metrics ? formatCurrency(metrics.totalEarnings, metrics.currency) : "0.00"}
+            detail={metricsLoading ? "Cargando..." : metrics ? (
+              <>
+                {formatCurrency(metrics.totalEarnings, metrics.currency)} <span className="text-[#FFF100]">USDT</span>
+              </>
+            ) : (
+              <>0.00 <span className="text-[#FFF100]">USDT</span></>
+            )}
             subtitle="Ganancias totales"
+            showDollarSign={false}
           />
           <MiniBaner 
             className="h-[90px] md:h-[100px] lg:h-[110px]"
-            detail={metricsLoading ? "Cargando..." : metrics ? formatCurrency(metrics.availableBalance, metrics.currency) : "0.00"}
+            detail={metricsLoading ? "Cargando..." : metrics ? (
+              <>
+                {formatCurrency(metrics.availableBalance, metrics.currency)} <span className="text-[#FFF100]">USDT</span>
+              </>
+            ) : (
+              <>0.00 <span className="text-[#FFF100]">USDT</span></>
+            )}
             subtitle="Saldo disponible"
+            showDollarSign={false}
             actionButton={{
               text: "Solicitar pago",
               onClick: () => {
-                // Aquí puedes agregar la lógica para abrir un modal o cambiar de página
-                console.log("Solicitar pago clickeado");
+                navigate('/commissions');
               }
             }}
           />
@@ -171,13 +191,27 @@ const Dashboard: React.FC = () => {
           />
           <MiniBaner 
             className="h-[90px] md:h-[100px] lg:h-[110px]"
-            detail={metricsLoading ? "Cargando..." : metrics ? formatCurrency(metrics.lastMonthCommissions, metrics.currency) : "0.00"}
+            detail={metricsLoading ? "Cargando..." : metrics ? (
+              <>
+                {formatCurrency(metrics.lastMonthCommissions, metrics.currency)} <span className="text-[#FFF100]">USDT</span>
+              </>
+            ) : (
+              <>0.00 <span className="text-[#FFF100]">USDT</span></>
+            )}
             subtitle="Comisiones último mes"
+            showDollarSign={false}
           />
           <MiniBaner 
             className="h-[90px] md:h-[100px] lg:h-[110px]"
-            detail={metricsLoading ? "Cargando..." : metrics ? formatCurrency(metrics.totalVolume, metrics.currency) : "0.00"}
+            detail={metricsLoading ? "Cargando..." : metrics ? (
+              <>
+                {formatCurrency(metrics.totalVolume, metrics.currency)} <span className="text-[#FFF100]">USDT</span>
+              </>
+            ) : (
+              <>0.00 <span className="text-[#FFF100]">USDT</span></>
+            )}
             subtitle="Volumen total"
+            showDollarSign={false}
           />
         </div>
 

@@ -88,7 +88,7 @@ const ClaimDetail: React.FC = () => {
   const formatCurrency = (amount: number, currency: string): string => {
     const formatted = formatCurrencyWithThreeDecimals(amount);
     const symbol = currency === 'USDT' ? 'USDT' : '$';
-    return `${symbol}${formatted}`;
+    return `${symbol} ${formatted}`;
   };
 
   const getStatusColor = (status: string): string => {
@@ -214,8 +214,8 @@ const ClaimDetail: React.FC = () => {
                     Orden #{orderClaimsData.data.orderId}
                   </h2>
                   <div className="flex items-center gap-4 text-sm text-white/60">
-                    <span>Estado: <span className="text-white">{getStatusLabel(orderClaimsData.data.orderStatus)}</span></span>
-                    <span>Total: <span className="text-white font-semibold">{formatCurrency(orderClaimsData.data.orderTotalAmount, 'MXN')}</span></span>
+                    <span>Estado: <Badge variant="outline" className={getStatusColor(orderClaimsData.data.orderStatus)}>{getStatusLabel(orderClaimsData.data.orderStatus)}</Badge></span>
+                    <span>Total: <span className="text-white font-semibold">{formatCurrencyWithThreeDecimals(orderClaimsData.data.orderTotalAmount)} <span className="text-[#FFF100]">USDT</span></span></span>
                     <span>Claims: <span className="text-white">{claims.length}</span></span>
                   </div>
                 </div>
@@ -226,19 +226,19 @@ const ClaimDetail: React.FC = () => {
 
         {/* Lista de claims */}
         <div className="relative z-20 flex flex-col gap-3">
-          {/* Headers */}
-          <div className="w-full mb-3">
-            <div className="w-full flex items-center px-6">
-              <div className="flex-1 grid grid-cols-6 gap-4 h-10 items-center text-xs text-white">
-                <div className="flex items-center justify-center">Fecha</div>
-                <div className="flex items-center justify-center">
+          {/* Headers - Solo visible en pantallas medianas y grandes */}
+          <div className="w-full mb-3 hidden md:block">
+            <div className="w-full px-6 md:px-8 lg:px-10">
+              <div className="grid grid-cols-[1fr_1.5fr_1.2fr_1fr_1.2fr_1fr] gap-2 md:gap-4 h-10 items-center text-xs text-white">
+                <div className="flex items-center justify-start min-w-0">Fecha</div>
+                <div className="flex items-center justify-start min-w-0">
                   {/* Mostrar "Empresa" solo si el usuario es B2C y el tab es B2B */}
                   {userModel === 'B2C' && claimType === 'B2B' ? 'Empresa' : 'Usuario'}
                 </div>
-                <div className="flex items-center justify-center">Monto</div>
-                <div className="flex items-center justify-center">Estado</div>
-                <div className="flex items-center justify-center">Tipo</div>
-                <div className="flex items-center justify-center">Acciones</div>
+                <div className="flex items-center justify-start min-w-0">Monto</div>
+                <div className="flex items-center justify-start min-w-0">Estado</div>
+                <div className="flex items-center justify-start min-w-0">Tipo</div>
+                <div className="flex items-center justify-start min-w-0">Acciones</div>
               </div>
             </div>
           </div>
@@ -278,25 +278,26 @@ const ClaimDetail: React.FC = () => {
                   : censorEmail(userEmail);
 
                 return (
-                  <InfoBanner key={claim.id} className="w-full h-16" backgroundColor="#212020">
-                    <div className="w-full flex items-center px-6 py-2">
-                      <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm text-white">
+                  <InfoBanner key={claim.id} className="w-full !h-auto min-h-[64px] py-3 md:!h-16 md:py-0" backgroundColor="#212020">
+                    <div className="w-full h-full flex items-center md:items-center">
+                      {/* Layout para pantallas grandes: grid horizontal */}
+                      <div className="hidden md:grid grid-cols-[1fr_1.5fr_1.2fr_1fr_1.2fr_1fr] gap-2 md:gap-4 items-center text-sm text-white w-full">
                         {/* Fecha */}
-                        <div className="flex items-center justify-center">
-                          <span className="text-white">{formatDate(claim.createdAt)}</span>
+                        <div className="flex items-center justify-start min-w-0">
+                          <span className="text-white text-xs md:text-sm truncate">{formatDate(claim.createdAt)}</span>
                         </div>
                         {/* Usuario/Empresa */}
-                        <div className="flex items-center justify-center">
-                          <span className="text-white">{usuarioValue || 'N/A'}</span>
+                        <div className="flex items-center justify-start min-w-0">
+                          <span className="text-white text-xs md:text-sm truncate">{usuarioValue || 'N/A'}</span>
                         </div>
                         {/* Monto de la claim */}
-                        <div className="flex items-center justify-center">
-                          <span className="text-white font-semibold">
+                        <div className="flex items-center justify-start min-w-0">
+                          <span className="text-white font-semibold text-xs md:text-sm whitespace-nowrap">
                             {formatCurrency(montoClaim, claim.currency)}
                           </span>
                         </div>
                         {/* Estado */}
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-start min-w-0">
                           <Badge 
                             variant="outline" 
                             className={getStatusColor(claim.status)}
@@ -305,7 +306,7 @@ const ClaimDetail: React.FC = () => {
                           </Badge>
                         </div>
                         {/* Tipo de comisión */}
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-start min-w-0">
                           <Badge 
                             variant={getCommissionTypeBadgeVariant(claim.commissionType)}
                             className="text-xs"
@@ -314,13 +315,73 @@ const ClaimDetail: React.FC = () => {
                           </Badge>
                         </div>
                         {/* Acciones - Ver detalle */}
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-start min-w-0">
                           <button
                             onClick={() => {
                               setSelectedClaim(claim);
                               setModalOpen(true);
                             }}
-                            className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer text-sm"
+                            className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer text-xs md:text-sm whitespace-nowrap"
+                          >
+                            detalles
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Layout para pantallas pequeñas: stack vertical */}
+                      <div className="md:hidden flex flex-col gap-3 text-sm text-white w-full">
+                        {/* Fecha */}
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-white/60 text-xs flex-shrink-0">Fecha</span>
+                          <span className="text-white text-xs text-right ml-2">{formatDate(claim.createdAt)}</span>
+                        </div>
+                        {/* Usuario/Empresa */}
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-white/60 text-xs flex-shrink-0">
+                            {userModel === 'B2C' && claimType === 'B2B' ? 'Empresa' : 'Usuario'}
+                          </span>
+                          <span className="text-white text-xs text-right truncate ml-2 max-w-[60%]">{usuarioValue || 'N/A'}</span>
+                        </div>
+                        {/* Monto de la claim */}
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-white/60 text-xs flex-shrink-0">Monto</span>
+                          <span className="text-white font-semibold text-xs text-right whitespace-nowrap ml-2">
+                            {formatCurrency(montoClaim, claim.currency)}
+                          </span>
+                        </div>
+                        {/* Estado */}
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-white/60 text-xs flex-shrink-0">Estado</span>
+                          <div className="ml-2">
+                            <Badge 
+                              variant="outline" 
+                              className={getStatusColor(claim.status)}
+                            >
+                              {getStatusLabel(claim.status)}
+                            </Badge>
+                          </div>
+                        </div>
+                        {/* Tipo de comisión */}
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-white/60 text-xs flex-shrink-0">Tipo</span>
+                          <div className="ml-2">
+                            <Badge 
+                              variant={getCommissionTypeBadgeVariant(claim.commissionType)}
+                              className="text-xs"
+                            >
+                              {getCommissionTypeLabel(claim.commissionType)}
+                            </Badge>
+                          </div>
+                        </div>
+                        {/* Acciones - Ver detalle */}
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-white/60 text-xs flex-shrink-0">Acciones</span>
+                          <button
+                            onClick={() => {
+                              setSelectedClaim(claim);
+                              setModalOpen(true);
+                            }}
+                            className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer text-xs whitespace-nowrap ml-2"
                           >
                             detalles
                           </button>

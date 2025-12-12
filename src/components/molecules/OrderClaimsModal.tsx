@@ -77,7 +77,7 @@ const OrderClaimsModal: React.FC<OrderClaimsModalProps> = ({
   const formatCurrency = (amount: number, currency: string): string => {
     const formatted = formatCurrencyWithThreeDecimals(amount);
     const symbol = currency === 'USDT' ? 'USDT' : '$';
-    return `${symbol}${formatted}`;
+    return `${symbol} ${formatted}`;
   };
 
   const getStatusColor = (status: string): string => {
@@ -138,7 +138,7 @@ const OrderClaimsModal: React.FC<OrderClaimsModalProps> = ({
             </div>
             <div>
               <span className="text-white/60">Total: </span>
-              <span className="text-white font-semibold">{formatCurrency(orderTotalAmount, 'MXN')}</span>
+              <span className="text-white font-semibold">{formatCurrencyWithThreeDecimals(orderTotalAmount)} <span className="text-[#FFF100]">USDT</span></span>
             </div>
           </div>
         </DialogHeader>
@@ -182,7 +182,7 @@ const OrderClaimsModal: React.FC<OrderClaimsModalProps> = ({
                           {getStatusLabel(claim.status)}
                         </span>
                         <span className="text-white font-semibold">
-                          {formatCurrency(claim.commissionAmount, claim.currency)}
+                          {formatCurrencyWithThreeDecimals(claim.commissionAmount)} <span className="text-[#FFF100]">{claim.currency}</span>
                         </span>
                       </div>
                     </div>
@@ -208,7 +208,7 @@ const OrderClaimsModal: React.FC<OrderClaimsModalProps> = ({
                         <div>
                           <span className="text-white/60 block mb-1">Monto Base</span>
                           <span className="text-white">
-                            {formatCurrency(claim.baseAmount, claim.currency)}
+                            {formatCurrencyWithThreeDecimals(claim.baseAmount)} <span className="text-[#FFF100]">{claim.currency}</span>
                           </span>
                         </div>
                       )}
@@ -224,7 +224,7 @@ const OrderClaimsModal: React.FC<OrderClaimsModalProps> = ({
                         <div>
                           <span className="text-white/60 block mb-1">Markup Líder</span>
                           <span className="text-white">
-                            {formatCurrency(claim.leaderMarkupAmount, claim.currency)}
+                            {formatCurrencyWithThreeDecimals(claim.leaderMarkupAmount)} <span className="text-[#FFF100]">{claim.currency}</span>
                           </span>
                         </div>
                       )}
@@ -320,7 +320,7 @@ const OrderClaimsModal: React.FC<OrderClaimsModalProps> = ({
                                   <div>
                                     <span className="text-white/60 block mb-1">Volumen Total</span>
                                     <span className="text-white">
-                                      {formatCurrency(b2bDetails.totalVolume, 'MXN')}
+                                      {formatCurrencyWithThreeDecimals(b2bDetails.totalVolume)} <span className="text-[#FFF100]">USDT</span>
                                     </span>
                                   </div>
                                 )}
@@ -340,7 +340,7 @@ const OrderClaimsModal: React.FC<OrderClaimsModalProps> = ({
                                         <div key={txIndex} className="bg-white/5 p-2 rounded text-xs">
                                           <div className="flex justify-between">
                                             <span className="text-white/60">Volumen:</span>
-                                            <span className="text-white">{formatCurrency(tx.volumeMXN, 'MXN')}</span>
+                                            <span className="text-white">{formatCurrencyWithThreeDecimals(tx.volumeMXN)} <span className="text-[#FFF100]">USDT</span></span>
                                           </div>
                                           <div className="flex justify-between">
                                             <span className="text-white/60">Esperado:</span>

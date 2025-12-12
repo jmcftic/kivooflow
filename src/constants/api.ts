@@ -63,6 +63,7 @@ export const API_ENDPOINTS = {
     METRICS: "/dashboard/metrics",
     RESUME: "/dashboard/resume",
     RECENT_TRANSACTIONS: "/dashboard/recent-transactions",
+    CLAIMS_REPORT: "/dashboard/reports/claims-report",
   },
   CRYPTO: {
     WALLETS: "/crypto/wallets",

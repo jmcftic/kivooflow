@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils"
-import React from "react"
+import React, { ReactNode } from "react"
 
 interface EnterpriseInfoCardLargeProps {
-  primaryText: string;
+  primaryText: string | ReactNode;
   secondaryText: string;
   className?: string;
   gradientColor?: string;
@@ -118,7 +118,7 @@ export function EnterpriseInfoCardLarge({
               display: 'flex',
               alignItems: 'flex-start',
               fontFamily: 'Archivo, sans-serif',
-              fontSize: '40px',
+              fontSize: '32px',
               lineHeight: '1'
             }}
           >

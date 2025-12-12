@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils"
-import React from "react"
+import React, { ReactNode } from "react"
 
 interface EnterpriseInfoCardSmallProps {
-  primaryText: string;
+  primaryText: string | ReactNode;
   secondaryText: string;
   className?: string;
   gradientColor?: string;
@@ -79,14 +79,15 @@ export function EnterpriseInfoCardSmall({
   forceSmallFont = false,
 }: EnterpriseInfoCardSmallProps) {
   // Contar dígitos numéricos en el texto (sin contar el símbolo $ y puntos decimales)
-  const countDigits = (text: string): number => {
-    const numericText = text.replace(/[^0-9.]/g, '');
+  const countDigits = (text: string | ReactNode): number => {
+    const textStr = typeof text === 'string' ? text : String(text);
+    const numericText = textStr.replace(/[^0-9.]/g, '');
     return numericText.replace(/\./g, '').length;
   };
   
   const digitCount = countDigits(primaryText);
   const shouldReduceFontSize = forceSmallFont || digitCount > 6;
-  const fontSize = shouldReduceFontSize ? '20px' : '40px';
+  const fontSize = shouldReduceFontSize ? '18px' : '28px';
 
   // Generar un ID único para este componente
   const uniqueId = React.useMemo(() => {

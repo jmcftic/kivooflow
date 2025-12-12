@@ -11,6 +11,8 @@ export type TransactionItemType = {
   className?: string;
   cryptocurrency?: string; // Opcional: tipo de crypto (USDT, USDC, etc.)
   localCurrency?: string; // Opcional: moneda local (MXN, USD, COP, etc.)
+  hideLocalCurrency?: boolean; // Opcional: ocultar moneda local (para B2C)
+  fecha?: string; // Opcional: fecha de la transacción (createdAt)
 };
 
 const TransactionItem: FunctionComponent<TransactionItemType> = ({ 
@@ -20,10 +22,30 @@ const TransactionItem: FunctionComponent<TransactionItemType> = ({
   tipo,
   className = "",
   cryptocurrency,
-  localCurrency
+  localCurrency,
+  hideLocalCurrency = false,
+  fecha
 }) => {
   const isPositive = montoUSDT > 0;
   const colorClass = isPositive ? "text-[#32d74b]" : "text-[#ff6d64]";
+  
+  // Función para formatear la fecha
+  const formatDate = (dateString?: string): string => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+      return date.toLocaleDateString('es-MX', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return '';
+    }
+  };
   
   return (
     <div className={`flex items-center justify-between py-3 border-b border-[#333] last:border-b-0 ${className}`}>
@@ -43,21 +65,28 @@ const TransactionItem: FunctionComponent<TransactionItemType> = ({
           </div>
         </div>
         
-        {/* Nombre de la empresa */}
-        <span className="text-white text-sm font-medium">{empresa}</span>
+        {/* Nombre de la empresa y fecha */}
+        <div className="flex flex-col">
+          <span className="text-white text-sm font-medium">{empresa}</span>
+          {fecha && (
+            <span className="text-white/60 text-xs mt-0.5">{formatDate(fecha)}</span>
+          )}
+        </div>
       </div>
       
       {/* Lado derecho: Montos */}
       <div className="flex flex-col items-end">
         {/* Monto en USDT */}
         <div className={`text-sm font-semibold ${colorClass}`}>
-          {isPositive ? '+' : ''}{montoUSDT.toFixed(2)} {cryptocurrency || 'USDT'}
+          {isPositive ? '+' : ''}{montoUSDT.toFixed(2)} <span className="text-[#FFF100]">{cryptocurrency || 'USDT'}</span>
         </div>
         
-        {/* Monto en COP */}
-        <div className="text-xs text-[#CBCACA]">
-          {isPositive ? '+' : ''}{montoCOP.toLocaleString('es-CO')} {localCurrency || 'COP'}
-        </div>
+        {/* Monto en moneda local - Solo mostrar si no está oculto (para B2C) */}
+        {!hideLocalCurrency && (
+          <div className="text-xs text-[#CBCACA]">
+            {isPositive ? '+' : ''}{montoCOP.toLocaleString('es-CO')} {localCurrency || 'COP'}
+          </div>
+        )}
       </div>
     </div>
   );

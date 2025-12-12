@@ -43,7 +43,7 @@ const OrderClaimDetailModal: React.FC<OrderClaimDetailModalProps> = ({
   const formatCurrency = (amount: number, currency: string): string => {
     const formatted = formatCurrencyWithThreeDecimals(amount);
     const symbol = currency === 'USDT' ? 'USDT' : '$';
-    return `${symbol}${formatted}`;
+    return `${symbol} ${formatted}`;
   };
 
   const getStatusColor = (status: string): string => {
@@ -205,7 +205,7 @@ const OrderClaimDetailModal: React.FC<OrderClaimDetailModalProps> = ({
                 <div className="flex items-center justify-between w-full">
                   <span className="text-white/60 text-sm">Monto base</span>
                   <span className="text-white text-sm">
-                    {formatCurrency(claim.baseAmount || 0, claim.currency)}
+                    {formatCurrencyWithThreeDecimals(claim.baseAmount || 0)} <span className="text-[#FFF100]">{claim.currency}</span>
                   </span>
                 </div>
 
@@ -223,7 +223,7 @@ const OrderClaimDetailModal: React.FC<OrderClaimDetailModalProps> = ({
                 <div className="flex items-center justify-between w-full">
                   <span className="text-white/60 text-sm">Comisión</span>
                   <span className="text-white text-sm">
-                    {formatCurrency(claim.commissionAmount, claim.currency)}
+                    {formatCurrencyWithThreeDecimals(claim.commissionAmount)} <span className="text-[#FFF100]">{claim.currency}</span>
                   </span>
                 </div>
               </div>

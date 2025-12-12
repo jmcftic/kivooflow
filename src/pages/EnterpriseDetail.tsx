@@ -23,7 +23,7 @@ const EnterpriseDetail: React.FC = () => {
   const [level, setLevel] = useState<number>(1);
 
   // Función para formatear valores monetarios
-  const formatCurrency = (amount: number, currency: string = 'MXN'): string => {
+  const formatCurrency = (amount: number, currency: string = 'USDT'): string => {
     return new Intl.NumberFormat('es-MX', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -154,7 +154,15 @@ const EnterpriseDetail: React.FC = () => {
           >
             <div className="flex-1 min-w-0">
               <EnterpriseInfoCardLarge
-                primaryText={loading || !teamDetails ? '$0.00' : `$${formatCurrency(teamDetails.totalEarnings, 'MXN')}`}
+                primaryText={
+                  loading || !teamDetails ? (
+                    <>0.00 <span className="text-[#FFF100]">USDT</span></>
+                  ) : (
+                    <>
+                      {formatCurrency(teamDetails.totalEarnings, 'USDT')} <span className="text-[#FFF100]">USDT</span>
+                    </>
+                  )
+                }
                 secondaryText="Ganancias totales"
                 height={172}
                 className="w-full"
@@ -163,7 +171,15 @@ const EnterpriseDetail: React.FC = () => {
             </div>
             <div className="flex-1 min-w-0">
               <EnterpriseInfoCardLarge
-                primaryText={loading || !teamDetails ? '$0.00' : `$${formatCurrency(teamDetails.availableBalance, 'MXN')}`}
+                primaryText={
+                  loading || !teamDetails ? (
+                    <>0.00 <span className="text-[#FFF100]">USDT</span></>
+                  ) : (
+                    <>
+                      {formatCurrency(teamDetails.availableBalance, 'USDT')} <span className="text-[#FFF100]">USDT</span>
+                    </>
+                  )
+                }
                 secondaryText="Balance disponible"
                 height={172}
                 className="w-full"
@@ -197,7 +213,15 @@ const EnterpriseDetail: React.FC = () => {
             </div>
             <div className="w-full md:flex-1 min-w-0">
               <EnterpriseInfoCardSmall
-                primaryText={loading || !teamDetails ? '$0.00' : `$${formatCurrency(teamDetails.totalVolume, 'MXN')}`}
+                primaryText={
+                  loading || !teamDetails ? (
+                    <>0.00 <span className="text-[#FFF100]">USDT</span></>
+                  ) : (
+                    <>
+                      {formatCurrency(teamDetails.totalVolume, 'USDT')} <span className="text-[#FFF100]">USDT</span>
+                    </>
+                  )
+                }
                 secondaryText="Volumen total"
                 height={129}
                 className="w-full"

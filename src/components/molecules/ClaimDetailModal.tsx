@@ -278,7 +278,7 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                   <div className="flex items-center justify-between w-full">
                     <span className="text-white/60 text-sm">Comisión</span>
                     <span className="text-[#FFF100] font-bold text-sm">
-                      ${(() => {
+                      {(() => {
                         if (commissionAmount !== undefined && commissionAmount !== null) {
                           const commissionAmountNum = typeof commissionAmount === 'string' ? parseFloat(commissionAmount) : commissionAmount;
                           return isNaN(commissionAmountNum) ? '0' : formatCurrencyWithThreeDecimals(commissionAmountNum);
@@ -288,7 +288,7 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                           return typeof comision === 'number' ? formatCurrencyWithThreeDecimals(comision) : '0';
                         }
                         return '0.00';
-                      })()}
+                      })()} <span className="text-[#FFF100]">USDT</span>
                     </span>
                   </div>
                 </div>

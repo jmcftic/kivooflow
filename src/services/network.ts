@@ -409,43 +409,8 @@ export async function getB2BCommissions({ limit = 20, offset = 0 }: GetB2BCommis
   };
 }
 
-export interface MaterializeB2BCommissionRequest {
-  teamId: number;
-  level: number;
-  periodStartDate: string;
-  periodEndDate: string;
-}
-
-export async function materializeB2BCommission(request: MaterializeB2BCommissionRequest): Promise<B2BCommission> {
-  const res = await apiService.post<{ statusCode: number; message: string; data: B2BCommission }>(
-    API_ENDPOINTS.NETWORK.MATERIALIZE_B2B_COMMISSION,
-    request,
-  );
-
-  const payload: any = res;
-  const data = payload?.data ?? payload;
-
-  return {
-    id: data?.id ?? null,
-    teamId: data?.teamId ?? 0,
-    teamName: data?.teamName ?? '',
-    level: data?.level ?? 0,
-    commissionPercentage: data?.commissionPercentage ?? 0,
-    periodType: data?.periodType ?? 'monthly',
-    periodStartDate: data?.periodStartDate ?? '',
-    periodEndDate: data?.periodEndDate ?? '',
-    totalVolume: data?.totalVolume ?? 0,
-    commissionAmount: data?.commissionAmount ?? 0,
-    totalTransactions: data?.totalTransactions ?? 0,
-    currency: data?.currency ?? 'MXN',
-    status: data?.status ?? '',
-    calculationDetails: data?.calculationDetails,
-    createdAt: data?.createdAt ?? new Date().toISOString(),
-    commissionType: data?.commissionType,
-    userEmail: data?.userEmail || data?.calculationDetails?.userEmail,
-    isMaterialized: data?.isMaterialized ?? false,
-  };
-}
+// Función materializeB2BCommission eliminada - ya no es necesaria
+// Las comisiones se crean automáticamente cuando se consultan por primera vez
 
 export async function claimB2BCommission(request: ClaimB2BCommissionRequest): Promise<B2BCommission> {
   const res = await apiService.post<{ statusCode: number; message: string; data: B2BCommission }>(
@@ -457,24 +422,24 @@ export async function claimB2BCommission(request: ClaimB2BCommissionRequest): Pr
   const data = payload?.data ?? payload;
 
   return {
-    id: data?.id ?? null,
+    id: data?.id ?? 0, // Ya no es nullable, siempre tiene ID
     teamId: data?.teamId ?? 0,
     teamName: data?.teamName ?? '',
     level: data?.level ?? 0,
     commissionPercentage: data?.commissionPercentage ?? 0,
-    periodType: data?.periodType ?? 'monthly',
+    periodType: data?.periodType ?? 'biweekly', // Cambiado de 'monthly' a 'biweekly'
     periodStartDate: data?.periodStartDate ?? '',
     periodEndDate: data?.periodEndDate ?? '',
     totalVolume: data?.totalVolume ?? 0,
     commissionAmount: data?.commissionAmount ?? 0,
     totalTransactions: data?.totalTransactions ?? 0,
-    currency: data?.currency ?? 'MXN',
+    currency: data?.currency ?? 'USDT',
     status: data?.status ?? '',
     calculationDetails: data?.calculationDetails,
     createdAt: data?.createdAt ?? new Date().toISOString(),
     commissionType: data?.commissionType,
     userEmail: data?.userEmail || data?.calculationDetails?.userEmail,
-    isMaterialized: data?.isMaterialized ?? false,
+    isMaterialized: data?.isMaterialized ?? true, // Siempre será true ahora
   };
 }
 
@@ -497,7 +462,7 @@ export async function claimMlmTransaction(request: ClaimMlmTransactionRequest): 
     commissionAmount: data?.commissionAmount ?? 0,
     leaderMarkupAmount: data?.leaderMarkupAmount ?? null,
     markupPercentage: data?.markupPercentage ?? null,
-    currency: data?.currency ?? 'MXN',
+    currency: data?.currency ?? 'USDT',
     status: data?.status ?? '',
     cryptoTransactionId: data?.cryptoTransactionId ?? null,
     createdAt: data?.createdAt ?? new Date().toISOString(),
@@ -510,9 +475,12 @@ export async function claimMlmTransaction(request: ClaimMlmTransactionRequest): 
   };
 }
 
-export async function requestAllClaims(): Promise<RequestAllClaimsResponse> {
+export async function requestAllClaims(claimType?: 'mlm_transactions' | 'b2c_commissions'): Promise<RequestAllClaimsResponse> {
+  // Construir los parámetros de query si se proporciona claimType
+  const queryParams = claimType ? `?claimType=${claimType}` : '';
+  
   const res = await apiService.post<RequestAllClaimsResponse>(
-    API_ENDPOINTS.NETWORK.REQUEST_ALL_CLAIMS,
+    `${API_ENDPOINTS.NETWORK.REQUEST_ALL_CLAIMS}${queryParams}`,
     {},
   );
 
@@ -533,9 +501,16 @@ export async function requestAllClaims(): Promise<RequestAllClaimsResponse> {
   };
 }
 
-export async function getTotalToClaimInUSDT(): Promise<TotalToClaimInUSDTResponse> {
+export async function getTotalToClaimInUSDT(claimType?: 'mlm_transactions' | 'b2c_commissions'): Promise<TotalToClaimInUSDTResponse> {
+  // Construir los parámetros de query si se proporciona claimType
+  const query: Record<string, string> = {};
+  if (claimType) {
+    query.claimType = claimType;
+  }
+  
   const res = await apiService.get<TotalToClaimInUSDTResponse>(
     API_ENDPOINTS.NETWORK.TOTAL_USDT,
+    query,
   );
   const payload: any = res;
   const data = payload?.data ?? payload;
@@ -664,7 +639,7 @@ export async function getOrderClaims({
         commissionAmount: item.commissionAmount ?? 0,
         markupPercentage: item.markupPercentage ?? null,
         leaderMarkupAmount: item.leaderMarkupAmount ?? null,
-        currency: item.currency ?? 'MXN',
+        currency: item.currency ?? 'USDT',
         status: item.status ?? 'available',
         processedAt: item.processedAt ?? null,
         createdAt: item.createdAt ?? new Date().toISOString(),

@@ -77,7 +77,7 @@ export const SuperiorClaimCard: React.FC<SuperiorClaimCardProps> = ({
   
   const digitCount = countDigits(primaryText);
   const shouldReduceFontSize = forceSmallFont || digitCount > 6;
-  const fontSize = shouldReduceFontSize ? '20px' : '40px';
+  const fontSize = shouldReduceFontSize ? '12.5px' : '25px'; // Aumentado 25%: 20px->25px, 10px->12.5px
   
   // Generar un ID único para este componente
   const uniqueId = React.useMemo(() => {
@@ -114,11 +114,11 @@ export const SuperiorClaimCard: React.FC<SuperiorClaimCardProps> = ({
                 {primaryText}
               </span>
               {hasPercentageChange && (
-                <span className="flex items-center gap-1 flex-shrink-0" style={{ fontSize: '16px', lineHeight: '1' }}>
+                <span className="flex items-center gap-1 flex-shrink-0" style={{ fontSize: '10px', lineHeight: '1' }}>
                   {isPositive ? (
-                    <IncreaseArrow width={17} height={16} />
+                    <IncreaseArrow width={11} height={10} />
                   ) : (
-                    <DecreaseArrow width={17} height={16} />
+                    <DecreaseArrow width={11} height={10} />
                   )}
                   <span style={{ color: isPositive ? '#198500' : '#C94740' }}>
                     {isPositive ? '+' : ''}{percentageChange.toFixed(1)}%

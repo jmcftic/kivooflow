@@ -270,12 +270,12 @@ export interface MlmTransactionCalculationDetails {
 }
 
 export interface B2BCommission {
-  id: number | null;
+  id: number; // Siempre tiene ID (ya no es nullable)
   teamId: number;
   teamName: string;
   level: number; // 1 = hija directa (0.3%), 2 = nieta (0.2%)
   commissionPercentage: number;
-  periodType: string;
+  periodType: 'biweekly' | string; // Ahora es 'biweekly' en lugar de 'monthly'
   periodStartDate: string;
   periodEndDate: string;
   totalVolume: number;
@@ -287,7 +287,7 @@ export interface B2BCommission {
   createdAt: string;
   commissionType?: string; // papa, abuelo, bis_abuelo, leader_retention
   userEmail?: string; // Email del usuario que generó la comisión
-  isMaterialized?: boolean; // Indica si la comisión ya está materializada
+  isMaterialized?: boolean; // Siempre será true, pero se mantiene por compatibilidad
 }
 
 export interface ClaimB2BCommissionRequest {

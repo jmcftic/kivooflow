@@ -6,6 +6,7 @@ import Button from '../atoms/Button';
 import KryptoAnimation from '../atoms/KryptoAnimation';
 import { requestAllClaims } from '@/services/network';
 import { RequestAllClaimsResponse } from '@/types/network';
+import { formatCurrencyWithThreeDecimals } from '@/lib/utils';
 import '../../styles/krypto-animation.css';
 
 interface ClaimAllScreenProps {
@@ -14,6 +15,7 @@ interface ClaimAllScreenProps {
   onContinue?: () => void;
   onError?: (message: string) => void;
   onFinalContinue?: () => void;
+  claimType?: 'mlm_transactions' | 'b2c_commissions';
 }
 
 // Componente para el fondo optimizado (se carga una sola vez)
@@ -45,7 +47,8 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
   totalInUSDT = 0,
   onContinue,
   onError,
-  onFinalContinue
+  onFinalContinue,
+  claimType
 }) => {
   const [isRequesting, setIsRequesting] = useState(false);
   const [showCircleAnimation, setShowCircleAnimation] = useState(false);
@@ -53,17 +56,13 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
   const [showFinalScreen, setShowFinalScreen] = useState(false);
   const [responseData, setResponseData] = useState<RequestAllClaimsResponse | null>(null);
 
-  const formatNumber = (num: number): string => {
-    return num.toFixed(6).replace(/\.?0+$/, '');
-  };
-
   const handleContinue = async () => {
     if (isRequesting) return;
     
     setIsRequesting(true);
     try {
-      // Ejecutar la petición de reclamar todo
-      const response = await requestAllClaims();
+      // Ejecutar la petición de reclamar todo con el claimType si se proporciona
+      const response = await requestAllClaims(claimType);
       
       // Guardar la respuesta
       setResponseData(response);
@@ -260,7 +259,7 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
                 <div className="flex flex-col items-center">
                   <div>
                     <span className="text-white text-4xl sm:text-5xl font-bold" style={{ fontFamily: 'Urbanist, sans-serif' }}>
-                      ${formatNumber(totalInUSDT)}
+                      USDT {formatCurrencyWithThreeDecimals(totalInUSDT)}
                     </span>
                     <span className="text-gray-400 text-4xl sm:text-5xl font-bold ml-2" style={{ fontFamily: 'Urbanist, sans-serif' }}>
                       USD

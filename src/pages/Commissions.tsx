@@ -67,6 +67,7 @@ const Commissions: React.FC = () => {
     userEmail?: string;
   } | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>(undefined);
+  const [claimType, setClaimType] = useState<'mlm_transactions' | 'b2c_commissions' | undefined>(undefined);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorModalMessage, setErrorModalMessage] = useState('');
   const [noCardsModalOpen, setNoCardsModalOpen] = useState(false);
@@ -119,6 +120,30 @@ const Commissions: React.FC = () => {
   const handleRequestAllClaims = async () => {
     setIsLoadingTotal(true);
     try {
+      // Determinar el claimType según las reglas:
+      // - Si usuario es B2C:
+      //   - Tab B2C: claimType='mlm_transactions'
+      //   - Tab B2B: claimType='b2c_commissions'
+      // - Si usuario es B2B:
+      //   - Solo tiene tab B2B: claimType='mlm_transactions'
+      let claimType: 'mlm_transactions' | 'b2c_commissions' | undefined = undefined;
+      
+      if (availableModelsData) {
+        const userModel = availableModelsData.my_model?.trim().toUpperCase();
+        
+        if (userModel === 'B2C') {
+          // Usuario B2C
+          if (activeTab === 'b2c') {
+            claimType = 'mlm_transactions';
+          } else if (activeTab === 'b2b') {
+            claimType = 'b2c_commissions';
+          }
+        } else if (userModel === 'B2B') {
+          // Usuario B2B solo tiene tab B2B, enviar mlm_transactions
+          claimType = 'mlm_transactions';
+        }
+      }
+      
       // Primero verificar que hay tarjetas disponibles
       const tarjetasResponse = await getMisTarjetas();
       const tarjetasActivas = tarjetasResponse.cards.filter(
@@ -128,8 +153,8 @@ const Commissions: React.FC = () => {
       // Si no hay tarjetas activas, obtener el email del usuario antes de mostrar el modal
       if (tarjetasActivas.length === 0) {
         try {
-          // Obtener el email del usuario para el mensaje de WhatsApp
-          const response = await getTotalToClaimInUSDT();
+          // Obtener el email del usuario para el mensaje de WhatsApp (con claimType si está disponible)
+          const response = await getTotalToClaimInUSDT(claimType);
           setUserEmail(response.data.userEmail);
         } catch (emailError) {
           // Si falla obtener el email, continuar sin él
@@ -140,13 +165,24 @@ const Commissions: React.FC = () => {
         return;
       }
       
-      // Si hay tarjetas, obtener el total a reclamar en USDT
-      const response = await getTotalToClaimInUSDT();
+      // Si hay tarjetas, obtener el total a reclamar en USDT (con claimType si está disponible)
+      const response = await getTotalToClaimInUSDT(claimType);
+      
+      // Validar que el total no sea 0
+      if (response.data.totalInUSDT === 0) {
+        setErrorModalMessage('No puedes reclamar comisiones porque el total es 0. No hay comisiones disponibles para reclamar.');
+        setErrorModalOpen(true);
+        setIsLoadingTotal(false);
+        return;
+      }
       
       // Guardar los datos del total
       setTotalToClaimData(response.data);
       // Guardar el email del usuario para el mensaje de WhatsApp
       setUserEmail(response.data.userEmail);
+      
+      // Guardar el claimType para pasarlo a ClaimAllScreen
+      setClaimType(claimType);
       
       // Mostrar la pantalla completa con el SVG
       setShowClaimAllScreen(true);
@@ -272,7 +308,7 @@ const Commissions: React.FC = () => {
                 <>
                   <div className="w-full md:flex-1 min-w-0">
                     <SuperiorClaimCard
-                      primaryText={summary && typeof summary.totalCommissions === 'number' ? `$${formatCurrencyWithThreeDecimals(summary.totalCommissions)}` : '$0'}
+                      primaryText={summary && typeof summary.totalCommissions === 'number' ? `USDT ${formatCurrencyWithThreeDecimals(summary.totalCommissions)}` : 'USDT 0'}
                       secondaryText="Comisiones totales"
                       height={129}
                       className="w-full"
@@ -282,7 +318,7 @@ const Commissions: React.FC = () => {
                   </div>
                   <div className="w-full md:flex-1 min-w-0">
                     <SuperiorClaimCard
-                      primaryText={summary && typeof summary.gainsFromRecharges === 'number' ? `$${formatCurrencyWithThreeDecimals(summary.gainsFromRecharges)}` : '$0'}
+                      primaryText={summary && typeof summary.gainsFromRecharges === 'number' ? `USDT ${formatCurrencyWithThreeDecimals(summary.gainsFromRecharges)}` : 'USDT 0'}
                       secondaryText="Comisiones por recargas"
                       height={129}
                       className="w-full"
@@ -292,7 +328,7 @@ const Commissions: React.FC = () => {
                   </div>
                   <div className="w-full md:flex-1 min-w-0">
                     <SuperiorClaimCard
-                      primaryText={summary && typeof summary.gainsFromCards === 'number' ? `$${formatCurrencyWithThreeDecimals(summary.gainsFromCards)}` : '$0'}
+                      primaryText={summary && typeof summary.gainsFromCards === 'number' ? `USDT ${formatCurrencyWithThreeDecimals(summary.gainsFromCards)}` : 'USDT 0'}
                       secondaryText="Comisiones por venta de tarjetas"
                       height={129}
                       className="w-full"
@@ -390,6 +426,7 @@ const Commissions: React.FC = () => {
             setErrorModalOpen(true);
           }}
           onFinalContinue={handleFinalContinue}
+          claimType={claimType}
         />
       )}
     </div>

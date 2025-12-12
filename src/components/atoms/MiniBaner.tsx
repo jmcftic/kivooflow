@@ -7,7 +7,7 @@ import FoldedCard from "./FoldedCard";
 export type MiniBanerType = {
   className?: string;
   icon?: React.ReactNode;
-  detail: string;
+  detail: string | React.ReactNode;
   subtitle?: string;
   showDollarSign?: boolean;
   backgroundColor?: string;
@@ -65,7 +65,10 @@ const MiniBaner: FunctionComponent<MiniBanerType> = ({
           <div className="flex-1">
             {/* Texto principal con o sin símbolo $ */}
             <div className={`${finalTextColor} text-lg md:text-xl lg:text-2xl font-semibold mb-1`}>
-              {showDollarSign && !detail.toLowerCase().includes('cargando') ? `$${detail}` : detail}
+              {typeof detail === 'string' 
+                ? (showDollarSign && !detail.toLowerCase().includes('cargando') ? `$${detail}` : detail)
+                : detail
+              }
             </div>
             
             {/* Texto secundario */}

@@ -22,6 +22,7 @@ import CardAcquisition from "./pages/CardAcquisition";
 import Commissions from "./pages/Commissions";
 import Activity from "./pages/Activity";
 import Help from "./pages/Help";
+import ReporteClaims from "./pages/ReporteClaims";
 import ForgotPassword from "./pages/ForgotPassword";
 import VerificationCode from "./pages/VerificationCode";
 import VerificationSent from "./pages/VerificationSent";
@@ -250,6 +251,19 @@ function App() {
           element={
             <ProtectedRoute allowed={false}>
               <Help />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/claims"
+          element={
+            <ProtectedRoute
+              userCheck={(user) => {
+                const allowedIds = ['49', '335', '57', '291'];
+                return user !== null && allowedIds.includes(String(user.id));
+              }}
+            >
+              <ReporteClaims />
             </ProtectedRoute>
           }
         />

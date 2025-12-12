@@ -9,9 +9,10 @@ interface NetworkTabsProps {
   onTabChange: (tab: NetworkTabId) => void;
   availableTabs?: Record<NetworkTabId, boolean>;
   tabHeight?: number;
+  customLabels?: Partial<Record<NetworkTabId, string>>;
 }
 
-const NetworkTabs: React.FC<NetworkTabsProps> = ({ activeTab, onTabChange, availableTabs, tabHeight = 52 }) => {
+const NetworkTabs: React.FC<NetworkTabsProps> = ({ activeTab, onTabChange, availableTabs, tabHeight = 52, customLabels }) => {
   const availability: Record<NetworkTabId, boolean> = availableTabs ?? {
     b2c: true,
     b2b: false,
@@ -19,9 +20,9 @@ const NetworkTabs: React.FC<NetworkTabsProps> = ({ activeTab, onTabChange, avail
   };
 
   const tabs: Array<{ id: NetworkTabId; label: string }> = [
-    { id: 'b2c', label: 'B2C' },
-    { id: 'b2b', label: 'B2B' },
-    { id: 'b2t', label: 'B2T' },
+    { id: 'b2c', label: customLabels?.b2c || 'B2C' },
+    { id: 'b2b', label: customLabels?.b2b || 'B2B' },
+    { id: 'b2t', label: customLabels?.b2t || 'B2T' },
   ];
 
   // Filtrar solo las tabs disponibles

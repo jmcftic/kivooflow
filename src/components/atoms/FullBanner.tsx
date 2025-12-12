@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState, useEffect } from "react";
+import React, { FunctionComponent, ReactNode, useState, useEffect } from "react";
 import ReferredLinkGap from "./ReferredLinkGap";
 import ActionButton from "./ActionButton";
 import FoldedCard from "./FoldedCard";
@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 export type FullBannerType = {
   className?: string;
-  title: string;
+  title: string | ReactNode;
   linkText: string;
   linkHref?: string;
   onLinkClick?: () => void;

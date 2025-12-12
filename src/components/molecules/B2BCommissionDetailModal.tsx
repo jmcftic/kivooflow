@@ -41,8 +41,8 @@ const formatDate = (value?: string) => {
 };
 
 const formatCurrency = (value?: number) => {
-  if (value === undefined || value === null) return "$0";
-  return `$${formatCurrencyWithThreeDecimals(value)}`;
+  if (value === undefined || value === null) return "USDT 0";
+  return `USDT ${formatCurrencyWithThreeDecimals(value)}`;
 };
 
 const formatVolume = (value?: number) => {
@@ -75,7 +75,6 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
     periodStartDate,
     periodEndDate,
     commissionPercentage,
-    isMaterialized,
   } = commission;
 
   return (
@@ -120,7 +119,7 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
             <div className="p-4 bg-[#2A2A2A] rounded-lg">
               <p className="text-[#CBCACA] text-xs mb-1">Comisión</p>
               <p className="text-[#32d74b] font-semibold">
-                {formatCurrency(commissionAmount)}
+                {commissionAmount !== undefined && commissionAmount !== null ? formatCurrencyWithThreeDecimals(commissionAmount) : '0'} <span className="text-[#FFF100]">USDT</span>
               </p>
             </div>
             <div className="p-4 bg-[#2A2A2A] rounded-lg">
@@ -157,14 +156,14 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
           >
             Cerrar
           </Button>
-          {mode === "available" && onConfirm && !isMaterialized && (
+          {mode === "available" && onConfirm && (
             <Button
               variant="yellow"
               className="w-full md:w-auto font-semibold"
               onClick={onConfirm}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Materializando..." : "Solicitar comisiones por volumen"}
+              {isSubmitting ? "Solicitando..." : "Solicitar comisiones por volumen"}
             </Button>
           )}
         </DialogFooter>

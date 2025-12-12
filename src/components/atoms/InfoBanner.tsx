@@ -19,7 +19,7 @@ const InfoBanner: FunctionComponent<InfoBannerType> = ({
       backgroundColor={backgroundColor}
       variant="lg"
     >
-      <div className="w-full flex items-center justify-center">
+      <div className="w-full h-full flex items-center">
         {children}
       </div>
     </FoldedCard>
