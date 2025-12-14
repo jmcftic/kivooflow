@@ -24,7 +24,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
   const [user, setUser] = useState<User | null>(null);
 
   // IDs permitidos para acceder a Reportes
-  const allowedReportUserIds = ['49', '335', '57', '291'];
+  const allowedReportUserIds = ['49', '335', '57', '291', '53'];
 
   useEffect(() => {
     // Cargar información del usuario del localStorage

@@ -71,6 +71,7 @@ const Commissions: React.FC = () => {
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorModalMessage, setErrorModalMessage] = useState('');
   const [noCardsModalOpen, setNoCardsModalOpen] = useState(false);
+  const [noClaimableModalOpen, setNoClaimableModalOpen] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -170,8 +171,7 @@ const Commissions: React.FC = () => {
       
       // Validar que el total no sea 0
       if (response.data.totalInUSDT === 0) {
-        setErrorModalMessage('No puedes reclamar comisiones porque el total es 0. No hay comisiones disponibles para reclamar.');
-        setErrorModalOpen(true);
+        setNoClaimableModalOpen(true);
         setIsLoadingTotal(false);
         return;
       }
@@ -188,9 +188,20 @@ const Commissions: React.FC = () => {
       setShowClaimAllScreen(true);
     } catch (error: any) {
       console.error('Error obteniendo total a reclamar:', error);
-      const errorMessage = error?.message || 'Ocurrió un error al obtener el total a reclamar. Por favor, intenta nuevamente.';
-      setErrorModalMessage(errorMessage);
-      setErrorModalOpen(true);
+      const errorMessage = error?.message || error?.response?.data?.message || 'Ocurrió un error al obtener el total a reclamar. Por favor, intenta nuevamente.';
+      const messageLower = errorMessage.toLowerCase();
+      
+      // Verificar si el error es porque el total es 0 o no hay comisiones disponibles
+      if (
+        messageLower.includes('total es 0') ||
+        messageLower.includes('no hay comisiones disponibles') ||
+        messageLower.includes('no puedes reclamar comisiones porque el total es 0')
+      ) {
+        setNoClaimableModalOpen(true);
+      } else {
+        setErrorModalMessage(errorMessage);
+        setErrorModalOpen(true);
+      }
     } finally {
       setIsLoadingTotal(false);
     }
@@ -395,6 +406,15 @@ const Commissions: React.FC = () => {
         userEmail={userEmail}
       />
 
+      {/* Modal de no hay nada por reclamar */}
+      <NoCardsModal
+        open={noClaimableModalOpen}
+        onOpenChange={setNoClaimableModalOpen}
+        customTitle="NO HAY NADA POR RECLAMAR"
+        customMessage="No tienes comisiones disponibles para reclamar en este momento"
+        hideButton={true}
+      />
+
       {/* Modal de error */}
       <ErrorModal
         isOpen={errorModalOpen}
@@ -422,8 +442,19 @@ const Commissions: React.FC = () => {
           onBack={handleBackFromClaimAllScreen}
           totalInUSDT={totalToClaimData?.totalInUSDT || 0}
           onError={(message: string) => {
-            setErrorModalMessage(message);
-            setErrorModalOpen(true);
+            const messageLower = message.toLowerCase();
+            // Verificar si el error es porque el total es 0 o no hay comisiones disponibles
+            if (
+              messageLower.includes('total es 0') ||
+              messageLower.includes('no hay comisiones disponibles') ||
+              messageLower.includes('no puedes reclamar comisiones porque el total es 0')
+            ) {
+              setShowClaimAllScreen(false);
+              setNoClaimableModalOpen(true);
+            } else {
+              setErrorModalMessage(message);
+              setErrorModalOpen(true);
+            }
           }}
           onFinalContinue={handleFinalContinue}
           claimType={claimType}

@@ -101,7 +101,7 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
       }
     } catch (error: any) {
       console.error('Error al reclamar todas las comisiones:', error);
-      const errorMessage = error?.message || 'Ocurrió un error al reclamar las comisiones. Por favor, intenta nuevamente.';
+      const errorMessage = error?.message || error?.response?.data?.message || 'Ocurrió un error al reclamar las comisiones. Por favor, intenta nuevamente.';
       if (onError) {
         onError(errorMessage);
       }

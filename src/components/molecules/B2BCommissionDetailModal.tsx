@@ -156,16 +156,6 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
           >
             Cerrar
           </Button>
-          {mode === "available" && onConfirm && (
-            <Button
-              variant="yellow"
-              className="w-full md:w-auto font-semibold"
-              onClick={onConfirm}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Solicitando..." : "Solicitar comisiones por volumen"}
-            </Button>
-          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
