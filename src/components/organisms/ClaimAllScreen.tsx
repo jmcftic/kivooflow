@@ -243,7 +243,7 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
                   top: '80px'
                 }}
               >
-                solicitar pago
+                Solicitar pago
               </h1>
 
               {/* Monto total con símbolo $ - totalmente centrado horizontal y verticalmente */}
@@ -262,7 +262,7 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
                       USDT {formatCurrencyWithThreeDecimals(totalInUSDT)}
                     </span>
                     <span className="text-gray-400 text-4xl sm:text-5xl font-bold ml-2" style={{ fontFamily: 'Urbanist, sans-serif' }}>
-                      USD
+                      USDT
                     </span>
                   </div>
                   {/* Texto "Se usará el máximo disponible" debajo del valor */}

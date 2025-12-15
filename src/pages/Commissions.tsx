@@ -19,6 +19,7 @@ import { LottieLoader } from '@/components/ui/lottie-loader';
 import ErrorModal from '@/components/atoms/ErrorModal';
 import ClaimSuccessModal from '@/components/molecules/ClaimSuccessModal';
 import NoCardsModal from '@/components/molecules/NoCardsModal';
+import NoClaimsModal from '@/components/molecules/NoClaimsModal';
 import ClaimAllScreen from '@/components/organisms/ClaimAllScreen';
 import { useMinimumLoading } from '../hooks/useMinimumLoading';
 
@@ -407,12 +408,9 @@ const Commissions: React.FC = () => {
       />
 
       {/* Modal de no hay nada por reclamar */}
-      <NoCardsModal
+      <NoClaimsModal
         open={noClaimableModalOpen}
         onOpenChange={setNoClaimableModalOpen}
-        customTitle="NO HAY NADA POR RECLAMAR"
-        customMessage="No tienes comisiones disponibles para reclamar en este momento"
-        hideButton={true}
       />
 
       {/* Modal de error */}

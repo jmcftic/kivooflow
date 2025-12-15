@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
-import AlertIcon from "../atoms/AlertIcon";
-import Button from "../atoms/Button";
-import YellowFoldedCardMinibackground from "../atoms/YellowFoldedCardMinibackground";
-import FoldedCard from "../atoms/FoldedCard";
+import InfoModal from "./InfoModal";
 
 interface NoCardsModalProps {
   open: boolean;
@@ -17,6 +10,7 @@ interface NoCardsModalProps {
   hideButton?: boolean;
   buttonText?: string;
   userEmail?: string; // Email del usuario para agregar al mensaje de WhatsApp
+  illustrationSrc?: string; // Prop opcional para mostrar una ilustración personalizada en el futuro
 }
 
 const NoCardsModal: React.FC<NoCardsModalProps> = ({
@@ -28,14 +22,8 @@ const NoCardsModal: React.FC<NoCardsModalProps> = ({
   hideButton = false,
   buttonText = 'Solicitar tarjeta',
   userEmail,
+  illustrationSrc,
 }) => {
-  const handleRequestCard = () => {
-    if (onRequestCard) {
-      onRequestCard();
-    }
-    onOpenChange(false);
-  };
-
   const handleContactSupport = () => {
     // Número de WhatsApp de soporte (formato: código de país + número sin espacios, guiones o +)
     // +52 1 55 4057 6890 (México) -> 5215540576890
@@ -55,63 +43,17 @@ const NoCardsModal: React.FC<NoCardsModalProps> = ({
   const message = customMessage || 'Para recibir tus pagos necesitas adquirir tu tarjeta KIVOO';
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 max-w-[500px] bg-transparent border-0 shadow-none">
-        <FoldedCard
-          className="w-[500px] h-[405px] lg:h-[405px]"
-          gradientColor="#FFF100"
-          backgroundColor="#212020"
-          variant="md"
-        >
-          {/* Contenido centrado */}
-          <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 py-8">
-            {/* Icono de alerta dentro del elemento del sidebar con fondo amarillo */}
-            <div className="mb-6 flex-shrink-0 w-14 h-14 relative">
-              {/* Fondo amarillo con YellowFoldedCardMinibackground */}
-              <div className="absolute inset-0">
-                <YellowFoldedCardMinibackground width={56} height={56} className="w-full h-full" />
-              </div>
-              
-              {/* Icono de alerta centrado */}
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center z-10">
-                <AlertIcon width={56} height={56} />
-              </div>
-            </div>
-
-            {/* Texto principal amarillo */}
-            <h2 className="text-[#FFF100] text-[32px] font-bold mb-4 text-center">
-              {title}
-            </h2>
-
-            {/* Subtexto blanco */}
-            <p className="text-white text-base mb-8 text-center">
-              {message}
-            </p>
-
-            {/* Botón Contactar a soporte o Cerrar */}
-            {!hideButton ? (
-              <Button
-                variant="yellow"
-                size="lg"
-                className="w-full rounded-xl font-semibold text-lg"
-                onClick={handleContactSupport}
-              >
-                Contactar a soporte
-              </Button>
-            ) : (
-              <Button
-                variant="yellow"
-                size="lg"
-                className="w-full rounded-xl font-semibold text-lg"
-                onClick={() => onOpenChange(false)}
-              >
-                Cerrar
-              </Button>
-            )}
-          </div>
-        </FoldedCard>
-      </DialogContent>
-    </Dialog>
+    <InfoModal
+      open={open}
+      onOpenChange={onOpenChange}
+      illustrationSrc={illustrationSrc}
+      title={title}
+      message={message}
+      titleColor="yellow"
+      titleSize="large"
+      buttonText={hideButton ? buttonText : 'Contactar a soporte'}
+      onButtonClick={hideButton ? onRequestCard : handleContactSupport}
+    />
   );
 };
 
