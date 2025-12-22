@@ -23,7 +23,7 @@ export interface InfoModalProps {
   // Botón
   buttonText: string;
   onButtonClick?: () => void;
-  buttonVariant?: 'yellow' | 'default';
+  buttonVariant?: 'yellow' | 'outline';
 }
 
 const InfoModal: React.FC<InfoModalProps> = ({
