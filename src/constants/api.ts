@@ -1,8 +1,8 @@
 // API Configuration
 // Uses VITE_API_URL from environment variables, falls back to localhost for development
-//export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://3.144.137.41:3001";
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://3.144.137.41:3001";
 //export const API_BASE_URL = import.meta.env.VITE_API_URL || "https://dev.kivooapp.co";
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+//export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 // API Endpoints
 export const API_ENDPOINTS = {
   AUTH: {
