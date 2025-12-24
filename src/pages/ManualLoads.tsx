@@ -26,8 +26,6 @@ const ManualLoads: React.FC = () => {
     userId: 0,
     commissionAmount: 0,
     concept: 'fund',
-    baseAmount: undefined,
-    commissionPercentage: null,
     teamId: undefined,
     periodStartDate: undefined,
     periodEndDate: undefined,
@@ -174,12 +172,6 @@ const ManualLoads: React.FC = () => {
         concept: formData.concept,
       };
 
-      if (formData.baseAmount !== undefined) {
-        requestData.baseAmount = formData.baseAmount;
-      }
-      if (formData.commissionPercentage !== undefined && formData.commissionPercentage !== null) {
-        requestData.commissionPercentage = formData.commissionPercentage;
-      }
       if (formData.teamId !== undefined) {
         requestData.teamId = formData.teamId;
       }
@@ -334,41 +326,6 @@ const ManualLoads: React.FC = () => {
                 step="0.01"
                 min="0.01"
                 required
-              />
-            </div>
-
-            {/* Monto Base (Opcional) */}
-            <div>
-              <label htmlFor="base-amount" className="block text-sm font-medium text-white mb-2">
-                Monto Base (USDT) - Opcional
-              </label>
-              <Input
-                id="base-amount"
-                type="number"
-                value={formData.baseAmount || ''}
-                onChange={(e) => handleInputChange('baseAmount', e.target.value ? parseFloat(e.target.value) : undefined)}
-                variant="kivoo-glass"
-                placeholder="0.00"
-                step="0.01"
-                min="0"
-              />
-            </div>
-
-            {/* Porcentaje de Comisión (Opcional) */}
-            <div>
-              <label htmlFor="commission-percentage" className="block text-sm font-medium text-white mb-2">
-                Porcentaje de Comisión (%) - Opcional
-              </label>
-              <Input
-                id="commission-percentage"
-                type="number"
-                value={formData.commissionPercentage !== null && formData.commissionPercentage !== undefined ? formData.commissionPercentage : ''}
-                onChange={(e) => handleInputChange('commissionPercentage', e.target.value ? parseFloat(e.target.value) : null)}
-                variant="kivoo-glass"
-                placeholder="0.00"
-                step="0.01"
-                min="0"
-                max="100"
               />
             </div>
 
