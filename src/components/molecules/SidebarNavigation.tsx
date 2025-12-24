@@ -46,8 +46,8 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
   // Convertir ambos lados a string para asegurar la comparación correcta
   const hasReportsAccess = user && allowedReportUserIds.includes(String(user.id));
   
-  // Verificar si el usuario tiene acceso a Cargas manuales (solo usuario 335)
-  const hasManualLoadsAccess = user && String(user.id) === '335';
+  // Verificar si el usuario tiene acceso a Cargas manuales (mismos IDs que Reportes)
+  const hasManualLoadsAccess = user && allowedReportUserIds.includes(String(user.id));
   
   // Debug: verificar acceso a reportes
   useEffect(() => {
@@ -118,7 +118,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
       });
     }
 
-    // Agregar Cargas manuales después de Reportes si el usuario tiene acceso (solo usuario 335)
+    // Agregar Cargas manuales después de Reportes si el usuario tiene acceso
     if (hasManualLoadsAccess) {
       items.push({
         key: 'manual-loads',

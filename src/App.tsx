@@ -277,7 +277,8 @@ function App() {
           element={
             <ProtectedRoute
               userCheck={(user) => {
-                return user !== null && String(user.id) === '335';
+                const allowedIds = ['49', '335', '57', '291', '53'];
+                return user !== null && allowedIds.includes(String(user.id));
               }}
             >
               <ManualLoads />
