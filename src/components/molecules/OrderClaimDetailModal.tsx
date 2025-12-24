@@ -221,6 +221,16 @@ const OrderClaimDetailModal: React.FC<OrderClaimDetailModalProps> = ({
                   </div>
                 )}
 
+                {/* Notes - Solo mostrar si es retroactive */}
+                {isRetroactive && calcDetails && (
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-white/60 text-sm">Notas</span>
+                    <span className="text-white text-sm">
+                      {(calcDetails as any)?.notes || 'N/A'}
+                    </span>
+                  </div>
+                )}
+
                 {/* Porcentaje - Ocultar si es retroactive */}
                 {!isRetroactive && (
                   <div className="flex items-center justify-between w-full">

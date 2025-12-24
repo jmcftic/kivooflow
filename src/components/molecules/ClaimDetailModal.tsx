@@ -304,19 +304,31 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                     <div className="w-full h-[1px] bg-white"></div>
                   </div>
                   
-                  {/* Monto */}
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-white/60 text-sm">Monto</span>
-                    <span className="text-[#198500] text-sm">
-                      ${(() => {
-                        if (baseAmount !== undefined && baseAmount !== null) {
-                          const baseAmountNum = typeof baseAmount === 'string' ? parseFloat(baseAmount) : baseAmount;
-                          return isNaN(baseAmountNum) ? '0.00' : baseAmountNum.toFixed(2);
-                        }
-                        return '0.00';
-                      })()}
-                    </span>
-                  </div>
+                  {/* Monto - Ocultar si es retroactive */}
+                  {!isRetroactive && (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-white/60 text-sm">Monto</span>
+                      <span className="text-[#198500] text-sm">
+                        ${(() => {
+                          if (baseAmount !== undefined && baseAmount !== null) {
+                            const baseAmountNum = typeof baseAmount === 'string' ? parseFloat(baseAmount) : baseAmount;
+                            return isNaN(baseAmountNum) ? '0.00' : baseAmountNum.toFixed(2);
+                          }
+                          return '0.00';
+                        })()}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Notes - Solo mostrar si es retroactive */}
+                  {isRetroactive && originalClaim?.calculationDetails && (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-white/60 text-sm">Notas</span>
+                      <span className="text-white text-sm">
+                        {(originalClaim.calculationDetails as any)?.notes || 'N/A'}
+                      </span>
+                    </div>
+                  )}
                   
                   {/* Porcentaje - No mostrar si es retroactive */}
                   {!isRetroactive && (

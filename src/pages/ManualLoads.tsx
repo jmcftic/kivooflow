@@ -185,11 +185,42 @@ const ManualLoads: React.FC = () => {
         requestData.notes = formData.notes;
       }
 
+      // Obtener información del usuario autenticado para debugging
+      const userStr = localStorage.getItem('user');
+      const currentUser = userStr ? JSON.parse(userStr) : null;
+      
+      console.log('Enviando comisión manual:', {
+        requestData,
+        currentUserId: currentUser?.id,
+        currentUserEmail: currentUser?.email,
+      });
+
       const response = await createManualCommission(requestData);
       setSuccessMessage(response.message || 'Comisión manual creada exitosamente');
       setSuccessModalOpen(true);
     } catch (error: any) {
-      const errorMsg = error?.response?.data?.message || error?.message || 'Error al crear la comisión manual. Por favor, intenta nuevamente.';
+      // Log detallado del error para debugging
+      console.error('Error al crear comisión manual:', {
+        error,
+        response: error?.response,
+        status: error?.status,
+        message: error?.message,
+        data: error?.response?.data,
+      });
+
+      // Construir mensaje de error más detallado
+      let errorMsg = 'Error al crear la comisión manual. Por favor, intenta nuevamente.';
+      
+      if (error?.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      } else if (error?.message) {
+        errorMsg = error.message;
+      } else if (error?.status === 403) {
+        errorMsg = 'No tienes permiso para crear comisiones manuales. Contacta al administrador.';
+      } else if (error?.status === 401) {
+        errorMsg = 'Tu sesión expiró. Por favor, inicia sesión nuevamente.';
+      }
+
       setErrorMessage(errorMsg);
       setErrorModalOpen(true);
     } finally {

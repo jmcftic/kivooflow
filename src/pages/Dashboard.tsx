@@ -107,14 +107,14 @@ const Dashboard: React.FC = () => {
         {/* Navbar responsivo */}
         <DashboardNavbar />
 
-        {/* Info Banner - Justo debajo del navbar */}
-        <div className="relative z-20">
+        {/* Info Banner - Justo debajo del navbar - OCULTO */}
+        {/* <div className="relative z-20">
           <InfoBanner>
             <h2 className="text-black text-xl  text-center">
               Banner informativo
             </h2>
           </InfoBanner>
-        </div>
+        </div> */}
 
         {/* Full Banner - Link de referido - Debajo del Info Banner */}
         <div className="relative z-20 mt-6 mb-2">
