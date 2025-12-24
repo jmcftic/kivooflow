@@ -131,6 +131,7 @@ const ClaimDetail: React.FC = () => {
       'bis_abuelo': 'Nivel 3',
       'leader_retention': 'Comisión Empresa',
       'b2b_commission': 'Comisión B2B',
+      'retroactive': 'Retroactiva',
     };
     return typeMap[commissionType] || commissionType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
@@ -142,7 +143,34 @@ const ClaimDetail: React.FC = () => {
     if (typeLower === 'bis_abuelo' || typeLower === 'bisabuelo') return 'blue'; // Nivel 3 - azul
     if (typeLower === 'leader_markup' || typeLower === 'leader_retention') return 'yellow'; // Comisión Empresa - amarillo
     if (typeLower === 'b2b_commission') return 'yellow'; // Comisión B2B - amarillo
+    if (typeLower === 'retroactive') return 'yellow'; // Retroactiva - amarillo
     return 'default';
+  };
+
+  const getConceptBadge = (concept?: 'fund' | 'card_selling') => {
+    if (!concept) return null;
+    
+    let badgeText = '';
+    let badgeVariant: 'blue' | 'green' | 'default' = 'default';
+    
+    if (concept === 'fund') {
+      badgeText = 'Recarga';
+      badgeVariant = 'blue';
+    } else if (concept === 'card_selling') {
+      badgeText = 'Venta';
+      badgeVariant = 'green';
+    }
+    
+    if (!badgeText) return null;
+    
+    return (
+      <Badge 
+        variant={badgeVariant}
+        className="text-xs"
+      >
+        {badgeText}
+      </Badge>
+    );
   };
 
   const censorEmail = (email: string): string => {
@@ -229,12 +257,13 @@ const ClaimDetail: React.FC = () => {
           {/* Headers - Solo visible en pantallas medianas y grandes */}
           <div className="w-full mb-3 hidden md:block">
             <div className="w-full px-6 md:px-8 lg:px-10">
-              <div className="grid grid-cols-[1fr_1.5fr_1.2fr_1fr_1.2fr_1fr] gap-2 md:gap-4 h-10 items-center text-xs text-white">
+              <div className="grid grid-cols-[1fr_1.5fr_1fr_1.2fr_1fr_1.2fr_1fr] gap-2 md:gap-4 h-10 items-center text-xs text-white">
                 <div className="flex items-center justify-start min-w-0">Fecha</div>
                 <div className="flex items-center justify-start min-w-0">
                   {/* Mostrar "Empresa" solo si el usuario es B2C y el tab es B2B */}
                   {userModel === 'B2C' && claimType === 'B2B' ? 'Empresa' : 'Usuario'}
                 </div>
+                <div className="flex items-center justify-start min-w-0">Concepto</div>
                 <div className="flex items-center justify-start min-w-0">Monto</div>
                 <div className="flex items-center justify-start min-w-0">Estado</div>
                 <div className="flex items-center justify-start min-w-0">Tipo</div>
@@ -263,25 +292,33 @@ const ClaimDetail: React.FC = () => {
             <div className="w-full space-y-2">
               {claims.map((claim) => {
                 const calcDetails = claim.calculationDetails;
-                // Acceder a userEmail y teamName de forma segura según el tipo
-                const userEmail = (calcDetails && 'userEmail' in calcDetails) 
-                  ? (calcDetails as any).userEmail || '' 
-                  : '';
+                const isRetroactive = claim.commissionType?.toLowerCase() === 'retroactive';
+                
+                // Acceder a userEmail, user_email y teamName de forma segura según el tipo
+                // Para retroactive, usar user_email que viene censurado del backend
+                let userEmail = '';
+                if (isRetroactive && calcDetails && 'user_email' in calcDetails) {
+                  userEmail = (calcDetails as any).user_email || '';
+                } else if (calcDetails && 'userEmail' in calcDetails) {
+                  userEmail = (calcDetails as any).userEmail || '';
+                }
+                
                 const teamName = (calcDetails && 'teamName' in calcDetails) 
                   ? (calcDetails as any).teamName || '' 
                   : '';
                 const montoClaim = claim.commissionAmount + (claim.leaderMarkupAmount || 0);
                 
                 // Mostrar teamName solo si el usuario es B2C y el tab es B2B, si no mostrar correo
+                // Para retroactive, usar userEmail directamente (ya viene censurado), sino censurar
                 const usuarioValue = (userModel === 'B2C' && claimType === 'B2B' && teamName)
                   ? teamName 
-                  : censorEmail(userEmail);
+                  : (isRetroactive && userEmail ? userEmail : censorEmail(userEmail));
 
                 return (
                   <InfoBanner key={claim.id} className="w-full !h-auto min-h-[64px] py-3 md:!h-16 md:py-0" backgroundColor="#212020">
                     <div className="w-full h-full flex items-center md:items-center">
                       {/* Layout para pantallas grandes: grid horizontal */}
-                      <div className="hidden md:grid grid-cols-[1fr_1.5fr_1.2fr_1fr_1.2fr_1fr] gap-2 md:gap-4 items-center text-sm text-white w-full">
+                      <div className="hidden md:grid grid-cols-[1fr_1.5fr_1fr_1.2fr_1fr_1.2fr_1fr] gap-2 md:gap-4 items-center text-sm text-white w-full">
                         {/* Fecha */}
                         <div className="flex items-center justify-start min-w-0">
                           <span className="text-white text-xs md:text-sm truncate">{formatDate(claim.createdAt)}</span>
@@ -289,6 +326,10 @@ const ClaimDetail: React.FC = () => {
                         {/* Usuario/Empresa */}
                         <div className="flex items-center justify-start min-w-0">
                           <span className="text-white text-xs md:text-sm truncate">{usuarioValue || 'N/A'}</span>
+                        </div>
+                        {/* Concepto */}
+                        <div className="flex items-center justify-start min-w-0">
+                          {getConceptBadge(claim.concept)}
                         </div>
                         {/* Monto de la claim */}
                         <div className="flex items-center justify-start min-w-0">
@@ -342,6 +383,15 @@ const ClaimDetail: React.FC = () => {
                           </span>
                           <span className="text-white text-xs text-right truncate ml-2 max-w-[60%]">{usuarioValue || 'N/A'}</span>
                         </div>
+                        {/* Concepto */}
+                        {claim.concept && (
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-white/60 text-xs flex-shrink-0">Concepto</span>
+                            <div className="ml-2">
+                              {getConceptBadge(claim.concept)}
+                            </div>
+                          </div>
+                        )}
                         {/* Monto de la claim */}
                         <div className="flex items-center justify-between w-full">
                           <span className="text-white/60 text-xs flex-shrink-0">Monto</span>

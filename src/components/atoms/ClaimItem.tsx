@@ -20,6 +20,7 @@ export type ClaimItemType = {
   hideTarjeta?: boolean; // Si es true, oculta la columna Tarjeta
   usuarioLabel?: string; // Label para la columna Usuario/Empresa (ej: "Usuario" o "Empresa")
   usuarioValue?: string; // Valor a mostrar en la columna Usuario/Empresa (correo censurado o teamName)
+  concept?: 'fund' | 'card_selling'; // Concepto de la comisión: recarga o venta de tarjetas
 };
 
 const ClaimItem: FunctionComponent<ClaimItemType> = ({ 
@@ -39,6 +40,7 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
   hideTarjeta = false,
   usuarioLabel,
   usuarioValue,
+  concept,
 }) => {
   // Formatear fecha a formato local
   const formatFecha = (fechaStr: string) => {
@@ -103,6 +105,33 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
     }
   };
 
+  // Función para obtener el badge de concepto
+  const getConceptBadge = () => {
+    if (!concept) return null;
+    
+    let badgeText = '';
+    let badgeVariant: 'blue' | 'green' | 'default' = 'default';
+    
+    if (concept === 'fund') {
+      badgeText = 'Recarga';
+      badgeVariant = 'blue';
+    } else if (concept === 'card_selling') {
+      badgeText = 'Venta';
+      badgeVariant = 'green';
+    }
+    
+    if (!badgeText) return null;
+    
+    return (
+      <Badge 
+        variant={badgeVariant}
+        className="text-xs"
+      >
+        {badgeText}
+      </Badge>
+    );
+  };
+
   // Función para obtener el badge de tipo de comisión
   const getCommissionTypeBadge = () => {
     // Si hay commissionType, usarlo
@@ -123,6 +152,9 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
       } else if (tipoLower === 'leader_markup' || tipoLower === 'leader_retention') {
         badgeText = 'Comisión Empresa';
         badgeVariant = 'red';
+      } else if (tipoLower === 'retroactive') {
+        badgeText = 'Retroactiva';
+        badgeVariant = 'yellow';
       }
 
       return (
@@ -186,13 +218,20 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
 
   // Determinar si se muestra el badge de tipo de comisión
   const showCommissionTypeBadge = commissionType || (nivel !== undefined && nivel !== null);
+  // Determinar si se muestra el badge de concepto
+  const showConceptBadge = concept !== undefined;
   
   // Calcular número de columnas para el grid
-  let columnCount = 6; // Fecha, Tarjeta, Estado, Monto, Acción (5) + ID/Email (1) = 6
-  if (hideId && !userEmail) columnCount--; // Si ocultamos ID y no hay email
-  if (hideTarjeta) columnCount--; // Si ocultamos Tarjeta
+  // Base: Fecha, Estado, Monto, Acción = 4 columnas base
+  let columnCount = 4;
+  // Agregar ID/Email si no está oculto
+  if (!hideId) columnCount++;
+  // Agregar Tarjeta si no está oculta
+  if (!hideTarjeta) columnCount++;
   // Si hay badge de tipo de comisión, agregamos columna
   if (showCommissionTypeBadge) columnCount++;
+  // Si hay badge de concepto, agregamos columna
+  if (showConceptBadge) columnCount++;
   // Si hay columna Usuario/Empresa, agregamos columna
   if (usuarioLabel && usuarioValue) columnCount++;
   // NO agregamos columna para nivel si se está mostrando el badge
@@ -242,6 +281,16 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
         <span className="text-white text-sm font-medium mb-1">{formatFecha(fecha)}</span>
         <span className="text-[#CBCACA] text-xs">Fecha</span>
       </div>
+
+      {/* Concepto - Mostrar si hay concepto */}
+      {showConceptBadge && (
+        <div className="flex flex-col">
+          <div className="mb-1">
+            {getConceptBadge()}
+          </div>
+          <span className="text-[#CBCACA] text-xs">Concepto</span>
+        </div>
+      )}
 
       {/* Tarjeta/Empresa - Solo mostrar si no está oculta */}
       {!hideTarjeta && (

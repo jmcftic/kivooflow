@@ -27,6 +27,8 @@ import {
   Order,
   OrderClaimsResponse,
   OrderClaimItem,
+  CreateManualCommissionRequest,
+  ManualCommissionResponse,
 } from '@/types/network';
 
 export interface GetNetworkParams {
@@ -458,7 +460,7 @@ export async function claimMlmTransaction(request: ClaimMlmTransactionRequest): 
     userId: data?.userId ?? 0,
     commissionType: data?.commissionType ?? '',
     baseAmount: data?.baseAmount ?? 0,
-    commissionPercentage: data?.commissionPercentage ?? 0,
+    commissionPercentage: data?.commissionPercentage !== undefined ? data.commissionPercentage : null,
     commissionAmount: data?.commissionAmount ?? 0,
     leaderMarkupAmount: data?.leaderMarkupAmount ?? null,
     markupPercentage: data?.markupPercentage ?? null,
@@ -466,7 +468,11 @@ export async function claimMlmTransaction(request: ClaimMlmTransactionRequest): 
     status: data?.status ?? '',
     cryptoTransactionId: data?.cryptoTransactionId ?? null,
     createdAt: data?.createdAt ?? new Date().toISOString(),
-    ...data, // Incluir otros campos adicionales como calculationDetails
+    concept: data?.concept,
+    creationType: data?.creationType,
+    userCreatorId: data?.userCreatorId ?? null,
+    calculationDetails: data?.calculationDetails,
+    ...data, // Incluir otros campos adicionales (esto sobrescribirá los campos anteriores si vienen en data)
   };
 
   return {
@@ -648,6 +654,23 @@ export async function getOrderClaims({
       })),
       total: data?.total ?? 0,
     },
+  };
+}
+
+export async function createManualCommission(request: CreateManualCommissionRequest): Promise<ManualCommissionResponse> {
+  const res = await apiService.post<ManualCommissionResponse>(
+    API_ENDPOINTS.NETWORK.MANUAL_COMMISSIONS,
+    request,
+  );
+
+  const payload: any = res;
+  const message = payload?.message || 'Comisión manual creada exitosamente';
+  const data = payload?.data ?? payload;
+
+  return {
+    statusCode: payload?.statusCode ?? 201,
+    message,
+    data: data as Claim,
   };
 }
 

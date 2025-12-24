@@ -181,7 +181,7 @@ export interface Claim {
   userId: number;
   commissionType: string; // papa, abuelo, bis_abuelo, leader_retention
   baseAmount: number | string; // Puede venir como string desde el backend
-  commissionPercentage: number | string; // Puede venir como string desde el backend
+  commissionPercentage: number | string | null; // Puede venir como string desde el backend, nullable para comisiones manuales
   commissionAmount: number | string; // Puede venir como string desde el backend
   leaderMarkupAmount?: number | null;
   markupPercentage?: number | null;
@@ -190,6 +190,9 @@ export interface Claim {
   cryptoTransactionId?: number | null;
   createdAt: string;
   calculationDetails?: B2BCommissionCalculationDetails | MlmTransactionCalculationDetails;
+  concept?: 'fund' | 'card_selling'; // Concepto de la comisión: recarga o venta de tarjetas
+  creationType?: 'auto' | 'manual'; // Tipo de creación: automática o manual
+  userCreatorId?: number | null; // ID del usuario que creó la comisión manual (null para automáticas)
   [key: string]: any; // Para otros campos adicionales
 }
 
@@ -288,6 +291,9 @@ export interface B2BCommission {
   commissionType?: string; // papa, abuelo, bis_abuelo, leader_retention
   userEmail?: string; // Email del usuario que generó la comisión
   isMaterialized?: boolean; // Siempre será true, pero se mantiene por compatibilidad
+  concept?: 'fund' | 'card_selling'; // Concepto de la comisión: recarga o venta de tarjetas
+  creationType?: 'auto' | 'manual'; // Tipo de creación: automática o manual
+  userCreatorId?: number | null; // ID del usuario que creó la comisión manual (null para automáticas)
 }
 
 export interface ClaimB2BCommissionRequest {
@@ -390,6 +396,7 @@ export interface Order {
   userId: number;
   status: 'pending' | 'paid' | 'cancelled';
   totalAmount: number;
+  netAmount?: number | null; // Monto neto después de descontar 2% de comisión de la app
   currency: string;
   paymentReference: string | null;
   notes: string | null;
@@ -437,6 +444,9 @@ export interface OrderClaimItem {
   createdAt: string;
   origin: 'mlm_transaction' | 'b2c_from_b2b_commission';
   calculationDetails: OrderClaimCalculationDetails;
+  concept?: 'fund' | 'card_selling'; // Concepto de la comisión: recarga o venta de tarjetas
+  creationType?: 'auto' | 'manual'; // Tipo de creación: automática o manual
+  userCreatorId?: number | null; // ID del usuario que creó la comisión manual (null para automáticas)
 }
 
 // Tipo unión para calculationDetails que puede ser de mlm_transaction o b2c_from_b2b_commission
@@ -499,5 +509,24 @@ export interface OrderClaimsResponse {
     items: OrderClaimItem[];
     total: number;
   };
+}
+
+// Interfaces para comisiones manuales
+export interface CreateManualCommissionRequest {
+  userId: number;
+  commissionAmount: number;
+  concept: 'fund' | 'card_selling';
+  baseAmount?: number;
+  commissionPercentage?: number | null;
+  teamId?: number;
+  periodStartDate?: string;
+  periodEndDate?: string;
+  notes?: string;
+}
+
+export interface ManualCommissionResponse {
+  statusCode: number;
+  message: string;
+  data: Claim;
 }
 

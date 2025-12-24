@@ -9,6 +9,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { getClaims, getB2BCommissions, claimB2BCommission, claimMlmTransaction, getAvailableMlmModels } from "@/services/network";
 import { Claim, B2BCommission } from "@/types/network";
 import { maskCardNumber, maskFullName } from "@/lib/utils";
+import { authService } from "@/services/auth";
 
 type CommissionTabId = 'b2c' | 'b2b' | 'b2t';
 
@@ -35,6 +36,7 @@ interface MappedClaim {
   commissionType?: string; // Tipo de comisión: papa, abuelo, bis_abuelo, leader_retention
   usuarioLabel?: string; // Label para la columna Usuario/Empresa
   usuarioValue?: string; // Valor a mostrar (correo censurado o teamName)
+  concept?: 'fund' | 'card_selling'; // Concepto de la comisión: recarga o venta de tarjetas
 }
 
 const mapClaim = (claim: Claim): MappedClaim => {
@@ -93,9 +95,40 @@ const mapClaim = (claim: Claim): MappedClaim => {
 
   // Obtener correo censurado del backend si viene (puede venir como userEmail censurado)
   // Si no viene censurado del backend, usar el userEmail que ya tenemos
-  const usuarioValue = (claim as any).userEmailCensored || (claim.calculationDetails && 'userEmailCensored' in claim.calculationDetails 
+  let usuarioValue = (claim as any).userEmailCensored || (claim.calculationDetails && 'userEmailCensored' in claim.calculationDetails 
     ? (claim.calculationDetails as any).userEmailCensored 
     : userEmail);
+
+  // Para comisiones retroactive, usar user_email de calculationDetails si está disponible
+  // También considerar userEmail directo del claim como fallback
+  const isRetroactive = claim.commissionType?.toLowerCase() === 'retroactive';
+  let usuarioLabel: string | undefined = undefined;
+  
+  if (isRetroactive) {
+    let retroactiveEmail: string | undefined = undefined;
+    
+    // Prioridad 1: user_email de calculationDetails
+    if (claim.calculationDetails) {
+      const calcDetails = claim.calculationDetails as any;
+      if (calcDetails.user_email && typeof calcDetails.user_email === 'string' && calcDetails.user_email.trim()) {
+        retroactiveEmail = calcDetails.user_email.trim();
+      }
+    }
+    
+    // Prioridad 2: userEmail directo del claim (si viene censurado desde el backend)
+    if (!retroactiveEmail && (claim as any).userEmail && typeof (claim as any).userEmail === 'string') {
+      const claimUserEmail = String((claim as any).userEmail).trim();
+      if (claimUserEmail) {
+        retroactiveEmail = claimUserEmail;
+      }
+    }
+    
+    // Si encontramos un email para retroactive, usarlo
+    if (retroactiveEmail) {
+      usuarioValue = retroactiveEmail;
+      usuarioLabel = 'Usuario';
+    }
+  }
 
   return {
     id: `CLM-${String(claim.id).padStart(3, '0')}`,
@@ -107,6 +140,8 @@ const mapClaim = (claim: Claim): MappedClaim => {
     commissionType: claim.commissionType,
     userEmail,
     usuarioValue,
+    usuarioLabel,
+    concept: claim.concept,
   };
 };
 
@@ -174,6 +209,7 @@ const mapB2BCommission = (commission: B2BCommission): MappedClaim => {
     originalB2BCommission: commission,
     userEmail: commission.userEmail,
     commissionType: commission.commissionType,
+    concept: commission.concept,
   };
 };
 
@@ -484,11 +520,21 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
                   // Determinar si se deben aplicar los cambios
                   const shouldApplyChanges = isB2CViewingB2B || isB2CViewingB2C || isB2BViewingB2B;
                   
-                  // Determinar label y value para la columna Usuario/Empresa
-                  let usuarioLabel: string | undefined = undefined;
-                  let usuarioValue: string | undefined = undefined;
+                  // Verificar si es retroactive
+                  const isRetroactive = commission.commissionType?.toLowerCase() === 'retroactive';
                   
-                  if (shouldApplyChanges) {
+                  // Determinar label y value para la columna Usuario/Empresa
+                  // Si ya viene usuarioLabel desde mapClaim (para retroactive), usarlo
+                  let usuarioLabel: string | undefined = commission.usuarioLabel;
+                  let usuarioValue: string | undefined = commission.usuarioValue;
+                  
+                  // Para retroactive, siempre usar los valores que vienen de mapClaim
+                  if (isRetroactive) {
+                    // Usar los valores desde mapClaim (ya vienen establecidos)
+                    usuarioLabel = commission.usuarioLabel;
+                    usuarioValue = commission.usuarioValue;
+                  } else if (!usuarioLabel && shouldApplyChanges) {
+                    // Si no es retroactive y se deben aplicar cambios, usar lógica según el contexto
                     if (isB2CViewingB2B) {
                       // B2C viendo B2B: mostrar "Empresa" con teamName
                       usuarioLabel = 'Empresa';
@@ -500,6 +546,11 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
                       usuarioValue = commission.usuarioValue || commission.userEmail;
                     }
                   }
+                  
+                  // Para retroactive, siempre ocultar ID y Tarjeta
+                  // Para no retroactive, usar shouldApplyChanges
+                  const finalHideId = isRetroactive ? true : shouldApplyChanges;
+                  const finalHideTarjeta = isRetroactive ? true : shouldApplyChanges;
                   
                   return (
                     <ClaimItem
@@ -513,11 +564,12 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
                       labelEmpresa={!!commission.originalB2BCommission}
                       onVerDetalle={() => handleVerDetalle(commission.id || index)}
                       userEmail={shouldApplyChanges ? commission.userEmail : undefined}
-                      commissionType={shouldApplyChanges ? commission.commissionType : undefined}
-                      hideId={shouldApplyChanges}
-                      hideTarjeta={shouldApplyChanges}
+                      commissionType={commission.commissionType}
+                      hideId={finalHideId}
+                      hideTarjeta={finalHideTarjeta}
                       usuarioLabel={usuarioLabel}
                       usuarioValue={usuarioValue}
+                      concept={commission.concept}
                     />
                   );
                 })}
@@ -558,12 +610,21 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
           }
           tipoComision={selectedClaim.originalClaim?.commissionType || 'N/A'}
           baseAmount={selectedClaim.originalClaim?.baseAmount}
-          commissionPercentage={selectedClaim.originalClaim?.commissionPercentage}
+          commissionPercentage={selectedClaim.originalClaim?.commissionPercentage !== null && selectedClaim.originalClaim?.commissionPercentage !== undefined
+            ? selectedClaim.originalClaim.commissionPercentage
+            : undefined}
           commissionAmount={selectedClaim.originalClaim?.commissionAmount !== undefined && selectedClaim.originalClaim?.commissionAmount !== null
             ? selectedClaim.originalClaim.commissionAmount
             : undefined}
           comision={selectedClaim.monto}
           hideCardSelection={true}
+          periodStartDate={selectedClaim.originalClaim?.calculationDetails && 'period_start_date' in selectedClaim.originalClaim.calculationDetails
+            ? (selectedClaim.originalClaim.calculationDetails as any).period_start_date
+            : undefined}
+          periodEndDate={selectedClaim.originalClaim?.calculationDetails && 'period_end_date' in selectedClaim.originalClaim.calculationDetails
+            ? (selectedClaim.originalClaim.calculationDetails as any).period_end_date
+            : undefined}
+          originalClaim={selectedClaim.originalClaim}
         />
       )}
 

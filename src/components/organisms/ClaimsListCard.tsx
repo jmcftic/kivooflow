@@ -194,7 +194,14 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeT
                         </div>
                         {/* Monto */}
                         <div className="flex items-center justify-center">
-                          <span className="text-white">{formatMonto(order.monto)}</span>
+                          <div className="flex flex-col items-center">
+                            <span className="text-white">{formatMonto(order.monto)}</span>
+                            {order.originalOrder.netAmount !== null && order.originalOrder.netAmount !== undefined && (
+                              <span className="text-xs text-white/60">
+                                Neto: {formatCurrencyWithThreeDecimals(order.originalOrder.netAmount)} USDT
+                              </span>
+                            )}
+                          </div>
                         </div>
                         {/* Estado con badge */}
                         <div className="flex items-center justify-center">

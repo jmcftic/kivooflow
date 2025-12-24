@@ -23,6 +23,7 @@ import Commissions from "./pages/Commissions";
 import Activity from "./pages/Activity";
 import Help from "./pages/Help";
 import ReporteClaims from "./pages/ReporteClaims";
+import ManualLoads from "./pages/ManualLoads";
 import ForgotPassword from "./pages/ForgotPassword";
 import VerificationCode from "./pages/VerificationCode";
 import VerificationSent from "./pages/VerificationSent";
@@ -137,6 +138,10 @@ function App() {
       case "/test-bg":
         title = "Kivoo Web - Test Background";
         metaDescription = "Página de prueba del nuevo fondo KivoMainBg";
+        break;
+      case "/manual-loads":
+        title = "Kivoo Web - Cargas Manuales";
+        metaDescription = "Crear comisiones manuales MLM";
         break;
     }
     
@@ -264,6 +269,18 @@ function App() {
               }}
             >
               <ReporteClaims />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manual-loads"
+          element={
+            <ProtectedRoute
+              userCheck={(user) => {
+                return user !== null && String(user.id) === '335';
+              }}
+            >
+              <ManualLoads />
             </ProtectedRoute>
           }
         />

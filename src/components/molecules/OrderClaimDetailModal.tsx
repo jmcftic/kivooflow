@@ -86,6 +86,7 @@ const OrderClaimDetailModal: React.FC<OrderClaimDetailModalProps> = ({
       'bis_abuelo': 'Nivel 3',
       'leader_retention': 'Comisión Empresa',
       'b2b_commission': 'Comisión B2B',
+      'retroactive': 'Retroactiva',
     };
     return typeMap[commissionType] || commissionType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
@@ -97,6 +98,7 @@ const OrderClaimDetailModal: React.FC<OrderClaimDetailModalProps> = ({
     if (typeLower === 'bis_abuelo' || typeLower === 'bisabuelo') return 'blue'; // Nivel 3 - azul
     if (typeLower === 'leader_markup' || typeLower === 'leader_retention') return 'yellow'; // Comisión Empresa - amarillo
     if (typeLower === 'b2b_commission') return 'yellow'; // Comisión B2B - amarillo
+    if (typeLower === 'retroactive') return 'yellow'; // Retroactiva - amarillo
     return 'default';
   };
 
@@ -111,10 +113,18 @@ const OrderClaimDetailModal: React.FC<OrderClaimDetailModalProps> = ({
   };
 
   const calcDetails = claim.calculationDetails;
-  // Acceder a userEmail, userFullName y teamName de forma segura según el tipo
-  const userEmail = (calcDetails && 'userEmail' in calcDetails) 
-    ? (calcDetails as any).userEmail || '' 
-    : '';
+  // Detectar si es retroactive
+  const isRetroactive = claim.commissionType?.toLowerCase() === 'retroactive';
+  
+  // Acceder a userEmail, user_email, userFullName y teamName de forma segura según el tipo
+  // Para retroactive, usar user_email que viene censurado del backend
+  let userEmail = '';
+  if (isRetroactive && calcDetails && 'user_email' in calcDetails) {
+    userEmail = (calcDetails as any).user_email || '';
+  } else if (calcDetails && 'userEmail' in calcDetails) {
+    userEmail = (calcDetails as any).userEmail || '';
+  }
+  
   const userFullName = (calcDetails && 'userFullName' in calcDetails) 
     ? (calcDetails as any).userFullName || '' 
     : '';
@@ -164,7 +174,7 @@ const OrderClaimDetailModal: React.FC<OrderClaimDetailModalProps> = ({
                   <span className="text-white text-sm">
                     {showEmpresa && teamName 
                       ? teamName 
-                      : (userFullName || censorEmail(userEmail) || 'N/A')}
+                      : (userFullName || (isRetroactive && userEmail ? userEmail : (userEmail ? censorEmail(userEmail) : 'N/A')))}
                   </span>
                 </div>
                 
@@ -201,23 +211,27 @@ const OrderClaimDetailModal: React.FC<OrderClaimDetailModalProps> = ({
                   <div className="w-full h-[1px] bg-white"></div>
                 </div>
                 
-                {/* Monto Base */}
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-white/60 text-sm">Monto base</span>
-                  <span className="text-white text-sm">
-                    {formatCurrencyWithThreeDecimals(claim.baseAmount || 0)} <span className="text-[#FFF100]">{claim.currency}</span>
-                  </span>
-                </div>
+                {/* Monto Base - Ocultar si es retroactive */}
+                {!isRetroactive && (
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-white/60 text-sm">Monto base</span>
+                    <span className="text-white text-sm">
+                      {formatCurrencyWithThreeDecimals(claim.baseAmount || 0)} <span className="text-[#FFF100]">{claim.currency}</span>
+                    </span>
+                  </div>
+                )}
 
-                {/* Porcentaje */}
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-white/60 text-sm">Porcentaje</span>
-                  <span className="text-white text-sm">
-                    {claim.commissionPercentage !== null 
-                      ? `${claim.commissionPercentage}%`
-                      : 'N/A'}
-                  </span>
-                </div>
+                {/* Porcentaje - Ocultar si es retroactive */}
+                {!isRetroactive && (
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-white/60 text-sm">Porcentaje</span>
+                    <span className="text-white text-sm">
+                      {claim.commissionPercentage !== null 
+                        ? `${claim.commissionPercentage}%`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                )}
 
                 {/* Comisión */}
                 <div className="flex items-center justify-between w-full">

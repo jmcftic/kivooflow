@@ -212,6 +212,31 @@ class AuthService {
     }
     return null;
   }
+
+  // Get user by email
+  async getUserByEmail(email: string): Promise<{ id: number; email: string }> {
+    const response = await apiService.get<{ id: number; email: string }>(
+      API_ENDPOINTS.AUTH.USER_BY_EMAIL,
+      { email: email.trim().toLowerCase() }
+    );
+
+    const anyResponse = response as any;
+    
+    // El endpoint puede devolver directamente { id, email } o envuelto en { user: { id, email } }
+    if (anyResponse?.user) {
+      return anyResponse.user;
+    }
+    
+    if (anyResponse?.success && anyResponse?.data) {
+      return anyResponse.data;
+    }
+    
+    if (anyResponse?.id && anyResponse?.email) {
+      return { id: anyResponse.id, email: anyResponse.email };
+    }
+
+    throw new Error(anyResponse?.message || "Usuario no encontrado");
+  }
 }
 
 export const authService = new AuthService();

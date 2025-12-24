@@ -23,6 +23,7 @@ import { UserCard } from "@/types/card";
 import { Spinner } from "@/components/ui/spinner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { authService } from "@/services/auth";
 
 interface ClaimDetailModalProps {
   open: boolean;
@@ -44,6 +45,9 @@ interface ClaimDetailModalProps {
   commissionPercentage?: number | string; // Porcentaje de comisión (commissionPercentage) - puede venir como string o number
   commissionAmount?: number | string; // Monto de comisión (commissionAmount) - puede venir como string o number
   hideCardSelection?: boolean; // Si es true, no muestra el select de tarjeta incluso en modo claim
+  periodStartDate?: string | null; // Fecha inicio período (para retroactive)
+  periodEndDate?: string | null; // Fecha fin período (para retroactive)
+  originalClaim?: any; // Claim original completo para acceder a calculationDetails
 }
 
 const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
@@ -64,12 +68,59 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
   commissionPercentage,
   commissionAmount,
   hideCardSelection = false,
+  periodStartDate,
+  periodEndDate,
+  originalClaim,
 }) => {
   const [selectedTarjeta, setSelectedTarjeta] = useState<string>("");
   const [confirmed, setConfirmed] = useState(false);
   const [tarjetas, setTarjetas] = useState<UserCard[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Detectar si es retroactive
+  const isRetroactive = tipoComision?.toLowerCase() === 'retroactive';
+
+  // Función para censurar email
+  const censorEmail = (email: string): string => {
+    if (!email || email === 'N/A') return 'N/A';
+    const [localPart, domain] = email.split('@');
+    if (!domain) return email;
+    const censoredLocal = localPart.length > 2 
+      ? `${localPart.substring(0, 2)}${'*'.repeat(Math.min(localPart.length - 2, 3))}`
+      : '***';
+    return `${censoredLocal}@${domain}`;
+  };
+
+  // Obtener usuario loggeado para retroactive
+  const getLoggedUserDisplay = (): string => {
+    if (!isRetroactive) return usuario || 'N/A';
+    
+    const loggedUser = authService.getStoredUser();
+    if (loggedUser?.full_name) {
+      return loggedUser.full_name;
+    }
+    if (loggedUser?.email) {
+      return censorEmail(loggedUser.email);
+    }
+    return usuario || 'N/A';
+  };
+
+  // Formatear fecha de período (mes, día, año)
+  const formatPeriodDate = (dateStr: string | undefined): string => {
+    if (!dateStr) return 'N/A';
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return 'N/A';
+      return date.toLocaleDateString('es-ES', {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric'
+      });
+    } catch {
+      return 'N/A';
+    }
+  };
 
   // Cargar tarjetas cuando se abre el modal solo en modo claim y no se oculta la selección
   useEffect(() => {
@@ -186,7 +237,7 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                   {/* Usuario */}
                   <div className="flex items-center justify-between w-full">
                     <span className="text-white/60 text-sm">Usuario</span>
-                    <span className="text-white text-sm">{usuario || 'N/A'}</span>
+                    <span className="text-white text-sm">{getLoggedUserDisplay()}</span>
                   </div>
                   
                   {/* Fecha */}
@@ -229,6 +280,9 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                         } else if (tipoLower === 'leader_markup' || tipoLower === 'leader_retention') {
                           badgeText = 'Comisión Empresa';
                           badgeVariant = 'red';
+                        } else if (tipoLower === 'retroactive') {
+                          badgeText = 'Retroactiva';
+                          badgeVariant = 'yellow';
                         }
 
                         return (
@@ -264,15 +318,31 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                     </span>
                   </div>
                   
-                  {/* Porcentaje */}
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-white/60 text-sm">Porcentaje</span>
-                    <span className="text-white text-sm">
-                      {commissionPercentage !== undefined && commissionPercentage !== null && String(commissionPercentage).trim() !== ''
-                        ? `${String(commissionPercentage)}%`
-                        : 'N/A'}
-                    </span>
-                  </div>
+                  {/* Porcentaje - No mostrar si es retroactive */}
+                  {!isRetroactive && (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-white/60 text-sm">Porcentaje</span>
+                      <span className="text-white text-sm">
+                        {commissionPercentage !== undefined && commissionPercentage !== null && String(commissionPercentage).trim() !== ''
+                          ? `${String(commissionPercentage)}%`
+                          : 'N/A'}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Período - Solo mostrar si es retroactive */}
+                  {isRetroactive && periodStartDate && periodEndDate && (
+                    <>
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-white/60 text-sm">Período inicio</span>
+                        <span className="text-white text-sm">{formatPeriodDate(periodStartDate)}</span>
+                      </div>
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-white/60 text-sm">Período fin</span>
+                        <span className="text-white text-sm">{formatPeriodDate(periodEndDate)}</span>
+                      </div>
+                    </>
+                  )}
                   
                   {/* Comisión */}
                   <div className="flex items-center justify-between w-full">

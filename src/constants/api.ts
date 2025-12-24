@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: "/auth/reset-password",
     REFRESH_TOKEN: "/auth/refresh",
     LOGOUT: "/auth/logout",
+    USER_BY_EMAIL: "/auth/user-by-email",
   },
   USER: {
     PROFILE: "/user/profile",
@@ -58,6 +59,7 @@ export const API_ENDPOINTS = {
     TOTAL_USDT: "/network/claims/total-usdt",
     ORDERS: "/network/orders",
     ORDER_CLAIMS: "/network/claim-orders/:id/claims",
+    MANUAL_COMMISSIONS: "/network/manual-commissions",
   },
   DASHBOARD: {
     METRICS: "/dashboard/metrics",
