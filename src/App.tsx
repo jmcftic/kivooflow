@@ -33,6 +33,8 @@ import TestBg from "./pages/TestBg";
 import Maintenance from "./pages/Maintenance";
 import ProtectedRoute from "./components/atoms/ProtectedRoute";
 import ErrorModal from "./components/atoms/ErrorModal";
+import authService from "./services/auth";
+import { apiService } from "./services/api";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -174,9 +176,20 @@ function App() {
     }
   }, [pathname]);
 
-  // Si el modo mantenimiento está activo y no estamos en la ruta de mantenimiento, redirigir
+  // Si el modo mantenimiento está activo y no estamos en la ruta de mantenimiento, cerrar sesión y redirigir
   useEffect(() => {
     if (isMaintenanceMode && pathname !== '/maintenance') {
+      // Cerrar sesión si hay usuario logueado
+      const isAuthenticated = authService.isAuthenticated();
+      if (isAuthenticated) {
+        // Limpiar sesión completamente
+        authService.logout();
+        // Limpiar también access_token por si acaso
+        localStorage.removeItem('access_token');
+        // Limpiar cualquier otro dato de sesión
+        apiService.setToken(null);
+      }
+      // Redirigir a página de mantenimiento
       window.location.href = '/maintenance';
     }
   }, [isMaintenanceMode, pathname]);

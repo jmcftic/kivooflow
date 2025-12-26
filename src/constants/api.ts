@@ -1,8 +1,21 @@
 // API Configuration
-// Uses VITE_API_URL from environment variables, falls back to localhost for development
-//export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://3.144.137.41:3001";
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "https://dev.kivooapp.co";
-//export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+// Uses VITE_API_URL from environment variables
+// 
+// PRIORIDAD (en orden):
+// 1. Variable de entorno VITE_API_URL (Cloudflare o .env local) - SIEMPRE tiene máxima prioridad
+// 2. Fallback solo para desarrollo local si no hay .env configurado
+//
+// IMPORTANTE: 
+// - En Cloudflare: la variable VITE_API_URL debe estar configurada en cada ambiente (preview, production, etc.)
+//   Cloudflare SIEMPRE usará la variable configurada, NO el fallback del código
+// - En desarrollo local: usa el archivo .env (VITE_API_URL=https://dev.kivooapp.co)
+//   Si no hay .env, usa el fallback a localhost solo para desarrollo
+// - NUNCA cambiar el fallback para producción, siempre usar variables de entorno en Cloudflare
+export const API_BASE_URL = import.meta.env.VITE_API_URL || (
+  // Fallback SOLO para desarrollo local si no hay .env
+  // En Cloudflare, VITE_API_URL siempre debe estar configurada
+  import.meta.env.DEV ? "http://localhost:3001" : "https://dev.kivooapp.co"
+);
 // API Endpoints
 export const API_ENDPOINTS = {
   AUTH: {
