@@ -10,6 +10,8 @@ const Maintenance: React.FC = () => {
     window.open(whatsappUrl, "_blank");
   };
 
+  
+
   return (
     <div className="h-screen w-full maintenance-page flex flex-col items-center justify-center">
       {/* Contenido centrado */}
