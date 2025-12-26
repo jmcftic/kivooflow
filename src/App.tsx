@@ -30,6 +30,7 @@ import VerificationSent from "./pages/VerificationSent";
 import ResetPassword from "./pages/ResetPassword";
 import ResetPasswordSuccess from "./pages/ResetPasswordSuccess";
 import TestBg from "./pages/TestBg";
+import Maintenance from "./pages/Maintenance";
 import ProtectedRoute from "./components/atoms/ProtectedRoute";
 import ErrorModal from "./components/atoms/ErrorModal";
 
@@ -48,6 +49,10 @@ function App() {
   const location = useLocation();
   const pathname = location.pathname;
   const [sessionExpired, setSessionExpired] = useState(false);
+  
+  // Verificar si el modo mantenimiento está activo
+  // Se activa con la variable de entorno VITE_MAINTENANCE_MODE=true
+  const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
 
   // Precargar la animación Lottie al inicio de la app
   useEffect(() => {
@@ -143,6 +148,10 @@ function App() {
         title = "Kivoo Web - Cargas Manuales";
         metaDescription = "Crear comisiones manuales MLM";
         break;
+      case "/maintenance":
+        title = "Kivoo Web - Mantenimiento";
+        metaDescription = "Aplicación en mantenimiento";
+        break;
     }
     
     // Verificar si es ruta de detalle de empresa
@@ -164,6 +173,25 @@ function App() {
       }
     }
   }, [pathname]);
+
+  // Si el modo mantenimiento está activo y no estamos en la ruta de mantenimiento, redirigir
+  useEffect(() => {
+    if (isMaintenanceMode && pathname !== '/maintenance') {
+      window.location.href = '/maintenance';
+    }
+  }, [isMaintenanceMode, pathname]);
+
+  // Si el modo mantenimiento está activo, mostrar solo la página de mantenimiento
+  if (isMaintenanceMode) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <Routes>
+          <Route path="/maintenance" element={<Maintenance />} />
+          <Route path="*" element={<Maintenance />} />
+        </Routes>
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -291,6 +319,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/reset-password/success" element={<ResetPasswordSuccess />} />
         <Route path="/test-bg" element={<TestBg />} />
+        <Route path="/maintenance" element={<Maintenance />} />
       </Routes>
     </QueryClientProvider>
   );

@@ -138,4 +138,125 @@ html, body, #root {
     font-family: 'Urbanist', sans-serif;
     font-weight: 500; /* Medium */
   }
+
+  /* Estilos para página de mantenimiento */
+  .maintenance-page {
+    background-color: #29292b;
+    background-image: none;
+    clip-path: none;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border: none;
+    outline: none;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .maintenance-page * {
+    clip-path: none;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+
+  .maintenance-page *::before,
+  .maintenance-page *::after {
+    display: none;
+    content: none;
+  }
+
+  .maintenance-page::before,
+  .maintenance-page::after {
+    display: none;
+    content: none;
+  }
+
+  .maintenance-page img {
+    image-rendering: auto;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    shape-rendering: geometricPrecision;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .maintenance-icon-container {
+    position: relative;
+    display: inline-block;
+  }
+
+  .maintenance-icon-only {
+    image-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .maintenance-stars {
+    image-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .maintenance-title {
+    font-family: 'Urbanist', sans-serif;
+    font-weight: 500;
+    font-size: 32px;
+    line-height: 40px;
+    color: #ffffff;
+  }
+
+  .maintenance-subtitle {
+    font-family: 'Urbanist', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 20px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .maintenance-button {
+    background-color: #313133;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  .maintenance-button:hover {
+    opacity: 0.8;
+  }
+
+  .maintenance-button-wrapper {
+    display: block;
+    overflow: hidden;
+    border: none;
+    outline: none;
+  }
+
+  .maintenance-button img {
+    display: block;
+    border: none;
+    outline: none;
+    image-rendering: auto;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    shape-rendering: geometricPrecision;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    filter: blur(0);
+    -webkit-filter: blur(0);
+  }
+
 }
