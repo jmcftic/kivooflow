@@ -192,13 +192,17 @@ html, body, #root {
     display: inline-block;
   }
 
-  .maintenance-icon-only {
-    image-rendering: auto;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  .maintenance-blur-background {
+    background: radial-gradient(circle, #FFF100 0%, #FFF100 50%, rgba(255, 241, 0, 0.6) 70%, transparent 85%);
+    border-radius: 50%;
+    filter: blur(68px);
+    -webkit-filter: blur(68px);
+    opacity: 1;
+    /* Ajustar el tamaño del blur para que coincida con el SVG original */
+    transform: translate(-50%, -50%) scale(1.2);
   }
 
-  .maintenance-stars {
+  .maintenance-icon-only {
     image-rendering: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -207,16 +211,16 @@ html, body, #root {
   .maintenance-title {
     font-family: 'Urbanist', sans-serif;
     font-weight: 500;
-    font-size: 32px;
-    line-height: 40px;
+    font-size: clamp(24px, 5vw, 32px);
+    line-height: clamp(30px, 6vw, 40px);
     color: #ffffff;
   }
 
   .maintenance-subtitle {
     font-family: 'Urbanist', sans-serif;
     font-weight: 400;
-    font-size: 16px;
-    line-height: 20px;
+    font-size: clamp(14px, 3vw, 16px);
+    line-height: clamp(18px, 4vw, 20px);
     color: rgba(255, 255, 255, 0.7);
   }
 
@@ -229,6 +233,8 @@ html, body, #root {
     padding: 0;
     margin: 0;
     overflow: hidden;
+    width: 100%;
+    max-width: 100%;
   }
 
   .maintenance-button:hover {
@@ -240,6 +246,13 @@ html, body, #root {
     overflow: hidden;
     border: none;
     outline: none;
+    width: 100%;
+  }
+
+  .maintenance-button-wrapper svg {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
   }
 
   .maintenance-button img {

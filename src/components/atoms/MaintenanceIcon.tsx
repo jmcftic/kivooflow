@@ -13,7 +13,20 @@ const MaintenanceIcon: React.FC<MaintenanceIconProps> = ({
 }) => {
   return (
     <div className={`maintenance-icon-container ${className}`} style={{ width, height, position: 'relative' }}>
-      {/* Icono principal - en el medio */}
+      {/* Blur background - efecto CSS */}
+      <div 
+        className="maintenance-blur-background"
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: `${(317 / 390) * 100 * 0.4}%`,
+          height: `${(317 / 390) * 100 * 0.4}%`,
+          zIndex: 1,
+        }}
+      />
+      {/* Icono principal */}
       <img
         src="/icons/Dashboard/MaintenanceIconOnly.svg"
         alt="Mantenimiento"
@@ -26,21 +39,6 @@ const MaintenanceIcon: React.FC<MaintenanceIconProps> = ({
           width: `${(192 / 390) * 100}%`,
           height: `${(317 / 390) * 100}%`,
           zIndex: 2,
-        }}
-      />
-      {/* Estrellas - encima */}
-      <img
-        src="/icons/Dashboard/MaintenanceStars.svg"
-        alt=""
-        className="maintenance-stars"
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: `${(281 / 390) * 100}%`,
-          height: `${(260 / 390) * 100}%`,
-          zIndex: 3,
         }}
       />
     </div>
