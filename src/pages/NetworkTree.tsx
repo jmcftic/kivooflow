@@ -13,6 +13,7 @@ import SingleArrowHistory from '../components/atoms/SingleArrowHistory';
 import MoneyIcon from '../components/atoms/MoneyIcon';
 import { Spinner } from '@/components/ui/spinner';
 import { LottieLoader } from '@/components/ui/lottie-loader';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMinimumLoading } from '@/hooks/useMinimumLoading';
 import { formatCurrencyWithThreeDecimals } from '@/lib/utils';
 import {
@@ -447,7 +448,7 @@ const NetworkTree: React.FC = () => {
       <KivoMainBg className="absolute inset-0 z-0" />
       <SidebarApp />
 
-      <div className="flex-1 relative flex flex-col pl-6 pr-6 overflow-y-auto pb-8 pt-16 lg:pt-0">
+      <div className="flex-1 relative flex flex-col pl-6 pr-6 overflow-y-hidden pb-0 pt-16 lg:pt-0">
         <DashboardNavbar 
           title={subtreeRootName ? t('network:networkOf', { name: subtreeRootName }) : t('network:title')}
         />
@@ -463,10 +464,10 @@ const NetworkTree: React.FC = () => {
             <span className="text-[#ff6d64]">{error}</span>
           </div>
         ) : (
-          <>
+          <div className="relative z-20 mt-4 mb-0 flex flex-col flex-1 min-h-0">
             {/* Breadcrumb con nivel - alineado a la izquierda, y nombre/correo a la derecha */}
             {subtreeRootName && (
-              <div className="relative z-20 mt-2 mb-4 flex items-center justify-between text-white text-sm">
+              <div className="mt-2 mb-4 flex items-center justify-between text-white text-sm">
                 {/* History alineado a la izquierda */}
                 <div className="flex items-center gap-2">
                   <button 
@@ -492,7 +493,7 @@ const NetworkTree: React.FC = () => {
             )}
 
             {/* MiniBaners con estadísticas */}
-            <div className="relative z-20 mb-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
               <MiniBaner 
                 className="h-[90px] md:h-[100px] lg:h-[110px]"
                 icon={<MoneyIcon size={24} />}
@@ -515,39 +516,41 @@ const NetworkTree: React.FC = () => {
             </div>
 
             {/* Header de la tabla */}
-            <div className="relative z-20 mb-4">
+            <div className="mb-4">
               <NetworkTableHeader activeTab={activeTab} />
             </div>
 
-            {/* Tabla de red */}
-            <div className="relative z-20 mb-4">
-              <NetworkTable
-                items={subtreeUsers}
-                activeTab={activeTab}
-                activeLevel={subtreeRootLevel as 1 | 2 | 3}
-                onToggleExpand={handleToggleExpand}
-                childrenByParent={childrenByParent}
-                onViewTree={(id) => {
-                  sessionStorage.setItem('networkTreeUserId', id.toString());
-                  // Forzar recarga del componente navegando primero a /network y luego a /network/tree
-                  // O simplemente recargar la página actual
-                  window.location.href = '/network/tree';
-                }}
-                disableViewTree={false}
-                hasDepthLimit={hasDepthLimit}
-                maxDepth={maxDepth}
-                onLoadMoreChildren={handleLoadMoreChildren}
-                parentHasMore={parentHasMore}
-                parentLoading={parentLoading}
-                loadingTreeUserId={null}
-                parentExhausted={parentExhausted}
-                parentErrors={parentErrors}
-              />
-            </div>
+            {/* Contenido scrollable de la tabla */}
+            <ScrollArea className="flex-1 min-h-0">
+              <div className="pr-4">
+                <NetworkTable
+                  items={subtreeUsers}
+                  activeTab={activeTab}
+                  activeLevel={subtreeRootLevel as 1 | 2 | 3}
+                  onToggleExpand={handleToggleExpand}
+                  childrenByParent={childrenByParent}
+                  onViewTree={(id) => {
+                    sessionStorage.setItem('networkTreeUserId', id.toString());
+                    // Forzar recarga del componente navegando primero a /network y luego a /network/tree
+                    // O simplemente recargar la página actual
+                    window.location.href = '/network/tree';
+                  }}
+                  disableViewTree={false}
+                  hasDepthLimit={hasDepthLimit}
+                  maxDepth={maxDepth}
+                  onLoadMoreChildren={handleLoadMoreChildren}
+                  parentHasMore={parentHasMore}
+                  parentLoading={parentLoading}
+                  loadingTreeUserId={null}
+                  parentExhausted={parentExhausted}
+                  parentErrors={parentErrors}
+                />
+              </div>
+            </ScrollArea>
 
-            {/* Paginación */}
+            {/* Paginación al fondo fija dentro del área de contenido */}
             {subtreeTotal > 0 && (
-              <div className="relative z-20 mb-4">
+              <div className="pt-3 pb-6">
                 <NetworkPaginationBar
                   currentPage={subtreePage}
                   totalItems={subtreeTotal}
@@ -568,7 +571,7 @@ const NetworkTree: React.FC = () => {
                 />
               </div>
             )}
-          </>
+          </div>
         )}
 
         {/* SVG de esquina */}
