@@ -4,6 +4,7 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { BrowserRouter } from "react-router-dom";
 import "./global.css";
+import "./i18n/config"; // Inicializar i18n
 
 // Suprimir el mensaje de React DevTools
 const originalLog = console.log;

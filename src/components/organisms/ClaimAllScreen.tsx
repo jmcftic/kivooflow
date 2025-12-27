@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import BackButtonPath from '../atoms/BackButtonPath';
 import Logo from '../atoms/Logo';
 import AdmirationCircleIcon from '../atoms/AdmirationCircleIcon';
@@ -15,6 +16,7 @@ interface ClaimAllScreenProps {
   onContinue?: () => void;
   onError?: (message: string) => void;
   onFinalContinue?: () => void;
+  onRequestStarted?: () => void;
   claimType?: 'mlm_transactions' | 'b2c_commissions';
 }
 
@@ -48,21 +50,50 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
   onContinue,
   onError,
   onFinalContinue,
+  onRequestStarted,
   claimType
 }) => {
+  const { t } = useTranslation(['commissions', 'common']);
   const [isRequesting, setIsRequesting] = useState(false);
   const [showCircleAnimation, setShowCircleAnimation] = useState(false);
   const [circleSize, setCircleSize] = useState(0);
   const [showFinalScreen, setShowFinalScreen] = useState(false);
   const [responseData, setResponseData] = useState<RequestAllClaimsResponse | null>(null);
+  const hasTimedOutRef = useRef(false);
 
   const handleContinue = async () => {
     if (isRequesting) return;
     
     setIsRequesting(true);
+    hasTimedOutRef.current = false;
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    // Configurar timeout de 1 segundo
+    timeoutId = setTimeout(() => {
+      // Si todavía está procesando después de 1 segundo, cerrar la pantalla
+      hasTimedOutRef.current = true;
+      // Cerrar ClaimAllScreen
+      onBack();
+      // Notificar al padre que la solicitud está en proceso
+      if (onRequestStarted) {
+        onRequestStarted();
+      }
+    }, 1000);
+    
     try {
       // Ejecutar la petición de reclamar todo con el claimType si se proporciona
       const response = await requestAllClaims(claimType);
+      
+      // Limpiar timeout si la solicitud termina rápido
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      
+      // Si ya se cerró la pantalla por timeout, no mostrar la animación
+      if (hasTimedOutRef.current) {
+        setIsRequesting(false);
+        return;
+      }
       
       // Guardar la respuesta
       setResponseData(response);
@@ -100,6 +131,17 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
         onContinue();
       }
     } catch (error: any) {
+      // Limpiar timeout en caso de error
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      
+      // Si ya se cerró la pantalla por timeout, no hacer nada más
+      if (hasTimedOutRef.current) {
+        // La solicitud continúa en segundo plano, el error se manejará a través de notificaciones
+        return;
+      }
+      
       console.error('Error al reclamar todas las comisiones:', error);
       const errorMessage = error?.message || error?.response?.data?.message || 'Ocurrió un error al reclamar las comisiones. Por favor, intenta nuevamente.';
       if (onError) {
@@ -170,7 +212,7 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
                 className="text-black text-2xl sm:text-3xl font-bold text-center"
                 style={{ fontFamily: 'Archivo, sans-serif' }}
               >
-                SOLICITUD EXITOSA
+                {t('commissions:claimAllScreen.successfulRequest')}
               </h2>
             )}
             
@@ -194,7 +236,7 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
                 className="w-full bg-black text-[#FFF100] py-3 px-6 rounded-xl font-semibold text-lg hover:opacity-90 transition-opacity"
                 style={{ fontFamily: 'Archivo, sans-serif' }}
               >
-                Continuar
+                {t('commissions:claimAllScreen.continue')}
               </button>
             </div>
           </div>
@@ -223,7 +265,7 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
             <button
               onClick={onBack}
               className="absolute top-4 left-4 z-50 cursor-pointer hover:opacity-80 transition-opacity"
-              aria-label="Volver"
+              aria-label={t('commissions:claimAllScreen.back')}
             >
               <BackButtonPath width={64} height={64} />
             </button>
@@ -243,7 +285,7 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
                   top: '80px'
                 }}
               >
-                Solicitar pago
+                {t('commissions:claimAllScreen.requestPayment')}
               </h1>
 
               {/* Monto total con símbolo $ - totalmente centrado horizontal y verticalmente */}
@@ -267,7 +309,7 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
                   </div>
                   {/* Texto "Se usará el máximo disponible" debajo del valor */}
                   <p className="text-white/60 text-sm mt-4 text-center">
-                    Se usará el máximo disponible
+                    {t('commissions:claimAllScreen.willUseMaxAvailable')}
                   </p>
                 </div>
               </div>
@@ -281,7 +323,7 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
                   onClick={handleContinue}
                   disabled={isRequesting || showCircleAnimation}
                 >
-                  {isRequesting ? 'Solicitando...' : 'Continuar'}
+                  {isRequesting ? t('commissions:claimAllScreen.requestInProcess') : t('commissions:claimAllScreen.continue')}
                 </Button>
               </div>
 
@@ -291,7 +333,7 @@ const ClaimAllScreen: React.FC<ClaimAllScreenProps> = ({
                   <AdmirationCircleIcon width={40} height={40} />
                 </div>
                 <p className="text-gray-400 text-sm flex-1">
-                  El envió de tu saldo seleccionado sera enviado a tu tarjeta KIVOO predeterminada en la aplicación.
+                  {t('commissions:claimAllScreen.defaultCardInfo')}
                 </p>
               </div>
             </div>

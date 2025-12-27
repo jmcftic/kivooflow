@@ -1,0 +1,13 @@
+{
+    "errors": {
+        "SECRETS_SERVICE_NOT_READY": "SecretsService no está listo. Verifique la configuración de AWS.",
+        "UNSUPPORTED_NETWORK": "Red no soportada: {network}",
+        "EVM_PRIVATE_KEY_DERIVATION_FAILED": "No se pudo derivar la clave privada para EVM",
+        "SOLANA_PRIVATE_KEY_DERIVATION_FAILED": "No se pudo derivar la clave privada para Solana",
+        "BITCOIN_PRIVATE_KEY_DERIVATION_FAILED": "No se pudo derivar la clave privada para Bitcoin",
+        "BITCOIN_ADDRESS_GENERATION_FAILED": "No se pudo generar la dirección Bitcoin",
+        "TRON_PRIVATE_KEY_DERIVATION_FAILED": "No se pudo derivar la clave privada para TRON",
+        "UNSUPPORTED_NETWORK_FOR_REGENERATION": "Red no soportada para regeneración: {network}",
+        "UNSUPPORTED_NETWORK_WITH_LIST": "Red no soportada: {network}. Soportadas: {supportedNetworks}"
+    }
+}

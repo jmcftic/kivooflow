@@ -8,6 +8,7 @@ export interface LoginResponse {
   access_token: string;
   refresh_token: string;
   user: User;
+  lang?: string; // Idioma preferido del usuario ('es' | 'en')
 }
 
 export interface RegisterRequest {
@@ -85,6 +86,7 @@ export interface User {
       card3Url?: string | null;
     };
   };
+  lang?: string; // Idioma preferido del usuario ('es' | 'en')
 }
 
 export type UserStatus = "pending" | "active" | "suspended" | "blocked";

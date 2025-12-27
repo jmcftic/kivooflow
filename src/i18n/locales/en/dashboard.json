@@ -1,0 +1,65 @@
+{
+  "title": "Dashboard",
+  "metrics": {
+    "totalCommissions": "Total commissions",
+    "pendingClaims": "Pending claims",
+    "completedClaims": "Completed claims",
+    "networkSize": "Network size",
+    "activeCards": "Active cards",
+    "totalEarnings": "Total earnings",
+    "availableBalance": "Available balance",
+    "activeReferrals": "Active Referrals",
+    "lastMonthCommissions": "Last month commissions",
+    "totalVolume": "Total volume"
+  },
+  "recentActivity": {
+    "title": "Recent activity",
+    "noActivity": "No recent activity"
+  },
+  "quickActions": {
+    "title": "Quick actions",
+    "claimAll": "Claim all",
+    "viewNetwork": "View network",
+    "viewClaims": "View claims",
+    "requestPayment": "Request payment"
+  },
+  "referralLink": {
+    "title": "Link from",
+    "user": "User",
+    "loading": "Loading...",
+    "copySuccess": "Link copied to clipboard",
+    "shareTitle": "Join Kivoo",
+    "shareText": "Join Kivoo using my referral link"
+  },
+  "summary": {
+    "title": "GENERAL SUMMARY",
+    "view": "View",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "selectRange": "Select a range",
+    "last2Months": "Last 2 months",
+    "last6Months": "Last 6 months",
+    "lastYear": "Last year",
+    "last2Years": "Last 2 years",
+    "noWeeklyData": "No weekly data available for the selected period",
+    "noData": "No data available for the selected period",
+    "recargasScaleNote": "* Recharges are shown scaled for better visualization. Real values are shown in the tooltip.",
+    "labels": {
+      "ventas": "Sales",
+      "recargas": "Recharges",
+      "comisiones": "Commissions"
+    }
+  },
+  "recentTransactions": {
+    "title": "RECENT TRANSACTIONS",
+    "loading": "Loading transactions...",
+    "error": "Error loading transactions",
+    "selectModel": "Select a model to view transactions",
+    "noTransactions": "No recent transactions",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "loadingMore": "Loading more transactions...",
+    "loadMore": "Load more transactions"
+  }
+}
+

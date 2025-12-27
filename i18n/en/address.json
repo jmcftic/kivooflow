@@ -1,0 +1,8 @@
+{
+    "errors": {
+        "USER_NOT_FOUND": "User with ID {userId} not found",
+        "NETWORK_NOT_SUPPORTED": "Network {network} not supported. Available networks: {supportedNetworks}",
+        "INVALID_GENERATED_ADDRESS": "Invalid generated address for network {network}: {address}",
+        "ADDRESS_GENERATION_ERROR": "Error generating new crypto address"
+    }
+}

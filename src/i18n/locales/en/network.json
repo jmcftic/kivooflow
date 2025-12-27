@@ -1,0 +1,64 @@
+{
+  "title": "Network",
+  "networkGeneral": "{{tab}} Network General",
+  "networkOf": "{{name}}'s Network",
+  "level": "Level",
+  "levels": {
+    "level1": "Level 1",
+    "level2": "Level 2",
+    "level3": "Level 3"
+  },
+  "table": {
+    "headers": {
+      "email": "Email",
+      "user": "User",
+      "company": "Company",
+      "joinDate": "Join date",
+      "level": "Level",
+      "volume": "Volume",
+      "actions": "Actions"
+    },
+    "actions": {
+      "viewTree": "View tree",
+      "viewDetail": "View detail",
+      "loadMore": "Load more",
+      "loading": "Loading..."
+    }
+  },
+  "stats": {
+    "activeReferrals": "Active referrals",
+    "lastMonthCommissions": "Last month commissions",
+    "totalVolume": "Total volume",
+    "totalEarnings": "Total earnings",
+    "availableBalance": "Available balance",
+    "totalReferrals": "Total referrals"
+  },
+  "enterpriseDetail": {
+    "profileOf": "{{name}} Profile"
+  },
+  "networkTree": {
+    "title": "Network tree",
+    "noData": "No network data available"
+  },
+  "teams": {
+    "title": "Teams",
+    "createTeam": "Create team",
+    "editTeam": "Edit team",
+    "deleteTeam": "Delete team",
+    "noTeams": "No teams available"
+  },
+  "leaders": {
+    "b2b": "B2B Leaders",
+    "b2t": "B2T Leaders",
+    "b2c": "B2C Leaders"
+  },
+  "errors": {
+    "loadError": "Error loading network",
+    "notFound": "Network not found",
+    "invalidUserId": "Invalid user ID"
+  },
+  "messages": {
+    "noMoreUsers": "No more users at this level"
+  }
+}
+

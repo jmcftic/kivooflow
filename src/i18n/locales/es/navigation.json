@@ -1,0 +1,41 @@
+{
+  "menu": {
+    "dashboard": "Dashboard",
+    "network": "Red",
+    "claims": "Comisiones",
+    "commissions": "Comisiones",
+    "cards": "Tarjetas",
+    "cardAcquisition": "Adquisición de tarjeta",
+    "activity": "Actividad",
+    "reports": "Reportes",
+    "manualLoads": "Cargas manuales",
+    "help": "Ayuda",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión",
+    "profile": "Perfil"
+  },
+  "breadcrumbs": {
+    "home": "Inicio",
+    "dashboard": "Dashboard",
+    "network": "Red",
+    "claims": "Comisiones",
+    "cards": "Tarjetas",
+    "activity": "Actividad"
+  },
+  "titles": {
+    "dashboard": "Dashboard",
+    "network": "Red",
+    "claims": "Comisiones",
+    "commissions": "Comisiones",
+    "cards": "Tarjetas",
+    "activity": "Actividad",
+    "help": "Ayuda",
+    "settings": "Configuración",
+    "profile": "Perfil"
+  },
+  "messages": {
+    "moduleComingSoon": "El módulo estará próximamente disponible",
+    "noPermission": "No tienes permisos para acceder a esta sección"
+  }
+}
+

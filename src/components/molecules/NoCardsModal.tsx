@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import InfoModal from "./InfoModal";
 
 interface NoCardsModalProps {
@@ -20,18 +21,21 @@ const NoCardsModal: React.FC<NoCardsModalProps> = ({
   customTitle,
   customMessage,
   hideButton = false,
-  buttonText = 'Solicitar tarjeta',
+  buttonText,
   userEmail,
   illustrationSrc,
 }) => {
+  const { t } = useTranslation(['commissions', 'common']);
+  const defaultButtonText = buttonText || t('commissions:modals.noCards.requestCard');
+  
   const handleContactSupport = () => {
     // Número de WhatsApp de soporte (formato: código de país + número sin espacios, guiones o +)
     // +52 1 55 4057 6890 (México) -> 5215540576890
     const supportPhoneNumber = '5215540576890';
-    let message = 'Deseo adquirir mi tarjeta kivoo para poder recibir mis comisiones';
+    let message = t('commissions:modals.noCards.whatsappMessage');
     // Agregar el correo al final del mensaje si está disponible
     if (userEmail) {
-      message += `. Mi correo en kivoo es ${userEmail}`;
+      message += `. ${t('commissions:modals.noCards.whatsappEmailSuffix')} ${userEmail}`;
     }
     // Usar api.whatsapp.com en lugar de wa.me para mejor compatibilidad con el mensaje precargado
     const whatsappUrl = `https://api.whatsapp.com/send?phone=${supportPhoneNumber}&text=${encodeURIComponent(message)}`;
@@ -39,8 +43,9 @@ const NoCardsModal: React.FC<NoCardsModalProps> = ({
     onOpenChange(false);
   };
 
-  const title = customTitle || 'NO PUEDES COBRAR TUS COMISIONES';
-  const message = customMessage || 'Para recibir tus pagos necesitas adquirir tu tarjeta KIVOO';
+  const title = customTitle || t('commissions:modals.noCards.title');
+  const message = customMessage || t('commissions:modals.noCards.message');
+  const buttonTextToShow = hideButton ? defaultButtonText : t('commissions:modals.noCards.contactSupport');
 
   return (
     <InfoModal
@@ -51,7 +56,7 @@ const NoCardsModal: React.FC<NoCardsModalProps> = ({
       message={message}
       titleColor="yellow"
       titleSize="large"
-      buttonText={hideButton ? buttonText : 'Contactar a soporte'}
+      buttonText={buttonTextToShow}
       onButtonClick={hideButton ? onRequestCard : handleContactSupport}
     />
   );

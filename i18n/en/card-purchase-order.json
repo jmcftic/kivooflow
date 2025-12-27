@@ -1,0 +1,30 @@
+{
+    "success": {
+        "PAYMENT_RECEIVED_MESSAGE": "We have received your payment of {amount} {currency} for your card purchase, and it is currently being processed.",
+        "PAYMENT_RECEIVED_TITLE": "You have paid {amount} {currency}. Your energy is now in motion!",
+        "PAYMENT_RECEIVED_BODY": "Open the app to proceed with your card shipping.",
+        "PARTIAL_PAYMENT_MESSAGE": "We have received your payment of {amount} {currency} for your card purchase. An outstanding balance of {remaining} is required to complete your purchase.",
+        "PARTIAL_PAYMENT_BODY": "You need to pay {remaining} to complete your purchase.",
+        "ORDER_CREATED_SUCCESS": "Card purchase order successfully created",
+        "ORDERS_RETRIEVED_SUCCESS": "Card purchase orders successfully retrieved",
+        "NO_ORDERS_FOUND": "No card purchase orders found for this user",
+        "ORDER_CANCELLED_SUCCESS": "Card purchase order successfully cancelled",
+        "PAYMENT_PROCESSED_SUCCESS": "Card purchase order payment successfully processed"
+    },
+    "errors": {
+        "USER_HAS_PENDING_ORDER": "User {userId} already has a pending card purchase order",
+        "MLM_MODEL_NOT_FOUND": "MLM model information not found for user {userId}",
+        "CARD_INFO_NOT_FOUND": "Card information not found for card type {cardTypeId} and team {teamId}",
+        "CARD_TYPE_NOT_FOUND": "Card type information not found for ID {cardTypeId}",
+        "ORDER_CREATION_ERROR": "Error creating card purchase order for user {userId}",
+        "ORDER_NOT_FOUND": "Card purchase order with ID {orderId} not found for user {userId}",
+        "ORDER_NOT_FOUND_BY_ID": "Card purchase order with ID {orderId} not found",
+        "SHIPPING_UPDATE_ERROR": "Could not update the shipping record",
+        "SHIPPING_METHOD_NOT_FOUND": "Shipping method not found for the card purchase order",
+        "BUHO_SEND_ERROR": "Error sending data to Buho",
+        "PAID_ORDER_NOT_FOUND": "No paid purchase order found for this user",
+        "TRACKING_DATA_ERROR": "Error receiving tracking data",
+        "CARD_TYPE_ID_REQUIRED": "Card type ID is required",
+        "ORDER_ID_REQUIRED": "Order ID is required"
+    }
+}

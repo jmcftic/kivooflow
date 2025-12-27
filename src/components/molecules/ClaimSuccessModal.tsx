@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,8 @@ const ClaimSuccessModal: React.FC<ClaimSuccessModalProps> = ({
   message,
   showSubtext = true,
 }) => {
+  const { t } = useTranslation(['commissions', 'common']);
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-0 max-w-[500px] bg-transparent border-0 shadow-none">
@@ -39,7 +42,7 @@ const ClaimSuccessModal: React.FC<ClaimSuccessModalProps> = ({
             {/* Subtexto si es exitoso */}
             {showSubtext && (
               <p className="text-white text-sm mb-6 text-center opacity-80">
-                Tu claim está en proceso de aprobación
+                {t('commissions:modals.claimSuccess.subtext')}
               </p>
             )}
 
@@ -50,7 +53,7 @@ const ClaimSuccessModal: React.FC<ClaimSuccessModalProps> = ({
                 className="w-full font-semibold"
                 onClick={() => onOpenChange(false)}
               >
-                Entendido
+                {t('commissions:modals.claimSuccess.understood')}
               </Button>
             </div>
           </div>

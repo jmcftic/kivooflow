@@ -530,3 +530,42 @@ export interface ManualCommissionResponse {
   data: Claim;
 }
 
+// Interfaces para notificaciones
+export interface KfNotification {
+  id: number;
+  userId: number;
+  title: string;
+  message: string;
+  type?: 'info' | 'success' | 'warning' | 'error';
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export interface NotificationsResponse {
+  statusCode: number;
+  message: string;
+  data: {
+    notifications: KfNotification[];
+    total: number;
+    unreadCount: number;
+    page: number;
+    pageSize: number;
+  };
+}
+
+export interface MarkNotificationAsReadResponse {
+  statusCode: number;
+  message: string;
+  data: KfNotification;
+}
+
+export interface MarkAllNotificationsAsReadResponse {
+  statusCode: number;
+  message: string;
+  data: {
+    updatedCount: number;
+  };
+}
+

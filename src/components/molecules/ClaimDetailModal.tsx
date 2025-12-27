@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -72,6 +73,7 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
   periodEndDate,
   originalClaim,
 }) => {
+  const { t, i18n } = useTranslation(['commissions', 'claims', 'common']);
   const [selectedTarjeta, setSelectedTarjeta] = useState<string>("");
   const [confirmed, setConfirmed] = useState(false);
   const [tarjetas, setTarjetas] = useState<UserCard[]>([]);
@@ -94,7 +96,7 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
 
   // Obtener usuario loggeado para retroactive
   const getLoggedUserDisplay = (): string => {
-    if (!isRetroactive) return usuario || 'N/A';
+    if (!isRetroactive) return usuario || '';
     
     const loggedUser = authService.getStoredUser();
     if (loggedUser?.full_name) {
@@ -103,22 +105,24 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
     if (loggedUser?.email) {
       return censorEmail(loggedUser.email);
     }
-    return usuario || 'N/A';
+    return usuario || '';
   };
 
   // Formatear fecha de período (mes, día, año)
   const formatPeriodDate = (dateStr: string | undefined): string => {
-    if (!dateStr) return 'N/A';
+    if (!dateStr) return '';
     try {
       const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return 'N/A';
-      return date.toLocaleDateString('es-ES', {
+      if (isNaN(date.getTime())) return '';
+      // Usar locale según el idioma
+      const locale = i18n.language === 'en' ? 'en-US' : 'es-ES';
+      return date.toLocaleDateString(locale, {
         month: '2-digit',
         day: '2-digit',
         year: 'numeric'
       });
     } catch {
-      return 'N/A';
+      return '';
     }
   };
 
@@ -158,7 +162,7 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
       
       // Si después del filtro no hay tarjetas, mostrar error
       if (tarjetasActivas.length === 0) {
-        setError("Sin tarjetas activas disponibles");
+        setError(t('commissions:modals.claimDetail.noActiveCards'));
         setTarjetas([]);
       } else {
         setTarjetas(tarjetasActivas);
@@ -167,10 +171,10 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
       console.error("Error cargando tarjetas:", err);
       // Si es un error 500, mostrar mensaje específico
       if (err?.status === 500 || err?.response?.status === 500) {
-        setError("Sin tarjetas disponibles");
+        setError(t('commissions:modals.claimDetail.noCardsAvailable'));
         setTarjetas([]);
       } else {
-        setError("Error al cargar las tarjetas");
+        setError(t('commissions:modals.claimDetail.errorLoadingCards'));
         setTarjetas([]);
       }
     } finally {
@@ -228,60 +232,74 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
             >
               {/* Título */}
               <h2 className="text-[#FFF100] text-xl font-bold">
-                Detalle
+                {t('commissions:modals.claimDetail.detail')}
               </h2>
 
               {/* ScrollArea con datos en filas */}
               <ScrollArea className="flex-1 w-full">
                 <div className="flex flex-col gap-2 w-full pr-4">
-                  {/* Usuario */}
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-white/60 text-sm">Usuario</span>
-                    <span className="text-white text-sm">{getLoggedUserDisplay()}</span>
-                  </div>
+                  {/* Usuario - Solo mostrar si hay valor */}
+                  {getLoggedUserDisplay() && (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-white/60 text-sm">{t('commissions:labels.user')}</span>
+                      <span className="text-white text-sm">{getLoggedUserDisplay()}</span>
+                    </div>
+                  )}
                   
-                  {/* Fecha */}
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-white/60 text-sm">Fecha</span>
-                    <span className="text-white text-sm">
-                      {fecha ? new Date(fecha).toLocaleDateString('es-MX', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit'
-                      }) : 'N/A'}
-                    </span>
-                  </div>
+                  {/* Fecha - Solo mostrar si hay fecha válida */}
+                  {fecha && (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-white/60 text-sm">{t('commissions:labels.date')}</span>
+                      <span className="text-white text-sm">
+                        {(() => {
+                          try {
+                            const date = new Date(fecha);
+                            if (isNaN(date.getTime())) return null;
+                            return date.toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'es-MX', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit'
+                            });
+                          } catch {
+                            return null;
+                          }
+                        })()}
+                      </span>
+                    </div>
+                  )}
                   
-                  {/* Estado */}
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-white/60 text-sm">Estado</span>
-                    <span className="text-white text-sm">{estado || 'N/A'}</span>
-                  </div>
+                  {/* Estado - Solo mostrar si hay estado */}
+                  {estado && (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-white/60 text-sm">{t('commissions:labels.status')}</span>
+                      <span className="text-white text-sm">{estado}</span>
+                    </div>
+                  )}
                   
-                  {/* Tipo de comisión */}
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-white/60 text-sm">Tipo de comisión</span>
-                    {tipoComision ? (
-                      (() => {
+                  {/* Tipo de comisión - Solo mostrar si hay tipoComision */}
+                  {tipoComision && (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-white/60 text-sm">{t('commissions:labels.commissionType')}</span>
+                      {(() => {
                         const tipoLower = tipoComision.toLowerCase();
                         let badgeText = tipoComision;
                         let badgeVariant: 'yellow' | 'green' | 'blue' | 'red' | 'default' = 'default';
 
                         // Mapear los tipos de comisión a los textos y variantes deseados
                         if (tipoLower === 'papa' || tipoLower === 'padre') {
-                          badgeText = 'Nivel 1';
+                          badgeText = t('claims:item.commissionTypes.level1');
                           badgeVariant = 'yellow';
                         } else if (tipoLower === 'abuelo') {
-                          badgeText = 'Nivel 2';
+                          badgeText = t('claims:item.commissionTypes.level2');
                           badgeVariant = 'green';
                         } else if (tipoLower === 'bis_abuelo' || tipoLower === 'bisabuelo') {
-                          badgeText = 'Nivel 3';
+                          badgeText = t('claims:item.commissionTypes.level3');
                           badgeVariant = 'blue';
                         } else if (tipoLower === 'leader_markup' || tipoLower === 'leader_retention') {
-                          badgeText = 'Comisión Empresa';
+                          badgeText = t('claims:item.commissionTypes.companyCommission');
                           badgeVariant = 'red';
                         } else if (tipoLower === 'retroactive') {
-                          badgeText = 'Retroactiva';
+                          badgeText = t('claims:item.commissionTypes.retroactive');
                           badgeVariant = 'yellow';
                         }
 
@@ -293,86 +311,81 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                             {badgeText}
                           </Badge>
                         );
-                      })()
-                    ) : (
-                      <span className="text-white text-sm">N/A</span>
-                    )}
-                  </div>
+                      })()}
+                    </div>
+                  )}
                   
                   {/* Línea divisoria con 10px de padding interno */}
                   <div className="w-full" style={{ padding: '10px 0' }}>
                     <div className="w-full h-[1px] bg-white"></div>
                   </div>
                   
-                  {/* Monto - Ocultar si es retroactive */}
-                  {!isRetroactive && (
+                  {/* Monto - Solo mostrar si no es retroactive y hay baseAmount */}
+                  {!isRetroactive && baseAmount !== undefined && baseAmount !== null && (
                     <div className="flex items-center justify-between w-full">
-                      <span className="text-white/60 text-sm">Monto</span>
+                      <span className="text-white/60 text-sm">{t('commissions:labels.amount')}</span>
                       <span className="text-[#198500] text-sm">
                         ${(() => {
-                          if (baseAmount !== undefined && baseAmount !== null) {
-                            const baseAmountNum = typeof baseAmount === 'string' ? parseFloat(baseAmount) : baseAmount;
-                            return isNaN(baseAmountNum) ? '0.00' : baseAmountNum.toFixed(2);
-                          }
-                          return '0.00';
+                          const baseAmountNum = typeof baseAmount === 'string' ? parseFloat(baseAmount) : baseAmount;
+                          return isNaN(baseAmountNum) ? '0.00' : baseAmountNum.toFixed(2);
                         })()}
                       </span>
                     </div>
                   )}
 
-                  {/* Notes - Solo mostrar si es retroactive */}
-                  {isRetroactive && originalClaim?.calculationDetails && (
+                  {/* Notes - Solo mostrar si es retroactive y hay notas */}
+                  {isRetroactive && originalClaim?.calculationDetails && (originalClaim.calculationDetails as any)?.notes && (
                     <div className="flex items-center justify-between w-full">
-                      <span className="text-white/60 text-sm">Notas</span>
+                      <span className="text-white/60 text-sm">{t('commissions:modals.claimDetail.notes')}</span>
                       <span className="text-white text-sm">
-                        {(originalClaim.calculationDetails as any)?.notes || 'N/A'}
+                        {(originalClaim.calculationDetails as any).notes}
                       </span>
                     </div>
                   )}
                   
-                  {/* Porcentaje - No mostrar si es retroactive */}
-                  {!isRetroactive && (
+                  {/* Porcentaje - Solo mostrar si no es retroactive y hay porcentaje */}
+                  {!isRetroactive && commissionPercentage !== undefined && commissionPercentage !== null && String(commissionPercentage).trim() !== '' && (
                     <div className="flex items-center justify-between w-full">
-                      <span className="text-white/60 text-sm">Porcentaje</span>
+                      <span className="text-white/60 text-sm">{t('commissions:modals.claimDetail.percentage')}</span>
                       <span className="text-white text-sm">
-                        {commissionPercentage !== undefined && commissionPercentage !== null && String(commissionPercentage).trim() !== ''
-                          ? `${String(commissionPercentage)}%`
-                          : 'N/A'}
+                        {`${String(commissionPercentage)}%`}
                       </span>
                     </div>
                   )}
 
-                  {/* Período - Solo mostrar si es retroactive */}
-                  {isRetroactive && periodStartDate && periodEndDate && (
+                  {/* Período - Solo mostrar si es retroactive y hay fechas válidas */}
+                  {isRetroactive && periodStartDate && periodEndDate && formatPeriodDate(periodStartDate) && formatPeriodDate(periodEndDate) && (
                     <>
                       <div className="flex items-center justify-between w-full">
-                        <span className="text-white/60 text-sm">Período inicio</span>
+                        <span className="text-white/60 text-sm">{t('commissions:modals.claimDetail.periodStart')}</span>
                         <span className="text-white text-sm">{formatPeriodDate(periodStartDate)}</span>
                       </div>
                       <div className="flex items-center justify-between w-full">
-                        <span className="text-white/60 text-sm">Período fin</span>
+                        <span className="text-white/60 text-sm">{t('commissions:modals.claimDetail.periodEnd')}</span>
                         <span className="text-white text-sm">{formatPeriodDate(periodEndDate)}</span>
                       </div>
                     </>
                   )}
                   
-                  {/* Comisión */}
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-white/60 text-sm">Comisión</span>
-                    <span className="text-[#FFF100] font-bold text-sm">
-                      {(() => {
-                        if (commissionAmount !== undefined && commissionAmount !== null) {
-                          const commissionAmountNum = typeof commissionAmount === 'string' ? parseFloat(commissionAmount) : commissionAmount;
-                          return isNaN(commissionAmountNum) ? '0' : formatCurrencyWithThreeDecimals(commissionAmountNum);
-                        }
-                        // Fallback a comision si commissionAmount no está disponible
-                        if (comision !== undefined && comision !== null) {
-                          return typeof comision === 'number' ? formatCurrencyWithThreeDecimals(comision) : '0';
-                        }
-                        return '0.00';
-                      })()} <span className="text-[#FFF100]">USDT</span>
-                    </span>
-                  </div>
+                  {/* Comisión - Solo mostrar si hay commissionAmount */}
+                  {(commissionAmount !== undefined && commissionAmount !== null) || (comision !== undefined && comision !== null) ? (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-white/60 text-sm">{t('commissions:labels.commission')}</span>
+                      <span className="text-[#FFF100] font-bold text-sm">
+                        {(() => {
+                          if (commissionAmount !== undefined && commissionAmount !== null) {
+                            const commissionAmountNum = typeof commissionAmount === 'string' ? parseFloat(commissionAmount) : commissionAmount;
+                            return isNaN(commissionAmountNum) ? '0' : formatCurrencyWithThreeDecimals(commissionAmountNum);
+                          }
+                          // Fallback a comision si commissionAmount no está disponible
+                          if (comision !== undefined && comision !== null) {
+                            return typeof comision === 'number' ? formatCurrencyWithThreeDecimals(comision) : '0';
+                          }
+                          return '0.00';
+                        })()} <span className="text-[#FFF100]">USDT</span>
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
               </ScrollArea>
             </div>
@@ -380,15 +393,15 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
             <div className="w-full h-full flex flex-col p-6">
               {/* Título */}
               <h2 className="text-[#FFF100] text-xl font-bold mb-6">
-                Solicitar Comisión
+                {t('commissions:modals.claimDetail.requestCommission')}
               </h2>
               {/* Select de tarjeta - Solo en modo claim */}
               <div className="mb-4">
-                  <label className="text-white text-sm mb-2 block">Seleccionar tarjeta</label>
+                  <label className="text-white text-sm mb-2 block">{t('commissions:modals.claimDetail.selectCard')}</label>
                   {loading ? (
                     <div className="flex items-center justify-center py-4">
                       <Spinner className="size-4 text-[#FFF000]" />
-                      <span className="text-sm text-[#aaa] ml-2">Cargando tarjetas...</span>
+                      <span className="text-sm text-[#aaa] ml-2">{t('commissions:modals.claimDetail.loadingCards')}</span>
                     </div>
                   ) : error ? (
                     <Select 
@@ -398,7 +411,7 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                     >
                       <SelectTrigger className="w-full" disabled={true}>
                         <SelectValue 
-                          placeholder={error === "Sin tarjetas disponibles" ? "Sin tarjetas disponibles" : "Error al cargar tarjetas"} 
+                          placeholder={error === t('commissions:modals.claimDetail.noCardsAvailable') ? t('commissions:modals.claimDetail.noCardsAvailable') : t('commissions:modals.claimDetail.errorLoadingCardsPlaceholder')} 
                         />
                       </SelectTrigger>
                     </Select>
@@ -410,7 +423,7 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                     >
                       <SelectTrigger className="w-full" disabled={tarjetas.length === 0}>
                         <SelectValue 
-                          placeholder={tarjetas.length === 0 ? "Sin tarjetas activas" : "Elige una tarjeta"} 
+                          placeholder={tarjetas.length === 0 ? t('commissions:modals.claimDetail.noActiveCards') : t('commissions:modals.claimDetail.chooseCard')} 
                         />
                       </SelectTrigger>
                       {tarjetas.length > 0 && (
@@ -449,7 +462,7 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                   htmlFor="confirm"
                   className={`text-sm text-white leading-none ${(loading || error !== null || tarjetas.length === 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  Confirmo que deseo solicitar esta comisión
+                  {t('commissions:modals.claimDetail.confirmCheckbox')}
                 </label>
               </div>
 
@@ -461,11 +474,11 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                   onClick={handleConfirm}
                   disabled={!canConfirm}
                 >
-                  {isClaiming ? 'Solicitando...' : 'Solicitar'}
+                  {isClaiming ? t('commissions:modals.claimDetail.requesting') : t('commissions:modals.claimDetail.request')}
                 </Button>
                 {(error || (tarjetas.length === 0 && !loading)) && (
                   <p className="text-red-500 text-xs mt-2 text-center">
-                    {error || 'No hay tarjetas disponibles para solicitar la comisión'}
+                    {error || t('commissions:modals.claimDetail.noCardsForClaim')}
                   </p>
                 )}
               </div>

@@ -1,0 +1,98 @@
+{
+  "title": "Claims",
+  "cards": {
+    "earningsToClaim": "Ganancias por reclamar",
+    "claimedLastMonth": "Reclamado último mes",
+    "net": "Neto"
+  },
+  "table": {
+    "headers": {
+      "date": "Fecha",
+      "amount": "Monto",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "labels": {
+      "date": "Fecha",
+      "amount": "Monto",
+      "status": "Estado",
+      "actions": "Acciones",
+      "details": "detalles",
+      "net": "Neto"
+    },
+    "status": {
+      "paid": "Pagada",
+      "pending": "Pendiente",
+      "cancelled": "Cancelada"
+    },
+    "messages": {
+      "loading": "Cargando órdenes...",
+      "error": "Error al cargar órdenes",
+      "noOrders": "No hay órdenes disponibles",
+      "loadingMore": "Cargando más órdenes...",
+      "loadMore": "Cargar más órdenes"
+    }
+  },
+  "item": {
+    "labels": {
+      "id": "ID",
+      "email": "Correo",
+      "date": "Fecha",
+      "concept": "Concepto",
+      "card": "Tarjeta",
+      "company": "Empresa",
+      "commissionType": "Tipo de comisión",
+      "level": "Nivel",
+      "status": "Estado",
+      "amount": "Monto",
+      "commission": "Comisión",
+      "action": "Acción",
+      "actions": "Acciones",
+      "type": "Tipo",
+      "user": "Usuario"
+    },
+    "concepts": {
+      "fund": "Recarga",
+      "card_selling": "Venta",
+      "volume": "Volumen"
+    },
+    "commissionTypes": {
+      "level1": "Nivel 1",
+      "level2": "Nivel 2",
+      "level3": "Nivel 3",
+      "companyCommission": "Comisión Empresa",
+      "retroactive": "Retroactiva"
+    },
+    "actions": {
+      "viewDetail": "Ver detalle"
+    }
+  },
+  "detail": {
+    "title": "Detalle de Orden",
+    "back": "Volver",
+    "order": "Orden",
+    "status": "Estado",
+    "total": "Total",
+    "claims": "Claims",
+    "loading": "Cargando claims...",
+    "error": "Error al cargar claims",
+    "noClaims": "No hay claims en esta orden",
+    "details": "detalles",
+    "statusLabels": {
+      "received": "Recibida",
+      "inProcess": "En proceso",
+      "available": "Disponible",
+      "paid": "Pagada",
+      "cancelled": "Cancelada"
+    },
+    "commissionTypes": {
+      "level1": "Nivel 1",
+      "level2": "Nivel 2",
+      "level3": "Nivel 3",
+      "companyCommission": "Comisión Empresa",
+      "b2bCommission": "Comisión B2B",
+      "retroactive": "Retroactiva"
+    }
+  }
+}
+

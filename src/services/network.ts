@@ -29,6 +29,10 @@ import {
   OrderClaimItem,
   CreateManualCommissionRequest,
   ManualCommissionResponse,
+  KfNotification,
+  NotificationsResponse,
+  MarkNotificationAsReadResponse,
+  MarkAllNotificationsAsReadResponse,
 } from '@/types/network';
 
 export interface GetNetworkParams {
@@ -671,6 +675,99 @@ export async function createManualCommission(request: CreateManualCommissionRequ
     statusCode: payload?.statusCode ?? 201,
     message,
     data: data as Claim,
+  };
+}
+
+export interface GetUserNotificationsParams {
+  page?: number;
+  pageSize?: number;
+  isRead?: boolean;
+}
+
+export async function getUserNotifications({
+  page = 1,
+  pageSize = 20,
+  isRead,
+}: GetUserNotificationsParams = {}): Promise<NotificationsResponse> {
+  const query: Record<string, string | number> = {
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+  };
+
+  if (isRead !== undefined) {
+    query.isRead = isRead.toString();
+  }
+
+  const res = await apiService.get<NotificationsResponse>(
+    API_ENDPOINTS.NETWORK.NOTIFICATIONS,
+    query,
+  );
+
+  const payload: any = res;
+  const data = payload?.data ?? payload;
+
+  return {
+    statusCode: payload?.statusCode ?? 200,
+    message: payload?.message ?? 'Notificaciones obtenidas exitosamente',
+    data: {
+      notifications: (data?.notifications ?? []).map((notif: any) => ({
+        id: notif.id ?? 0,
+        userId: notif.userId ?? 0,
+        title: notif.title ?? '',
+        message: notif.message ?? '',
+        type: notif.type as 'info' | 'success' | 'warning' | 'error' | undefined,
+        isRead: notif.isRead ?? false,
+        createdAt: notif.createdAt ?? new Date().toISOString(),
+        updatedAt: notif.updatedAt ?? new Date().toISOString(),
+        deletedAt: notif.deletedAt ?? null,
+      })),
+      total: data?.total ?? 0,
+      unreadCount: data?.unreadCount ?? 0,
+      page: data?.page ?? page,
+      pageSize: data?.pageSize ?? pageSize,
+    },
+  };
+}
+
+export async function markNotificationAsRead(notificationId: number): Promise<MarkNotificationAsReadResponse> {
+  const endpoint = apiService.buildEndpoint(API_ENDPOINTS.NETWORK.NOTIFICATION_MARK_READ, { id: notificationId });
+  const res = await apiService.put<MarkNotificationAsReadResponse>(endpoint, {});
+
+  const payload: any = res;
+  const data = payload?.data ?? payload;
+
+  return {
+    statusCode: payload?.statusCode ?? 200,
+    message: payload?.message ?? 'Notificación marcada como leída exitosamente',
+    data: {
+      id: data?.id ?? notificationId,
+      userId: data?.userId ?? 0,
+      title: data?.title ?? '',
+      message: data?.message ?? '',
+      type: data?.type as 'info' | 'success' | 'warning' | 'error' | undefined,
+      isRead: data?.isRead ?? true,
+      createdAt: data?.createdAt ?? new Date().toISOString(),
+      updatedAt: data?.updatedAt ?? new Date().toISOString(),
+      deletedAt: data?.deletedAt ?? null,
+    },
+  };
+}
+
+export async function markAllNotificationsAsRead(): Promise<MarkAllNotificationsAsReadResponse> {
+  const res = await apiService.put<MarkAllNotificationsAsReadResponse>(
+    API_ENDPOINTS.NETWORK.NOTIFICATIONS_MARK_ALL_READ,
+    {},
+  );
+
+  const payload: any = res;
+  const data = payload?.data ?? payload;
+
+  return {
+    statusCode: payload?.statusCode ?? 200,
+    message: payload?.message ?? 'Todas las notificaciones marcadas como leídas exitosamente',
+    data: {
+      updatedCount: data?.updatedCount ?? 0,
+    },
   };
 }
 

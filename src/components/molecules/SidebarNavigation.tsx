@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import SidebarItem from '../atoms/SidebarItem';
 import DashboardIcon from '../atoms/DashboardIcon';
 import ClaimsIcon from '../atoms/ClaimsIcon';
@@ -22,6 +23,7 @@ interface SidebarNavigationProps {
 const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", isCollapsed = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation('navigation');
   const [user, setUser] = useState<User | null>(null);
 
   // IDs permitidos para acceder a Reportes
@@ -35,7 +37,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
         const userData: User = JSON.parse(userStr);
         setUser(userData);
         // Debug: verificar el ID del usuario
-        console.log('User ID:', userData.id, 'Type:', typeof userData.id);
+        // console.log('User ID:', userData.id, 'Type:', typeof userData.id);
       } catch (error) {
         console.error('Error al cargar usuario:', error);
       }
@@ -50,57 +52,57 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
   const hasManualLoadsAccess = user && allowedReportUserIds.includes(String(user.id));
   
   // Debug: verificar acceso a reportes
-  useEffect(() => {
-    if (user) {
-      console.log('Checking reports access:', {
-        userId: user.id,
-        userIdType: typeof user.id,
-        allowedIds: allowedReportUserIds,
-        hasAccess: hasReportsAccess
-      });
-    }
-  }, [user, hasReportsAccess]);
+  // useEffect(() => {
+  //   if (user) {
+  //     console.log('Checking reports access:', {
+  //       userId: user.id,
+  //       userIdType: typeof user.id,
+  //       allowedIds: allowedReportUserIds,
+  //       hasAccess: hasReportsAccess
+  //     });
+  //   }
+  // }, [user, hasReportsAccess]);
 
   const primaryNavItems = useMemo(() => {
     const items = [
       {
         key: 'dashboard',
-        label: 'Dashboard',
+        label: t('menu.dashboard'),
         icon: <DashboardIcon />,
         path: '/dashboard',
         disabled: false,
       },
       {
         key: 'claims',
-        label: 'Claims',
+        label: t('menu.claims'),
         icon: <ClaimsIcon />,
         path: '/claims',
         disabled: false,
       },
       {
         key: 'card',
-        label: 'Adquisición de tarjeta',
+        label: t('menu.cardAcquisition'),
         icon: <CardAcquisitionIcon />,
         path: '/card-acquisition',
         disabled: true,
       },
       {
         key: 'commissions',
-        label: 'Comisiones',
+        label: t('menu.commissions'),
         icon: <CommissionsIcon />,
         path: '/commissions',
         disabled: false,
       },
       {
         key: 'network',
-        label: 'Red',
+        label: t('menu.network'),
         icon: <NetworkIcon />,
         path: '/network',
         disabled: false,
       },
       {
         key: 'activity',
-        label: 'Actividad',
+        label: t('menu.activity'),
         icon: <ActivityIcon />,
         path: '/activity',
         disabled: true,
@@ -111,7 +113,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
     if (hasReportsAccess) {
       items.push({
         key: 'reports',
-        label: 'Reportes',
+        label: t('menu.reports'),
         icon: <ReportsIcon />,
         path: '/reports/claims',
         disabled: false,
@@ -122,7 +124,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
     if (hasManualLoadsAccess) {
       items.push({
         key: 'manual-loads',
-        label: 'Cargas manuales',
+        label: t('menu.manualLoads'),
         icon: <ManualLoadsIcon />,
         path: '/manual-loads',
         disabled: false,
@@ -130,15 +132,15 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
     }
 
     return items;
-  }, [hasReportsAccess, hasManualLoadsAccess, user?.id]);
+  }, [hasReportsAccess, hasManualLoadsAccess, user?.id, t]);
 
   const helpItem = useMemo(() => ({
     key: 'help',
-    label: 'Ayuda',
+    label: t('menu.help'),
     icon: <HelpIcon />,
     path: '/help',
     disabled: true,
-  }), []);
+  }), [t]);
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
@@ -152,7 +154,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
           isCollapsed={isCollapsed}
           onClick={!item.disabled ? () => navigate(item.path) : undefined}
           disabled={item.disabled}
-          disabledMessage="El módulo estará próximamente disponible"
+          disabledMessage={t('messages.moduleComingSoon')}
         />
       ))}
       
@@ -173,7 +175,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
           isCollapsed={isCollapsed}
           onClick={undefined}
           disabled={helpItem.disabled}
-          disabledMessage="El módulo estará próximamente disponible"
+          disabledMessage={t('messages.moduleComingSoon')}
         />
       </div>
       

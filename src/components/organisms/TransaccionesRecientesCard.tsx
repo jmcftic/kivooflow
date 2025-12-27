@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import FoldedCard from "../atoms/FoldedCard";
 import TransactionItem from "../atoms/TransactionItem";
@@ -115,6 +116,8 @@ const TransaccionesRecientesCard: React.FC<TransaccionesRecientesCardProps> = ({
   model,
   initialTransactions = []
 }) => {
+  const { t } = useTranslation(['dashboard', 'common']);
+  
   // Obtener el modelo del usuario desde localStorage
   const getUserModel = (): string | null => {
     try {
@@ -202,7 +205,7 @@ const TransaccionesRecientesCard: React.FC<TransaccionesRecientesCardProps> = ({
       <div className="w-full h-full flex flex-col pt-10 overflow-hidden">
         {/* Header con título */}
         <div className="mb-6 flex-shrink-0">
-          <h3 className="text-[#FFF000] text-xl font-bold uppercase">TRANSACCIONES RECIENTES</h3>
+          <h3 className="text-[#FFF000] text-xl font-bold uppercase">{t('dashboard:recentTransactions.title')}</h3>
         </div>
 
         {/* Contenido scrolleable */}
@@ -212,16 +215,16 @@ const TransaccionesRecientesCard: React.FC<TransaccionesRecientesCardProps> = ({
             <div className="flex items-center justify-center h-full">
               <div className="flex flex-col items-center gap-2">
                 <Spinner className="size-6 text-[#FFF000]" />
-                <span className="text-sm text-[#aaa]">Cargando transacciones...</span>
+                <span className="text-sm text-[#aaa]">{t('dashboard:recentTransactions.loading')}</span>
               </div>
             </div>
           ) : status === "error" ? (
             <div className="flex items-center justify-center h-full">
-              <span className="text-sm text-[#ff6d64]">Error al cargar transacciones</span>
+              <span className="text-sm text-[#ff6d64]">{t('dashboard:recentTransactions.error')}</span>
             </div>
           ) : !model ? (
             <div className="flex items-center justify-center h-full">
-              <span className="text-sm text-[#aaa]">Selecciona un modelo para ver las transacciones</span>
+              <span className="text-sm text-[#aaa]">{t('dashboard:recentTransactions.selectModel')}</span>
             </div>
           ) : (
             <>
@@ -230,14 +233,14 @@ const TransaccionesRecientesCard: React.FC<TransaccionesRecientesCardProps> = ({
                groupedTransactions.ayer.length === 0 && 
                groupedTransactions.anteriores.length === 0 ? (
                 <div className="flex items-center justify-center h-full py-8">
-                  <span className="text-sm text-[#aaa]">No hay transacciones recientes</span>
+                  <span className="text-sm text-[#aaa]">{t('dashboard:recentTransactions.noTransactions')}</span>
                 </div>
               ) : (
                 <>
                   {/* Sección HOY */}
                   {groupedTransactions.hoy.length > 0 && (
                     <div className="mb-4">
-                      <h4 className="text-white text-xl mb-3">Hoy</h4>
+                      <h4 className="text-white text-xl mb-3">{t('dashboard:recentTransactions.today')}</h4>
                       {groupedTransactions.hoy.map((transaction) => (
                         <TransactionItem
                           key={transaction.id}
@@ -257,7 +260,7 @@ const TransaccionesRecientesCard: React.FC<TransaccionesRecientesCardProps> = ({
                   {/* Sección AYER */}
                   {groupedTransactions.ayer.length > 0 && (
                     <div className="mb-4">
-                      <h4 className="text-white text-xl mb-3">Ayer</h4>
+                      <h4 className="text-white text-xl mb-3">{t('dashboard:recentTransactions.yesterday')}</h4>
                       {groupedTransactions.ayer.map((transaction) => (
                         <TransactionItem
                           key={transaction.id}
@@ -299,14 +302,14 @@ const TransaccionesRecientesCard: React.FC<TransaccionesRecientesCardProps> = ({
                       {isFetchingNextPage ? (
                         <div className="flex items-center gap-2">
                           <Spinner className="size-4 text-[#FFF000]" />
-                          <span className="text-sm text-[#aaa]">Cargando más transacciones...</span>
+                          <span className="text-sm text-[#aaa]">{t('dashboard:recentTransactions.loadingMore')}</span>
                         </div>
                       ) : (
                         <button
                           onClick={() => fetchNextPage()}
                           className="text-[#FFF000] text-sm hover:text-[#E6D900] transition-colors"
                         >
-                          Cargar más transacciones
+                          {t('dashboard:recentTransactions.loadMore')}
                         </button>
                       )}
                     </div>

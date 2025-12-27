@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import SidebarApp from '../components/organisms/SidebarApp';
 import DashboardNavbar from '../components/atoms/DashboardNavbar';
@@ -13,6 +14,7 @@ import { NetworkLeaderOwnedToB2C, TeamDetailsData } from '../types/network';
 const EnterpriseDetail: React.FC = () => {
   const navigate = useNavigate();
   const { enterpriseId, model } = useParams<{ enterpriseId: string; model?: string }>();
+  const { t, i18n } = useTranslation(['network', 'commissions', 'common']);
   const [enterpriseName, setEnterpriseName] = useState<string>('X Billion');
   const [networkType, setNetworkType] = useState<string>('B2T');
   const [enterpriseFullName, setEnterpriseFullName] = useState<string>('X Billion');
@@ -24,7 +26,8 @@ const EnterpriseDetail: React.FC = () => {
 
   // Función para formatear valores monetarios
   const formatCurrency = (amount: number, currency: string = 'USDT'): string => {
-    return new Intl.NumberFormat('es-MX', {
+    const locale = i18n.language === 'en' ? 'en-US' : 'es-MX';
+    return new Intl.NumberFormat(locale, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
@@ -112,7 +115,7 @@ const EnterpriseDetail: React.FC = () => {
             {/* Perfil de X Billion - 303x50 */}
             <div className="w-[303px] h-[50px] flex items-center">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#FFF100]" style={{ fontFamily: 'Archivo, sans-serif' }}>
-                Perfil de {enterpriseName}
+                {t('network:enterpriseDetail.profileOf', { name: enterpriseName })}
               </h1>
             </div>
             
@@ -133,12 +136,12 @@ const EnterpriseDetail: React.FC = () => {
               onClick={handleBackToNetwork}
               className="text-white hover:opacity-80 transition-opacity"
             >
-              Red {networkType} General
+              {t('network:networkGeneral', { tab: networkType })}
             </button>
             {teamDetails && (
               <>
                 <SingleArrowHistory className="mx-2" />
-                <span className="font-bold">Nivel {level}</span>
+                <span className="font-bold">{t('network:level')} {level}</span>
                 <SingleArrowHistory className="mx-2" />
                 <span className="font-bold">{enterpriseName}</span>
               </>
@@ -163,7 +166,7 @@ const EnterpriseDetail: React.FC = () => {
                     </>
                   )
                 }
-                secondaryText="Ganancias totales"
+                secondaryText={t('network:stats.totalEarnings')}
                 height={172}
                 className="w-full"
                 showChart={true}
@@ -180,7 +183,7 @@ const EnterpriseDetail: React.FC = () => {
                     </>
                   )
                 }
-                secondaryText="Balance disponible"
+                secondaryText={t('network:stats.availableBalance')}
                 height={172}
                 className="w-full"
               />
@@ -197,7 +200,7 @@ const EnterpriseDetail: React.FC = () => {
             <div className="w-full md:flex-1 min-w-0">
               <EnterpriseInfoCardSmall
                 primaryText={loading || !teamDetails ? '0' : teamDetails.activeReferrals.toString()}
-                secondaryText="Referidos activos"
+                secondaryText={t('network:stats.activeReferrals')}
                 height={129}
                 className="w-full"
                 showChart={true}
@@ -206,7 +209,7 @@ const EnterpriseDetail: React.FC = () => {
             <div className="w-full md:flex-1 min-w-0">
               <EnterpriseInfoCardSmall
                 primaryText={loading || !teamDetails ? '0' : teamDetails.totalReferrals.toString()}
-                secondaryText="Referidos totales"
+                secondaryText={t('network:stats.totalReferrals')}
                 height={129}
                 className="w-full"
               />
@@ -222,7 +225,7 @@ const EnterpriseDetail: React.FC = () => {
                     </>
                   )
                 }
-                secondaryText="Volumen total"
+                secondaryText={t('network:stats.totalVolume')}
                 height={129}
                 className="w-full"
               />

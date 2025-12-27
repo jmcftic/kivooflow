@@ -28,6 +28,7 @@ export const API_ENDPOINTS = {
     REFRESH_TOKEN: "/auth/refresh",
     LOGOUT: "/auth/logout",
     USER_BY_EMAIL: "/auth/user-by-email",
+    UPDATE_PROFILE: "/auth/update-profile",
   },
   USER: {
     PROFILE: "/user/profile",
@@ -73,6 +74,9 @@ export const API_ENDPOINTS = {
     ORDERS: "/network/orders",
     ORDER_CLAIMS: "/network/claim-orders/:id/claims",
     MANUAL_COMMISSIONS: "/network/manual-commissions",
+    NOTIFICATIONS: "/network/notifications",
+    NOTIFICATION_MARK_READ: "/network/notifications/:id/read",
+    NOTIFICATIONS_MARK_ALL_READ: "/network/notifications/read-all",
   },
   DASHBOARD: {
     METRICS: "/dashboard/metrics",

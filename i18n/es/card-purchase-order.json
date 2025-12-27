@@ -1,0 +1,30 @@
+{
+    "success": {
+        "PAYMENT_RECEIVED_MESSAGE": "Hemos recibido tu pago de {amount} {currency} para la compra de tu tarjeta y esta siendo procesado.",
+        "PAYMENT_RECEIVED_TITLE": "Has pagado {amount} {currency} ¡Tu energía ya está en movimiento!",
+        "PAYMENT_RECEIVED_BODY": "Ingresa a la app para continuar con el envío de tu tarjeta.",
+        "PARTIAL_PAYMENT_MESSAGE": "Hemos recibido tu pago de {amount} {currency} para la compra de tu tarjeta y esta siendo procesado. Te falta pagar {remaining} para completar tu compra.",
+        "PARTIAL_PAYMENT_BODY": "Te falta pagar {remaining} para completar tu compra.",
+        "ORDER_CREATED_SUCCESS": "orden de compra de tarjeta creada exitosamente",
+        "ORDERS_RETRIEVED_SUCCESS": "Ordenes de compra de tarjetas obtenidas exitosamente",
+        "NO_ORDERS_FOUND": "No se encontraron ordenes de compra de tarjetas para el usuario",
+        "ORDER_CANCELLED_SUCCESS": "Orden de compra de tarjeta cancelada exitosamente",
+        "PAYMENT_PROCESSED_SUCCESS": "Pago de orden de compra de tarjeta realizado exitosamente"
+    },
+    "errors": {
+        "USER_HAS_PENDING_ORDER": "El usuario {userId} ya tiene una orden de compra de tarjeta pendiente",
+        "MLM_MODEL_NOT_FOUND": "No se encontró información del modelo MLM para el usuario {userId}",
+        "CARD_INFO_NOT_FOUND": "No se encontró información de tarjeta para el tipo de tarjeta {cardTypeId} y equipo {teamId}",
+        "CARD_TYPE_NOT_FOUND": "No se encontró información de tipo de tarjeta para el id {cardTypeId}",
+        "ORDER_CREATION_ERROR": "Error creando orden de compra de tarjeta para el usuario {userId}",
+        "ORDER_NOT_FOUND": "No se encontró orden de compra de tarjeta para el usuario {userId} con id {orderId}",
+        "ORDER_NOT_FOUND_BY_ID": "No se encontró orden de compra de tarjeta con id {orderId}",
+        "SHIPPING_UPDATE_ERROR": "No se pudo actualizar el registro de envío",
+        "SHIPPING_METHOD_NOT_FOUND": "No se encontró el metodo de envío para la orden de compra de tarjeta",
+        "BUHO_SEND_ERROR": "Error al enviar datos a Buho",
+        "PAID_ORDER_NOT_FOUND": "No se encontró una orden de compra pagada para este usuario",
+        "TRACKING_DATA_ERROR": "Error recibir los datos de tracking",
+        "CARD_TYPE_ID_REQUIRED": "El id del tipo de tarjeta es requerido",
+        "ORDER_ID_REQUIRED": "El id de la orden es requerido"
+    }
+}

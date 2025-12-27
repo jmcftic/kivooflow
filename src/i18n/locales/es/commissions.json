@@ -1,0 +1,117 @@
+{
+  "title": "Comisiones",
+  "tabs": {
+    "b2c": "B2C",
+    "b2b": "B2B",
+    "b2t": "B2T"
+  },
+  "cards": {
+    "totalCommissions": "Comisiones totales",
+    "commissionsFromRecharges": "Comisiones por recargas",
+    "commissionsFromCardSales": "Comisiones por venta de tarjetas"
+  },
+  "button": {
+    "requestEarnings": "Solicitar ganancias",
+    "loading": "Cargando...",
+    "requesting": "Solicitando..."
+  },
+  "status": {
+    "approved": "Aprobado",
+    "pending": "Pendiente",
+    "available": "Disponible",
+    "requested": "Solicitado",
+    "rejected": "Rechazado"
+  },
+  "messages": {
+    "loading": "Cargando comisiones...",
+    "error": "Error al cargar comisiones",
+    "noCommissions": "No hay comisiones disponibles"
+  },
+  "labels": {
+    "user": "Usuario",
+    "date": "Fecha",
+    "email": "Correo",
+    "id": "ID",
+    "concept": "Concepto",
+    "card": "Tarjeta",
+    "company": "Empresa",
+    "commissionType": "Tipo de comisión",
+    "level": "Nivel",
+    "status": "Estado",
+    "amount": "Monto",
+    "commission": "Comisión",
+    "action": "Acción"
+  },
+  "claimAllScreen": {
+    "requestPayment": "Solicitar pago",
+    "willUseMaxAvailable": "Se usará el máximo disponible",
+    "continue": "Continuar",
+    "requestInProcess": "Solicitud en proceso",
+    "successfulRequest": "SOLICITUD EXITOSA",
+    "defaultCardInfo": "El envió de tu saldo seleccionado sera enviado a tu tarjeta KIVOO predeterminada en la aplicación.",
+    "back": "Volver"
+  },
+  "modals": {
+    "noCards": {
+      "title": "NO PUEDES COBRAR TUS COMISIONES",
+      "message": "Para recibir tus pagos necesitas adquirir tu tarjeta KIVOO",
+      "requestCard": "Solicitar tarjeta",
+      "contactSupport": "Contactar a soporte",
+      "whatsappMessage": "Deseo adquirir mi tarjeta kivoo para poder recibir mis comisiones",
+      "whatsappEmailSuffix": "Mi correo en kivoo es"
+    },
+    "noClaims": {
+      "title": "No hay comisiones disponibles para reclamar",
+      "message": "Por el momento, no hay comisiones disponibles para reclamar. Si se trata de un error, comunícate con el canal de soporte para poder darte un seguimiento.",
+      "continue": "Continuar"
+    },
+    "claimSuccess": {
+      "subtext": "Tu claim está en proceso de aprobación",
+      "understood": "Entendido"
+    },
+    "error": {
+      "title": "Error",
+      "understood": "Entendido"
+    },
+    "claimDetail": {
+      "title": "Detalle de comisión",
+      "detail": "Detalle",
+      "requestCommission": "Solicitar Comisión",
+      "claim": "Reclamar",
+      "selectCard": "Seleccionar tarjeta",
+      "selectCardPlaceholder": "Selecciona una tarjeta",
+      "chooseCard": "Elige una tarjeta",
+      "confirm": "Confirmar",
+      "close": "Cerrar",
+      "loadingCards": "Cargando tarjetas...",
+      "noActiveCards": "Sin tarjetas activas disponibles",
+      "noCardsAvailable": "Sin tarjetas disponibles",
+      "errorLoadingCards": "Error al cargar las tarjetas",
+      "errorLoadingCardsPlaceholder": "Error al cargar tarjetas",
+      "confirmCheckbox": "Confirmo que deseo solicitar esta comisión",
+      "requesting": "Solicitando...",
+      "request": "Solicitar",
+      "noCardsForClaim": "No hay tarjetas disponibles para solicitar la comisión",
+      "percentage": "Porcentaje",
+      "periodStart": "Período inicio",
+      "periodEnd": "Período fin",
+      "notes": "Notas",
+      "baseAmount": "Monto base"
+    },
+    "b2bCommissionDetail": {
+      "summary": "Resumen de comisión",
+      "detail": "Detalle de comisión",
+      "dateRange": "Rango de fechas considerado para la comisión",
+      "team": "Equipo",
+      "level": "Nivel",
+      "status": "Estado",
+      "commission": "Comisión",
+      "totalVolume": "Volumen total",
+      "commissionPercentage": "Porcentaje de comisión",
+      "transactions": "Transacciones",
+      "claim": "Reclamar comisión",
+      "close": "Cerrar"
+    }
+  }
+}
+

@@ -1,0 +1,39 @@
+{
+  "login": {
+    "title": "LOGIN OR REGISTER",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password",
+    "passwordTitle": "ENTER PASSWORD",
+    "passwordDescription": "For security, enter the password associated with your account. Make sure it's correct.",
+    "continue": "Continue",
+    "loggingIn": "Logging in...",
+    "forgotPassword": "I forgot my password",
+    "changeEmail": "Change email",
+    "biometricAuth": "Biometric authentication",
+    "invalidCredentials": "Login error. Please check your credentials.",
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required"
+  },
+  "forgotPassword": {
+    "title": "Recover password",
+    "emailPlaceholder": "Email",
+    "submit": "Send code",
+    "description": "Enter your email and we'll send you a verification code"
+  },
+  "resetPassword": {
+    "title": "Reset password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "submit": "Reset",
+    "passwordsMismatch": "Passwords do not match"
+  },
+  "verificationCode": {
+    "title": "Verification code",
+    "description": "Enter the code we sent to your email",
+    "codePlaceholder": "Code",
+    "submit": "Verify",
+    "resend": "Resend code",
+    "invalidCode": "Invalid code"
+  }
+}
+

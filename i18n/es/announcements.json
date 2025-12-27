@@ -1,0 +1,9 @@
+{
+    "success":{},
+    "errors":{
+        "SAVE_FAILED":"No se pudo guardar el anuncio",
+        "NOT_FOUND":"No se pudo encontrar el anuncio",
+        "UPDATE_FAILED":"No se pudo editar el anuncio",
+        "DELETE_FAILED":"No se pudo eliminar el anuncio"
+    }
+}

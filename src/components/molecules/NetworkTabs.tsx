@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import FoldedTabCard from '../atoms/FoldedTabCard';
 import { cn } from '@/lib/utils';
 
@@ -13,6 +14,7 @@ interface NetworkTabsProps {
 }
 
 const NetworkTabs: React.FC<NetworkTabsProps> = ({ activeTab, onTabChange, availableTabs, tabHeight = 52, customLabels }) => {
+  const { t } = useTranslation(['commissions', 'network', 'common']);
   const availability: Record<NetworkTabId, boolean> = availableTabs ?? {
     b2c: true,
     b2b: false,
@@ -20,9 +22,9 @@ const NetworkTabs: React.FC<NetworkTabsProps> = ({ activeTab, onTabChange, avail
   };
 
   const tabs: Array<{ id: NetworkTabId; label: string }> = [
-    { id: 'b2c', label: customLabels?.b2c || 'B2C' },
-    { id: 'b2b', label: customLabels?.b2b || 'B2B' },
-    { id: 'b2t', label: customLabels?.b2t || 'B2T' },
+    { id: 'b2c', label: customLabels?.b2c || t('commissions:tabs.b2c') },
+    { id: 'b2b', label: customLabels?.b2b || t('commissions:tabs.b2b') },
+    { id: 'b2t', label: customLabels?.b2t || t('commissions:tabs.b2t') },
   ];
 
   // Filtrar solo las tabs disponibles

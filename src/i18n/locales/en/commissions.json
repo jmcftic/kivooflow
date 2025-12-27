@@ -1,0 +1,117 @@
+{
+  "title": "Commissions",
+  "tabs": {
+    "b2c": "B2C",
+    "b2b": "B2B",
+    "b2t": "B2T"
+  },
+  "cards": {
+    "totalCommissions": "Total commissions",
+    "commissionsFromRecharges": "Commissions from recharges",
+    "commissionsFromCardSales": "Commissions from card sales"
+  },
+  "button": {
+    "requestEarnings": "Request earnings",
+    "loading": "Loading...",
+    "requesting": "Requesting..."
+  },
+  "status": {
+    "approved": "Approved",
+    "pending": "Pending",
+    "available": "Available",
+    "requested": "Requested",
+    "rejected": "Rejected"
+  },
+  "messages": {
+    "loading": "Loading commissions...",
+    "error": "Error loading commissions",
+    "noCommissions": "No commissions available"
+  },
+  "labels": {
+    "user": "User",
+    "date": "Date",
+    "email": "Email",
+    "id": "ID",
+    "concept": "Concept",
+    "card": "Card",
+    "company": "Company",
+    "commissionType": "Commission type",
+    "level": "Level",
+    "status": "Status",
+    "amount": "Amount",
+    "commission": "Commission",
+    "action": "Action"
+  },
+  "claimAllScreen": {
+    "requestPayment": "Request payment",
+    "willUseMaxAvailable": "Maximum available will be used",
+    "continue": "Continue",
+    "requestInProcess": "Request in process",
+    "successfulRequest": "SUCCESSFUL REQUEST",
+    "defaultCardInfo": "The selected balance will be sent to your default KIVOO card in the application.",
+    "back": "Back"
+  },
+  "modals": {
+    "noCards": {
+      "title": "YOU CANNOT COLLECT YOUR COMMISSIONS",
+      "message": "To receive your payments you need to get your KIVOO card",
+      "requestCard": "Request card",
+      "contactSupport": "Contact support",
+      "whatsappMessage": "I want to get my KIVOO card to receive my commissions",
+      "whatsappEmailSuffix": "My email in KIVOO is"
+    },
+    "noClaims": {
+      "title": "No commissions available to claim",
+      "message": "At the moment, there are no commissions available to claim. If this is an error, please contact the support channel so we can follow up.",
+      "continue": "Continue"
+    },
+    "claimSuccess": {
+      "subtext": "Your claim is in the approval process",
+      "understood": "Understood"
+    },
+    "error": {
+      "title": "Error",
+      "understood": "Understood"
+    },
+    "claimDetail": {
+      "title": "Commission detail",
+      "detail": "Detail",
+      "requestCommission": "Request Commission",
+      "claim": "Claim",
+      "selectCard": "Select card",
+      "selectCardPlaceholder": "Select a card",
+      "chooseCard": "Choose a card",
+      "confirm": "Confirm",
+      "close": "Close",
+      "loadingCards": "Loading cards...",
+      "noActiveCards": "No active cards available",
+      "noCardsAvailable": "No cards available",
+      "errorLoadingCards": "Error loading cards",
+      "errorLoadingCardsPlaceholder": "Error loading cards",
+      "confirmCheckbox": "I confirm that I want to request this commission",
+      "requesting": "Requesting...",
+      "request": "Request",
+      "noCardsForClaim": "No cards available to request the commission",
+      "percentage": "Percentage",
+      "periodStart": "Period start",
+      "periodEnd": "Period end",
+      "notes": "Notes",
+      "baseAmount": "Base amount"
+    },
+    "b2bCommissionDetail": {
+      "summary": "Commission summary",
+      "detail": "Commission detail",
+      "dateRange": "Date range considered for the commission",
+      "team": "Team",
+      "level": "Level",
+      "status": "Status",
+      "commission": "Commission",
+      "totalVolume": "Total volume",
+      "commissionPercentage": "Commission percentage",
+      "transactions": "Transactions",
+      "claim": "Claim commission",
+      "close": "Close"
+    }
+  }
+}
+

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import SidebarApp from '../components/organisms/SidebarApp';
@@ -12,6 +13,7 @@ import EnterpriseInfoCardSmall from '../components/atoms/EnterpriseInfoCardSmall
 import SuperiorClaimCard from '../components/atoms/SuperiorClaimCard';
 import NetworkPaginationBar from '../components/organisms/NetworkPaginationBar';
 import { getAvailableMlmModels, requestAllClaims, getTotalToClaimInUSDT } from '@/services/network';
+import { useClaimAllPollingContext } from '@/contexts/ClaimAllPollingContext';
 import { getMisTarjetas } from '@/services/cards';
 import { formatCurrencyWithThreeDecimals } from '@/lib/utils';
 import { Spinner } from '@/components/ui/spinner';
@@ -26,7 +28,9 @@ import { useMinimumLoading } from '../hooks/useMinimumLoading';
 type CommissionTabId = 'b2c' | 'b2b' | 'b2t';
 
 const Commissions: React.FC = () => {
+  const { t } = useTranslation(['commissions', 'common']);
   const queryClient = useQueryClient();
+  const { startPolling } = useClaimAllPollingContext();
   
   // Usar la misma query de React Query que CommissionsListCard para evitar duplicados
   const { data: availableModelsData, isLoading: isLoadingModels } = useQuery({
@@ -212,6 +216,11 @@ const Commissions: React.FC = () => {
     setShowClaimAllScreen(false);
   };
 
+  const handleClaimAllStarted = () => {
+    // Iniciar polling de notificaciones cuando la solicitud tarda más de 1 segundo
+    startPolling();
+  };
+
   const handleFinalContinue = async () => {
     // Cerrar la pantalla
     setShowClaimAllScreen(false);
@@ -245,7 +254,7 @@ const Commissions: React.FC = () => {
         <div className="flex-1 min-h-0 overflow-y-auto pl-6 pr-6 pb-8" style={{ paddingBottom: '84px' }}>
           {/* Navbar responsivo */}
           <DashboardNavbar 
-            title="Comisiones" 
+            title={t('commissions:title')} 
           />
 
           {/* Tabs - Debajo del label Comisiones */}
@@ -278,10 +287,10 @@ const Commissions: React.FC = () => {
                   {isRequestingClaims || isLoadingTotal ? (
                     <>
                       <Spinner className="size-4 text-black" />
-                      <span>{isLoadingTotal ? 'Cargando...' : 'Solicitando...'}</span>
+                      <span>{isLoadingTotal ? t('commissions:button.loading') : t('commissions:button.requesting')}</span>
                     </>
                   ) : (
-                    'Solicitar ganancias'
+                    t('commissions:button.requestEarnings')
                   )}
                 </SingleButtonNoClipPath>
               </div>
@@ -321,7 +330,7 @@ const Commissions: React.FC = () => {
                   <div className="w-full md:flex-1 min-w-0">
                     <SuperiorClaimCard
                       primaryText={summary && typeof summary.totalCommissions === 'number' ? `USDT ${formatCurrencyWithThreeDecimals(summary.totalCommissions)}` : 'USDT 0'}
-                      secondaryText="Comisiones totales"
+                      secondaryText={t('commissions:cards.totalCommissions')}
                       height={129}
                       className="w-full"
                       percentageChange={summary?.totalCommissionsPercentageChange}
@@ -331,7 +340,7 @@ const Commissions: React.FC = () => {
                   <div className="w-full md:flex-1 min-w-0">
                     <SuperiorClaimCard
                       primaryText={summary && typeof summary.gainsFromRecharges === 'number' ? `USDT ${formatCurrencyWithThreeDecimals(summary.gainsFromRecharges)}` : 'USDT 0'}
-                      secondaryText="Comisiones por recargas"
+                      secondaryText={t('commissions:cards.commissionsFromRecharges')}
                       height={129}
                       className="w-full"
                       percentageChange={summary?.gainsFromRechargesPercentageChange}
@@ -341,7 +350,7 @@ const Commissions: React.FC = () => {
                   <div className="w-full md:flex-1 min-w-0">
                     <SuperiorClaimCard
                       primaryText={summary && typeof summary.gainsFromCards === 'number' ? `USDT ${formatCurrencyWithThreeDecimals(summary.gainsFromCards)}` : 'USDT 0'}
-                      secondaryText="Comisiones por venta de tarjetas"
+                      secondaryText={t('commissions:cards.commissionsFromCardSales')}
                       height={129}
                       className="w-full"
                       percentageChange={summary?.gainsFromCardsPercentageChange}
@@ -375,6 +384,7 @@ const Commissions: React.FC = () => {
                 totalItems={paginationData?.totalItems || 0}
                 currentPage={currentPage}
                 usersLimit={pageSize}
+                totalPages={paginationData?.totalPages}
                 onChangePage={(page) => setCurrentPage(page)}
                 onChangeLimit={(limit) => {
                   setPageSize(limit);
@@ -417,7 +427,6 @@ const Commissions: React.FC = () => {
       <ErrorModal
         isOpen={errorModalOpen}
         onClose={() => setErrorModalOpen(false)}
-        title="Error"
         message={errorModalMessage}
       />
 
@@ -455,6 +464,7 @@ const Commissions: React.FC = () => {
             }
           }}
           onFinalContinue={handleFinalContinue}
+          onRequestStarted={handleClaimAllStarted}
           claimType={claimType}
         />
       )}

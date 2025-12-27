@@ -1,0 +1,64 @@
+{
+  "title": "Red",
+  "networkGeneral": "Red {{tab}} General",
+  "networkOf": "Red de {{name}}",
+  "level": "Nivel",
+  "levels": {
+    "level1": "Nivel 1",
+    "level2": "Nivel 2",
+    "level3": "Nivel 3"
+  },
+  "table": {
+    "headers": {
+      "email": "Correo electrónico",
+      "user": "Usuario",
+      "company": "Empresa",
+      "joinDate": "Fecha de unión",
+      "level": "Nivel",
+      "volume": "Volumen",
+      "actions": "Acciones"
+    },
+    "actions": {
+      "viewTree": "Ver árbol",
+      "viewDetail": "Ver detalle",
+      "loadMore": "Cargar más",
+      "loading": "Cargando..."
+    }
+  },
+  "stats": {
+    "activeReferrals": "Referidos activos",
+    "lastMonthCommissions": "Comisiones último mes",
+    "totalVolume": "Volumen total",
+    "totalEarnings": "Ganancias totales",
+    "availableBalance": "Balance disponible",
+    "totalReferrals": "Referidos totales"
+  },
+  "enterpriseDetail": {
+    "profileOf": "Perfil de {{name}}"
+  },
+  "networkTree": {
+    "title": "Árbol de red",
+    "noData": "No hay datos de red disponibles"
+  },
+  "teams": {
+    "title": "Equipos",
+    "createTeam": "Crear equipo",
+    "editTeam": "Editar equipo",
+    "deleteTeam": "Eliminar equipo",
+    "noTeams": "No hay equipos disponibles"
+  },
+  "leaders": {
+    "b2b": "Líderes B2B",
+    "b2t": "Líderes B2T",
+    "b2c": "Líderes B2C"
+  },
+  "errors": {
+    "loadError": "Error al cargar la red",
+    "notFound": "Red no encontrada",
+    "invalidUserId": "ID de usuario no válido"
+  },
+  "messages": {
+    "noMoreUsers": "No hay más usuarios en este nivel"
+  }
+}
+

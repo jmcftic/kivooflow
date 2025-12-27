@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import FoldedTabCard from '../atoms/FoldedTabCard';
 import { cn } from '@/lib/utils';
 
@@ -8,10 +9,12 @@ interface LevelTabsProps {
 }
 
 const LevelTabs: React.FC<LevelTabsProps> = ({ activeLevel, onLevelChange }) => {
+  const { t } = useTranslation(['network', 'common']);
+  
   const levels = [
-    { id: 1 as const, label: 'Nivel 1' },
-    { id: 2 as const, label: 'Nivel 2' },
-    { id: 3 as const, label: 'Nivel 3' },
+    { id: 1 as const, label: t('network:levels.level1') },
+    { id: 2 as const, label: t('network:levels.level2') },
+    { id: 3 as const, label: t('network:levels.level3') },
   ];
 
   return (

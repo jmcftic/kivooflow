@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
@@ -16,6 +17,7 @@ import NetworkTabs from '../components/molecules/NetworkTabs';
 import OrderClaimDetailModal from '../components/molecules/OrderClaimDetailModal';
 
 const ClaimDetail: React.FC = () => {
+  const { t, i18n } = useTranslation(['claims', 'commissions', 'common']);
   const navigate = useNavigate();
   const [orderId, setOrderId] = useState<number | null>(null);
   const [claimType, setClaimType] = useState<'B2C' | 'B2B' | null>(null);
@@ -75,7 +77,9 @@ const ClaimDetail: React.FC = () => {
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return 'N/A';
-      return date.toLocaleDateString('es-MX', {
+      // Usar locale según el idioma
+      const locale = i18n.language === 'en' ? 'en-US' : 'es-MX';
+      return date.toLocaleDateString(locale, {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -110,30 +114,29 @@ const ClaimDetail: React.FC = () => {
   const getStatusLabel = (status: string): string => {
     switch(status.toLowerCase()) {
       case 'claimed':
-        return 'Recibida';
+        return t('claims:detail.statusLabels.received');
       case 'requested':
-        return 'En proceso';
+        return t('claims:detail.statusLabels.inProcess');
       case 'available':
-        return 'Disponible';
+        return t('claims:detail.statusLabels.available');
       case 'paid':
-        return 'Pagada';
+        return t('claims:detail.statusLabels.paid');
       case 'cancelled':
-        return 'Cancelada';
+        return t('claims:detail.statusLabels.cancelled');
       default:
         return status;
     }
   };
 
   const getCommissionTypeLabel = (commissionType: string): string => {
-    const typeMap: Record<string, string> = {
-      'papa': 'Nivel 1',
-      'abuelo': 'Nivel 2',
-      'bis_abuelo': 'Nivel 3',
-      'leader_retention': 'Comisión Empresa',
-      'b2b_commission': 'Comisión B2B',
-      'retroactive': 'Retroactiva',
-    };
-    return typeMap[commissionType] || commissionType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const typeLower = commissionType.toLowerCase();
+    if (typeLower === 'papa' || typeLower === 'padre') return t('claims:detail.commissionTypes.level1');
+    if (typeLower === 'abuelo') return t('claims:detail.commissionTypes.level2');
+    if (typeLower === 'bis_abuelo' || typeLower === 'bisabuelo') return t('claims:detail.commissionTypes.level3');
+    if (typeLower === 'leader_retention' || typeLower === 'leader_markup') return t('claims:detail.commissionTypes.companyCommission');
+    if (typeLower === 'b2b_commission') return t('claims:detail.commissionTypes.b2bCommission');
+    if (typeLower === 'retroactive') return t('claims:detail.commissionTypes.retroactive');
+    return commissionType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
   const getCommissionTypeBadgeVariant = (commissionType: string): 'yellow' | 'green' | 'blue' | 'red' | 'default' => {
@@ -147,18 +150,22 @@ const ClaimDetail: React.FC = () => {
     return 'default';
   };
 
-  const getConceptBadge = (concept?: 'fund' | 'card_selling') => {
-    if (!concept) return null;
-    
+  const getConceptBadge = (concept?: 'fund' | 'card_selling', origin?: 'mlm_transaction' | 'b2c_from_b2b_commission') => {
     let badgeText = '';
     let badgeVariant: 'blue' | 'green' | 'default' = 'default';
     
+    // Si hay un concepto explícito, usarlo
     if (concept === 'fund') {
-      badgeText = 'Recarga';
+      badgeText = t('claims:item.concepts.fund');
       badgeVariant = 'blue';
     } else if (concept === 'card_selling') {
-      badgeText = 'Venta';
+      badgeText = t('claims:item.concepts.card_selling');
       badgeVariant = 'green';
+    } 
+    // Si no hay concepto pero el origin es b2c_from_b2b_commission, es una comisión por volumen empresa
+    else if (!concept && origin === 'b2c_from_b2b_commission') {
+      badgeText = t('claims:item.concepts.volume');
+      badgeVariant = 'default';
     }
     
     if (!badgeText) return null;
@@ -203,14 +210,14 @@ const ClaimDetail: React.FC = () => {
       {/* Contenido principal */}
       <div className="flex-1 relative flex flex-col pl-6 pr-6 overflow-y-auto pb-8 pt-16 lg:pt-0">
         {/* Navbar responsivo */}
-        <DashboardNavbar title="Detalle de Orden" />
+        <DashboardNavbar title={t('claims:detail.title')} />
 
         {/* Botón de regreso */}
         <div className="relative z-20 mt-6 mb-4">
           <button
             onClick={handleBack}
             className="cursor-pointer hover:opacity-80 transition-opacity"
-            aria-label="Volver"
+            aria-label={t('claims:detail.back')}
           >
             <BackButtonPath width={64} height={64} />
           </button>
@@ -239,12 +246,12 @@ const ClaimDetail: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-[#FFF100] text-xl font-semibold mb-2">
-                    Orden #{orderClaimsData.data.orderId}
+                    {t('claims:detail.order')} #{orderClaimsData.data.orderId}
                   </h2>
                   <div className="flex items-center gap-4 text-sm text-white/60">
-                    <span>Estado: <Badge variant="outline" className={getStatusColor(orderClaimsData.data.orderStatus)}>{getStatusLabel(orderClaimsData.data.orderStatus)}</Badge></span>
-                    <span>Total: <span className="text-white font-semibold">{formatCurrencyWithThreeDecimals(orderClaimsData.data.orderTotalAmount)} <span className="text-[#FFF100]">USDT</span></span></span>
-                    <span>Claims: <span className="text-white">{claims.length}</span></span>
+                    <span>{t('claims:detail.status')}: <Badge variant="outline" className={getStatusColor(orderClaimsData.data.orderStatus)}>{getStatusLabel(orderClaimsData.data.orderStatus)}</Badge></span>
+                    <span>{t('claims:detail.total')}: <span className="text-white font-semibold">{formatCurrencyWithThreeDecimals(orderClaimsData.data.orderTotalAmount)} <span className="text-[#FFF100]">USDT</span></span></span>
+                    <span>{t('claims:detail.claims')}: <span className="text-white">{claims.length}</span></span>
                   </div>
                 </div>
               </div>
@@ -258,16 +265,16 @@ const ClaimDetail: React.FC = () => {
           <div className="w-full mb-3 hidden md:block">
             <div className="w-full px-6 md:px-8 lg:px-10">
               <div className="grid grid-cols-[1fr_1.5fr_1fr_1.2fr_1fr_1.2fr_1fr] gap-2 md:gap-4 h-10 items-center text-xs text-white">
-                <div className="flex items-center justify-start min-w-0">Fecha</div>
+                <div className="flex items-center justify-start min-w-0">{t('claims:item.labels.date')}</div>
                 <div className="flex items-center justify-start min-w-0">
                   {/* Mostrar "Empresa" solo si el usuario es B2C y el tab es B2B */}
-                  {userModel === 'B2C' && claimType === 'B2B' ? 'Empresa' : 'Usuario'}
+                  {userModel === 'B2C' && claimType === 'B2B' ? t('claims:item.labels.company') : t('claims:item.labels.user')}
                 </div>
-                <div className="flex items-center justify-start min-w-0">Concepto</div>
-                <div className="flex items-center justify-start min-w-0">Monto</div>
-                <div className="flex items-center justify-start min-w-0">Estado</div>
-                <div className="flex items-center justify-start min-w-0">Tipo</div>
-                <div className="flex items-center justify-start min-w-0">Acciones</div>
+                <div className="flex items-center justify-start min-w-0">{t('claims:item.labels.concept')}</div>
+                <div className="flex items-center justify-start min-w-0">{t('claims:item.labels.amount')}</div>
+                <div className="flex items-center justify-start min-w-0">{t('claims:item.labels.status')}</div>
+                <div className="flex items-center justify-start min-w-0">{t('claims:item.labels.type')}</div>
+                <div className="flex items-center justify-start min-w-0">{t('claims:item.labels.actions')}</div>
               </div>
             </div>
           </div>
@@ -277,16 +284,16 @@ const ClaimDetail: React.FC = () => {
             <div className="flex items-center justify-center h-64">
               <div className="flex flex-col items-center gap-2">
                 <Spinner className="size-6 text-[#FFF100]" />
-                <span className="text-sm text-[#aaa]">Cargando claims...</span>
+                <span className="text-sm text-[#aaa]">{t('claims:detail.loading')}</span>
               </div>
             </div>
           ) : isError ? (
             <div className="flex items-center justify-center h-64">
-              <span className="text-sm text-[#ff6d64]">Error al cargar claims</span>
+              <span className="text-sm text-[#ff6d64]">{t('claims:detail.error')}</span>
             </div>
           ) : claims.length === 0 ? (
             <div className="flex items-center justify-center h-64">
-              <span className="text-sm text-[#aaa]">No hay claims en esta orden</span>
+              <span className="text-sm text-[#aaa]">{t('claims:detail.noClaims')}</span>
             </div>
           ) : (
             <div className="w-full space-y-2">
@@ -329,7 +336,7 @@ const ClaimDetail: React.FC = () => {
                         </div>
                         {/* Concepto */}
                         <div className="flex items-center justify-start min-w-0">
-                          {getConceptBadge(claim.concept)}
+                          {getConceptBadge(claim.concept, claim.origin)}
                         </div>
                         {/* Monto de la claim */}
                         <div className="flex items-center justify-start min-w-0">
@@ -364,7 +371,7 @@ const ClaimDetail: React.FC = () => {
                             }}
                             className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer text-xs md:text-sm whitespace-nowrap"
                           >
-                            detalles
+                            {t('claims:detail.details')}
                           </button>
                         </div>
                       </div>
@@ -373,35 +380,35 @@ const ClaimDetail: React.FC = () => {
                       <div className="md:hidden flex flex-col gap-3 text-sm text-white w-full">
                         {/* Fecha */}
                         <div className="flex items-center justify-between w-full">
-                          <span className="text-white/60 text-xs flex-shrink-0">Fecha</span>
+                          <span className="text-white/60 text-xs flex-shrink-0">{t('claims:item.labels.date')}</span>
                           <span className="text-white text-xs text-right ml-2">{formatDate(claim.createdAt)}</span>
                         </div>
                         {/* Usuario/Empresa */}
                         <div className="flex items-center justify-between w-full">
                           <span className="text-white/60 text-xs flex-shrink-0">
-                            {userModel === 'B2C' && claimType === 'B2B' ? 'Empresa' : 'Usuario'}
+                            {userModel === 'B2C' && claimType === 'B2B' ? t('claims:item.labels.company') : t('claims:item.labels.user')}
                           </span>
                           <span className="text-white text-xs text-right truncate ml-2 max-w-[60%]">{usuarioValue || 'N/A'}</span>
                         </div>
                         {/* Concepto */}
-                        {claim.concept && (
+                        {(claim.concept || claim.origin === 'b2c_from_b2b_commission') && (
                           <div className="flex items-center justify-between w-full">
-                            <span className="text-white/60 text-xs flex-shrink-0">Concepto</span>
+                            <span className="text-white/60 text-xs flex-shrink-0">{t('claims:item.labels.concept')}</span>
                             <div className="ml-2">
-                              {getConceptBadge(claim.concept)}
+                              {getConceptBadge(claim.concept, claim.origin)}
                             </div>
                           </div>
                         )}
                         {/* Monto de la claim */}
                         <div className="flex items-center justify-between w-full">
-                          <span className="text-white/60 text-xs flex-shrink-0">Monto</span>
+                          <span className="text-white/60 text-xs flex-shrink-0">{t('claims:item.labels.amount')}</span>
                           <span className="text-white font-semibold text-xs text-right whitespace-nowrap ml-2">
                             {formatCurrency(montoClaim, claim.currency)}
                           </span>
                         </div>
                         {/* Estado */}
                         <div className="flex items-center justify-between w-full">
-                          <span className="text-white/60 text-xs flex-shrink-0">Estado</span>
+                          <span className="text-white/60 text-xs flex-shrink-0">{t('claims:item.labels.status')}</span>
                           <div className="ml-2">
                             <Badge 
                               variant="outline" 
@@ -413,7 +420,7 @@ const ClaimDetail: React.FC = () => {
                         </div>
                         {/* Tipo de comisión */}
                         <div className="flex items-center justify-between w-full">
-                          <span className="text-white/60 text-xs flex-shrink-0">Tipo</span>
+                          <span className="text-white/60 text-xs flex-shrink-0">{t('claims:item.labels.type')}</span>
                           <div className="ml-2">
                             <Badge 
                               variant={getCommissionTypeBadgeVariant(claim.commissionType)}
@@ -425,7 +432,7 @@ const ClaimDetail: React.FC = () => {
                         </div>
                         {/* Acciones - Ver detalle */}
                         <div className="flex items-center justify-between w-full">
-                          <span className="text-white/60 text-xs flex-shrink-0">Acciones</span>
+                          <span className="text-white/60 text-xs flex-shrink-0">{t('claims:item.labels.actions')}</span>
                           <button
                             onClick={() => {
                               setSelectedClaim(claim);
@@ -433,7 +440,7 @@ const ClaimDetail: React.FC = () => {
                             }}
                             className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer text-xs whitespace-nowrap ml-2"
                           >
-                            detalles
+                            {t('claims:detail.details')}
                           </button>
                         </div>
                       </div>

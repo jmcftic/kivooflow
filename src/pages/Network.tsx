@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import SidebarApp from '../components/organisms/SidebarApp';
 import DashboardNavbar from '../components/atoms/DashboardNavbar';
@@ -35,6 +36,7 @@ type NetworkTabId = 'b2c' | 'b2b' | 'b2t';
 
 const Network: React.FC = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation(['network', 'commissions', 'common']);
   const [activeTab, setActiveTab] = useState<NetworkTabId>('b2c');
   const [activeLevel, setActiveLevel] = useState<1 | 2 | 3>(1);
   const [searchFilter, setSearchFilter] = useState('');
@@ -1390,7 +1392,7 @@ const Network: React.FC = () => {
           </div>
         )}
         {/* Navbar responsivo */}
-        <DashboardNavbar title={subtreeMode && subtreeRootName ? `Red de ${subtreeRootName}` : "Red"} />
+        <DashboardNavbar title={subtreeMode && subtreeRootName ? t('network:networkOf', { name: subtreeRootName }) : t('network:title')} />
 
         {/* Contenido de Red */}
         <div className="relative z-20 mt-4 mb-0 flex flex-col flex-1 min-h-0">
@@ -1401,10 +1403,10 @@ const Network: React.FC = () => {
                 onClick={handleBackToNetwork}
                 className="text-white hover:opacity-80 transition-opacity"
               >
-                Red {activeTab.toUpperCase()} General
+                {t('network:networkGeneral', { tab: activeTab.toUpperCase() })}
               </button>
               <SingleArrowHistory className="mx-2" />
-              <span className="font-bold">Nivel {subtreeRootLevel}</span>
+              <span className="font-bold">{t('network:level')} {subtreeRootLevel}</span>
               <SingleArrowHistory className="mx-2" />
               <span className="font-bold">{subtreeRootName}</span>
             </div>
@@ -1436,20 +1438,20 @@ const Network: React.FC = () => {
                 className="h-[90px] md:h-[100px] lg:h-[110px]"
                 icon={<MoneyIcon size={24} />}
                 detail="0"
-                subtitle="Referidos activos"
+                subtitle={t('network:stats.activeReferrals')}
                 showDollarSign={false}
               />
               <MiniBaner 
                 className="h-[90px] md:h-[100px] lg:h-[110px]"
                 icon={<MoneyIcon size={24} />}
                 detail="0.00"
-                subtitle="Comisiones último mes"
+                subtitle={t('network:stats.lastMonthCommissions')}
               />
               <MiniBaner 
                 className="h-[90px] md:h-[100px] lg:h-[110px]"
                 icon={<MoneyIcon size={24} />}
                 detail="0.00"
-                subtitle="Volumen total"
+                subtitle={t('network:stats.totalVolume')}
               />
             </div>
           )}
@@ -1525,6 +1527,11 @@ const Network: React.FC = () => {
                 totalItems={hasSearch ? displayedItems.length : totalItemsLevel1} 
                 currentPage={currentPage}
                 usersLimit={usersLimit}
+                totalPages={
+                  isLeaderTab 
+                    ? leaderState?.pagination?.totalPages 
+                    : b2cPagination?.totalPages
+                }
                 onChangePage={setCurrentPage}
                 onChangeLimit={(n) => { setUsersLimit(n); setCurrentPage(1); }}
               />

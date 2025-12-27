@@ -1,0 +1,34 @@
+{
+    "notifications": {
+        "deposit_success": {
+            "message": "We have received your deposit of {amount} {cryptocurrency} on your card ending in {cardNumber}, and it is currently being processed. It will be reflected in your balance in a few moments.",
+            "title": "You have deposited {amount} {cryptocurrency}. Your energy is now in motion!",
+            "body": "Check it now on your card {cardNumber} and keep vibrating with KIVOO"
+        },
+        "deposit_error": {
+            "message": "There was a problem crediting your deposit of {amount} {cryptocurrency} to your card ending in {cardNumber}. Please contact support.",
+            "title": "We couldn't credit your deposit of {amount} {cryptocurrency}",
+            "body": "We couldn't credit your deposit. Please contact support."
+        },
+        "card_purchase_payment_error": {
+            "message": "There was a problem processing your payment of {amount} {cryptocurrency} for your card purchase. Please contact support.",
+            "title": "We couldn't process your payment of {amount} {cryptocurrency}",
+            "body": "We couldn't process your payment. Please contact support."
+        },
+        "card_purchase_shipping_error": {
+            "message": "Your payment was processed successfully. However, there was an error sending the order to our carrier. Please contact support.",
+            "title": "We couldn't process your card shipment",
+            "body": "Your payment was processed successfully. However, there was an error sending the order to our carrier. Please contact support."
+        },
+        "admin_native_token_alert": {
+            "message": "{cryptocurrency} deposit received from user {userId} - {amount} {cryptocurrency} ({amountMXN} MXN)",
+            "title": "⏸️ {cryptocurrency} Received - Manual Accreditation Required",
+            "body": "Hash: {transactionHash} | User: {userId} | Card: {cardNumber}"
+        },
+        "admin_manual_review_alert": {
+            "message": "{errorType} detected: {errorDetail}",
+            "title": "🚨 Manual Review Required",
+            "body": "Transaction {transactionHash} paused - {errorType}"
+        }
+    }
+}

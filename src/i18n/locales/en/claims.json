@@ -1,0 +1,98 @@
+{
+  "title": "Claims",
+  "cards": {
+    "earningsToClaim": "Earnings to claim",
+    "claimedLastMonth": "Claimed last month",
+    "net": "Net"
+  },
+  "table": {
+    "headers": {
+      "date": "Date",
+      "amount": "Amount",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "labels": {
+      "date": "Date",
+      "amount": "Amount",
+      "status": "Status",
+      "actions": "Actions",
+      "details": "details",
+      "net": "Net"
+    },
+    "status": {
+      "paid": "Paid",
+      "pending": "Pending",
+      "cancelled": "Cancelled"
+    },
+    "messages": {
+      "loading": "Loading orders...",
+      "error": "Error loading orders",
+      "noOrders": "No orders available",
+      "loadingMore": "Loading more orders...",
+      "loadMore": "Load more orders"
+    }
+  },
+  "item": {
+    "labels": {
+      "id": "ID",
+      "email": "Email",
+      "date": "Date",
+      "concept": "Concept",
+      "card": "Card",
+      "company": "Company",
+      "commissionType": "Commission type",
+      "level": "Level",
+      "status": "Status",
+      "amount": "Amount",
+      "commission": "Commission",
+      "action": "Action",
+      "actions": "Actions",
+      "type": "Type",
+      "user": "User"
+    },
+    "concepts": {
+      "fund": "Recharge",
+      "card_selling": "Sale",
+      "volume": "Volume"
+    },
+    "commissionTypes": {
+      "level1": "Level 1",
+      "level2": "Level 2",
+      "level3": "Level 3",
+      "companyCommission": "Company Commission",
+      "retroactive": "Retroactive"
+    },
+    "actions": {
+      "viewDetail": "View detail"
+    }
+  },
+  "detail": {
+    "title": "Order Detail",
+    "back": "Back",
+    "order": "Order",
+    "status": "Status",
+    "total": "Total",
+    "claims": "Claims",
+    "loading": "Loading claims...",
+    "error": "Error loading claims",
+    "noClaims": "No claims in this order",
+    "details": "details",
+    "statusLabels": {
+      "received": "Received",
+      "inProcess": "In process",
+      "available": "Available",
+      "paid": "Paid",
+      "cancelled": "Cancelled"
+    },
+    "commissionTypes": {
+      "level1": "Level 1",
+      "level2": "Level 2",
+      "level3": "Level 3",
+      "companyCommission": "Company Commission",
+      "b2bCommission": "B2B Commission",
+      "retroactive": "Retroactive"
+    }
+  }
+}
+

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Button from "../atoms/Button";
 import EmailInput from "../molecules/EmailInput";
 import PasswordInput from "../atoms/PasswordInput";
@@ -21,6 +22,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   className = ""
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['forms', 'common']);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [step, setStep] = useState<'email' | 'password'>('email');
@@ -45,12 +47,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
     e.preventDefault();
     
     if (!email) {
-      setError("El correo electrónico es requerido");
+      setError(t('forms:login.emailRequired'));
       return;
     }
     
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError("Por favor ingresa un correo electrónico válido");
+      setError(t('common:validation.email'));
       return;
     }
     
@@ -62,7 +64,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     e.preventDefault();
     
     if (!password) {
-      setError("La contraseña es requerida");
+      setError(t('forms:login.passwordRequired'));
       return;
     }
     
@@ -70,11 +72,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
     
     try {
       await loginMutation.mutateAsync({ email, password });
+      // Esperar un momento para que el idioma se establezca correctamente
+      // antes de navegar (si el backend devolvió un idioma, ya se estableció en authService.login)
+      await new Promise(resolve => setTimeout(resolve, 100));
       // Si el login es exitoso, redirigir al dashboard
       navigate('/dashboard');
     } catch (error: any) {
       // Mostrar modal de error
-      setErrorMessage(error.message || "Error al iniciar sesión. Verifica tus credenciales.");
+      setErrorMessage(error.message || t('forms:login.invalidCredentials'));
       setShowErrorModal(true);
     }
   };
@@ -101,7 +106,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         <>
           {/* Título para email */}
           <h1 className="text-2xl md:text-3xl font-bold text-[#FFF100] text-center mb-8 uppercase tracking-wide">
-            INGRESA O REGISTRATE
+            {t('forms:login.title')}
           </h1>
           
           {/* Formulario de email */}
@@ -111,7 +116,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               value={email}
               onChange={handleEmailChange}
               error={error}
-              placeholder="Correo electrónico"
+              placeholder={t('forms:login.emailPlaceholder')}
             />
             
             {/* Botón continuar */}
@@ -121,7 +126,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               size="lg"
               className="w-full rounded-xl font-semibold text-lg py-4"
             >
-              Continuar
+              {t('forms:login.continue')}
             </Button>
           </form>
           
@@ -134,12 +139,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
         <>
           {/* Título para contraseña */}
           <h1 className="text-2xl md:text-3xl font-bold text-[#FFF100] text-center mb-4 uppercase tracking-wide">
-            INGRESA CONTRASEÑA
+            {t('forms:login.passwordTitle')}
           </h1>
           
           {/* Descripción */}
           <p className="text-sm text-gray-300 text-center mb-8">
-            Por seguridad, introduce la contraseña asociada a tu cuenta. Asegúrate de que sea la correcta.
+            {t('forms:login.passwordDescription')}
           </p>
           
           {/* Formulario de contraseña */}
@@ -150,7 +155,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               value={password}
               onChange={handlePasswordChange}
               error={error}
-              placeholder="Contraseña"
+              placeholder={t('forms:login.passwordPlaceholder')}
             />
             
             {/* Botón continuar */}
@@ -162,7 +167,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               loading={loginMutation.isPending}
               disabled={loginMutation.isPending}
             >
-              {loginMutation.isPending ? "Iniciando sesión..." : "Continuar"}
+              {loginMutation.isPending ? t('forms:login.loggingIn') : t('forms:login.continue')}
             </Button>
           </form>
           
@@ -173,7 +178,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               onClick={onForgotPassword}
               className="text-[#FFF100] text-sm hover:text-[#E6D900] transition-colors"
             >
-              Olvidé mi contraseña
+              {t('forms:login.forgotPassword')}
             </button>
           </div>
           
@@ -184,7 +189,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               onClick={handleBackToEmail}
               className="text-gray-400 text-sm hover:text-gray-300 transition-colors"
             >
-              ← Cambiar email
+              ← {t('forms:login.changeEmail')}
             </button>
           </div>
         </>

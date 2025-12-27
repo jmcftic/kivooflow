@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import SidebarApp from '../components/organisms/SidebarApp';
 import DashboardNavbar from '../components/atoms/DashboardNavbar';
@@ -24,6 +25,7 @@ import authService from '@/services/auth';
 
 const NetworkTree: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['network', 'common']);
   
   // Obtener el ID del árbol desde sessionStorage
   const getTreeUserId = (): number | null => {
@@ -221,7 +223,7 @@ const NetworkTree: React.FC = () => {
       }
     } catch (e) {
       console.error('Error cargando árbol', e);
-      setError('Error al cargar el árbol del usuario');
+      setError(t('network:errors.loadError'));
       setSubtreeUsers([]);
       setSubtreeTotal(0);
     } finally {
@@ -335,8 +337,8 @@ const NetworkTree: React.FC = () => {
       setParentErrors(prev => ({
         ...prev,
         [parentUserId]: status === 403
-          ? 'No hay más usuarios por mostrar.'
-          : 'No se pudieron cargar los usuarios de este nivel.'
+          ? t('network:messages.noMoreUsers')
+          : t('network:errors.loadError')
       }));
     } finally {
       setParentLoading(prev => {
@@ -406,7 +408,7 @@ const NetworkTree: React.FC = () => {
       console.error('Error cargando más hijos', e);
       setParentErrors(prev => ({
         ...prev,
-        [parentId]: 'No se pudieron cargar más usuarios.'
+        [parentId]: t('network:errors.loadError')
       }));
     } finally {
       setParentLoading(prev => {
@@ -431,9 +433,9 @@ const NetworkTree: React.FC = () => {
         <KivoMainBg className="absolute inset-0 z-0" />
         <SidebarApp />
         <div className="flex-1 relative flex flex-col pl-6 pr-6 overflow-y-auto pb-8 pt-16 lg:pt-0">
-          <DashboardNavbar title="Árbol de Red" />
+          <DashboardNavbar title={t('network:networkTree.title')} />
           <div className="flex items-center justify-center h-full">
-            <span className="text-[#ff6d64]">ID de usuario no válido</span>
+            <span className="text-[#ff6d64]">{t('network:errors.invalidUserId')}</span>
           </div>
         </div>
       </div>
@@ -447,7 +449,7 @@ const NetworkTree: React.FC = () => {
 
       <div className="flex-1 relative flex flex-col pl-6 pr-6 overflow-y-auto pb-8 pt-16 lg:pt-0">
         <DashboardNavbar 
-          title={subtreeRootName ? `Red de ${subtreeRootName}` : "Red de..."}
+          title={subtreeRootName ? t('network:networkOf', { name: subtreeRootName }) : t('network:title')}
         />
 
         {/* Overlay con animación Lottie cuando está cargando */}
@@ -471,10 +473,10 @@ const NetworkTree: React.FC = () => {
                     onClick={handleBack}
                     className="hover:opacity-80 transition-opacity"
                   >
-                    Red {activeTab.toUpperCase()} General
+                    {t('network:networkGeneral', { tab: activeTab.toUpperCase() })}
                   </button>
                   <SingleArrowHistory className="mx-2" />
-                  <span className="font-bold">Nivel {subtreeRootLevel}</span>
+                  <span className="font-bold">{t('network:level')} {subtreeRootLevel}</span>
                   <SingleArrowHistory className="mx-2" />
                   <span className="font-normal">{subtreeRootName}</span>
                 </div>
@@ -495,20 +497,20 @@ const NetworkTree: React.FC = () => {
                 className="h-[90px] md:h-[100px] lg:h-[110px]"
                 icon={<MoneyIcon size={24} />}
                 detail={subtreeSummary ? subtreeSummary.activeReferrals.toString() : "0"}
-                subtitle="Referidos activos"
+                subtitle={t('network:stats.activeReferrals')}
                 showDollarSign={false}
               />
               <MiniBaner 
                 className="h-[90px] md:h-[100px] lg:h-[110px]"
                 icon={<MoneyIcon size={24} />}
                 detail={subtreeSummary ? formatCurrencyWithThreeDecimals(subtreeSummary.lastMonthCommissions) : "0"}
-                subtitle="Comisiones último mes"
+                subtitle={t('network:stats.lastMonthCommissions')}
               />
               <MiniBaner 
                 className="h-[90px] md:h-[100px] lg:h-[110px]"
                 icon={<MoneyIcon size={24} />}
                 detail={subtreeSummary ? formatCurrencyWithThreeDecimals(subtreeSummary.totalVolume) : "0"}
-                subtitle="Volumen total"
+                subtitle={t('network:stats.totalVolume')}
               />
             </div>
 

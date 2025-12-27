@@ -1,0 +1,40 @@
+{
+  "titles": {
+    "notification": "Notification",
+    "notifications": "Notifications",
+    "noNotifications": "No notifications",
+    "markAllRead": "Mark all as read"
+  },
+  "maintenance": {
+    "title": "We are performing maintenance tasks",
+    "description": "Our app is temporarily out of service while we work on improvements. The app will be available soon, thank you for your understanding.",
+    "contactSupport": "Contact support"
+  },
+  "noCards": {
+    "title": "YOU CANNOT COLLECT YOUR COMMISSIONS",
+    "message": "To receive your payments you need to acquire your KIVOO card",
+    "contactSupport": "Contact support",
+    "requestCard": "Request card"
+  },
+  "claimAll": {
+    "processing": "Processing commission request...",
+    "success": "Commissions requested successfully",
+    "error": "Error requesting commissions"
+  },
+  "messages": {
+    "loading": "Loading notifications...",
+    "error": "Error loading notifications",
+    "tryAgain": "Please try again",
+    "allNotificationsHere": "All your notifications will appear here"
+  },
+  "buttons": {
+    "markAllRead": "Mark all as read"
+  },
+  "time": {
+    "fewSecondsAgo": "A few seconds ago",
+    "minutesAgo": "{{count}} minutes ago",
+    "hoursAgo": "{{count}} hours ago",
+    "daysAgo": "{{count}} days ago"
+  }
+}
+

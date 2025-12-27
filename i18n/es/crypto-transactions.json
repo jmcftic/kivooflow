@@ -1,0 +1,24 @@
+{
+    "success": {
+        "TRANSACTION_CREATED": "Transacción crypto creada exitosamente",
+        "TRANSACTION_CANCELLED": "Transacción cancelada exitosamente",
+        "ADDRESS_CREATED": "Dirección crypto creada exitosamente"
+    },
+    "errors": {
+        "TOKEN_NOT_SUPPORTED": "Token {cryptocurrency} no soportado en red {network}",
+        "CARD_NOT_FOUND": "Tarjeta no encontrada o no pertenece al usuario",
+        "TRANSACTION_NOT_FOUND": "Transacción no encontrada",
+        "TRANSACTION_CANNOT_CANCEL": "Transacción no encontrada o no se puede cancelar",
+        "ADDRESS_CREATION_ERROR": "Error creando nueva dirección crypto",
+        "QR_GENERATION_ERROR": "Error generando código QR"
+    },
+    "instructions": {
+        "SEND_TITLE": "Envía {cryptocurrency} a esta dirección",
+        "SCAN_QR_STEP": "Escanea el código QR con tu wallet de crypto",
+        "SEND_EXACT_AMOUNT_STEP": "Envía exactamente {amount} {cryptocurrency}",
+        "CONFIRM_TRANSACTION_STEP": "Confirma la transacción en tu wallet",
+        "WAIT_CONFIRMATION_STEP": "Espera confirmación (1-3 minutos típicamente)",
+        "WARNING_MESSAGE": "Envía SOLO {cryptocurrency} en red {network}. Otros tokens se perderán.",
+        "TIME_LIMIT_MESSAGE": "Esta transacción expira en 30 minutos"
+    }
+}

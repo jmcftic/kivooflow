@@ -1,0 +1,9 @@
+{
+  "SUCCESS": {
+    "ORDER_STATUS_UPDATED": "Orden {orderId} actualizada a estado '{status}'{paymentReference}"
+  },
+  "ERRORS": {
+    "ORDER_NOT_FOUND": "Orden con ID {orderId} no encontrada",
+    "INVALID_STATUS": "Estado inválido. Debe ser uno de: {validStatuses}"
+  }
+}

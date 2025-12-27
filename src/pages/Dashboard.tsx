@@ -16,9 +16,12 @@ import { LottieLoader } from '@/components/ui/lottie-loader';
 import { User } from '../types/auth';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 import { useMinimumLoading } from '../hooks/useMinimumLoading';
+import { useTranslation } from 'react-i18next';
+import LanguageDebug from '../components/atoms/LanguageDebug';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation(['dashboard', 'common']);
   const [user, setUser] = useState<User | null>(null);
   const [referralLink, setReferralLink] = useState<string>('');
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
@@ -46,7 +49,9 @@ const Dashboard: React.FC = () => {
 
   // Función para formatear valores monetarios (solo número, sin símbolo)
   const formatCurrency = (amount: number, currency: string = 'USDT'): string => {
-    return new Intl.NumberFormat('es-MX', {
+    // Usar el locale según el idioma actual
+    const locale = i18n.language === 'en' ? 'en-US' : 'es-MX';
+    return new Intl.NumberFormat(locale, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
@@ -63,7 +68,7 @@ const Dashboard: React.FC = () => {
     if (referralLink) {
       try {
         await navigator.clipboard.writeText(referralLink);
-        console.log('Link copiado al portapapeles');
+        console.log(t('dashboard:referralLink.copySuccess'));
         // Aquí puedes agregar una notificación de éxito si tienes un sistema de notificaciones
       } catch (error) {
         console.error('Error al copiar link:', error);
@@ -75,8 +80,8 @@ const Dashboard: React.FC = () => {
     if (referralLink && navigator.share) {
       try {
         await navigator.share({
-          title: 'Únete a Kivoo',
-          text: 'Únete a Kivoo usando mi link de referido',
+          title: t('dashboard:referralLink.shareTitle'),
+          text: t('dashboard:referralLink.shareText'),
           url: referralLink,
         });
       } catch (error) {
@@ -105,7 +110,7 @@ const Dashboard: React.FC = () => {
           </div>
         )}
         {/* Navbar responsivo */}
-        <DashboardNavbar />
+        <DashboardNavbar title={t('dashboard:title')} />
 
         {/* Info Banner - Justo debajo del navbar - OCULTO */}
         {/* <div className="relative z-20">
@@ -121,11 +126,11 @@ const Dashboard: React.FC = () => {
           <FullBanner
             title={
               <>
-                Link de{' '}
-                <span className="font-bold">{user?.full_name || 'Usuario'}</span>
+                {t('dashboard:referralLink.title')}{' '}
+                <span className="font-bold">{user?.full_name || t('dashboard:referralLink.user')}</span>
               </>
             }
-            linkText={referralLink || 'Cargando...'}
+            linkText={referralLink || t('dashboard:referralLink.loading')}
             linkHref={referralLink}
             onLinkClick={() => {
               if (referralLink) {
@@ -141,7 +146,7 @@ const Dashboard: React.FC = () => {
         <div className="relative z-20 mt-4 flex justify-end">
           <ModelSelector 
             onModelChange={(model) => {
-              console.log('Modelo seleccionado:', model);
+              // console.log('Modelo seleccionado:', model);
               setSelectedModel(model);
             }}
           />
@@ -151,29 +156,29 @@ const Dashboard: React.FC = () => {
         <div className="relative z-20 grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 mt-6">
           <MiniBaner 
             className="h-[90px] md:h-[100px] lg:h-[110px]"
-            detail={metricsLoading ? "Cargando..." : metrics ? (
+            detail={metricsLoading ? t('common:buttons.loading') : metrics ? (
               <>
                 {formatCurrency(metrics.totalEarnings, metrics.currency)} <span className="text-[#FFF100]">USDT</span>
               </>
             ) : (
               <>0.00 <span className="text-[#FFF100]">USDT</span></>
             )}
-            subtitle="Ganancias totales"
+            subtitle={t('dashboard:metrics.totalEarnings')}
             showDollarSign={false}
           />
           <MiniBaner 
             className="h-[90px] md:h-[100px] lg:h-[110px]"
-            detail={metricsLoading ? "Cargando..." : metrics ? (
+            detail={metricsLoading ? t('common:buttons.loading') : metrics ? (
               <>
                 {formatCurrency(metrics.availableBalance, metrics.currency)} <span className="text-[#FFF100]">USDT</span>
               </>
             ) : (
               <>0.00 <span className="text-[#FFF100]">USDT</span></>
             )}
-            subtitle="Saldo disponible"
+            subtitle={t('dashboard:metrics.availableBalance')}
             showDollarSign={false}
             actionButton={{
-              text: "Solicitar pago",
+              text: t('dashboard:quickActions.requestPayment'),
               onClick: () => {
                 navigate('/commissions');
               }
@@ -185,32 +190,32 @@ const Dashboard: React.FC = () => {
         <div className="relative z-20 grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mt-6">
           <MiniBaner 
             className="h-[90px] md:h-[100px] lg:h-[110px]"
-            detail={metricsLoading ? "Cargando..." : metrics ? metrics.activeReferrals.toString() : "0"}
-            subtitle="Referidos Activos"
+            detail={metricsLoading ? t('common:buttons.loading') : metrics ? metrics.activeReferrals.toString() : "0"}
+            subtitle={t('dashboard:metrics.activeReferrals')}
             showDollarSign={false}
           />
           <MiniBaner 
             className="h-[90px] md:h-[100px] lg:h-[110px]"
-            detail={metricsLoading ? "Cargando..." : metrics ? (
+            detail={metricsLoading ? t('common:buttons.loading') : metrics ? (
               <>
                 {formatCurrency(metrics.lastMonthCommissions, metrics.currency)} <span className="text-[#FFF100]">USDT</span>
               </>
             ) : (
               <>0.00 <span className="text-[#FFF100]">USDT</span></>
             )}
-            subtitle="Comisiones último mes"
+            subtitle={t('dashboard:metrics.lastMonthCommissions')}
             showDollarSign={false}
           />
           <MiniBaner 
             className="h-[90px] md:h-[100px] lg:h-[110px]"
-            detail={metricsLoading ? "Cargando..." : metrics ? (
+            detail={metricsLoading ? t('common:buttons.loading') : metrics ? (
               <>
                 {formatCurrency(metrics.totalVolume, metrics.currency)} <span className="text-[#FFF100]">USDT</span>
               </>
             ) : (
               <>0.00 <span className="text-[#FFF100]">USDT</span></>
             )}
-            subtitle="Volumen total"
+            subtitle={t('dashboard:metrics.totalVolume')}
             showDollarSign={false}
           />
         </div>
@@ -238,6 +243,9 @@ const Dashboard: React.FC = () => {
         <div className="flex flex-col items-center justify-center flex-1 relative z-20">
          
         </div>
+
+        {/* Debug: Componente para verificar el idioma (remover en producción) */}
+        <LanguageDebug />
 
         {/* SVG de esquina en inferior derecha (debajo del patrón) */}
         <div className="absolute bottom-0 right-0 pointer-events-none overflow-hidden z-0">

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ClaimItem from "../atoms/ClaimItem";
 import ClaimDetailModal from "../molecules/ClaimDetailModal";
@@ -39,16 +40,20 @@ interface MappedClaim {
   concept?: 'fund' | 'card_selling'; // Concepto de la comisión: recarga o venta de tarjetas
 }
 
-const mapClaim = (claim: Claim): MappedClaim => {
+// Función helper para obtener traducción de estado
+const getStatusTranslation = (status: string, t: (key: string) => string): string => {
+  const statusLower = status.toLowerCase();
+  if (statusLower === 'processed' || statusLower === 'claimed') return t('commissions:status.approved');
+  if (statusLower === 'pending') return t('commissions:status.pending');
+  if (statusLower === 'available') return t('commissions:status.available');
+  if (statusLower === 'requested') return t('commissions:status.requested');
+  if (statusLower === 'rejected' || statusLower === 'cancelled') return t('commissions:status.rejected');
+  return status;
+};
+
+const mapClaim = (claim: Claim, t: (key: string) => string): MappedClaim => {
   // Mapear estado del backend a formato legible
-  const mapStatus = (status: string): string => {
-    const statusLower = status.toLowerCase();
-    if (statusLower === 'processed' || statusLower === 'claimed') return 'Aprobado';
-    if (statusLower === 'pending') return 'Pendiente';
-    if (statusLower === 'available') return 'Disponible';
-    if (statusLower === 'rejected' || statusLower === 'cancelled') return 'Rechazado';
-    return status;
-  };
+  const mapStatus = (status: string): string => getStatusTranslation(status, t);
 
   // Para tarjeta, priorizar calculationDetails.DefaultCard.card_number
   // Si no existe, usar cryptoTransactionId como fallback
@@ -126,7 +131,7 @@ const mapClaim = (claim: Claim): MappedClaim => {
     // Si encontramos un email para retroactive, usarlo
     if (retroactiveEmail) {
       usuarioValue = retroactiveEmail;
-      usuarioLabel = 'Usuario';
+      usuarioLabel = t('commissions:labels.user');
     }
   }
 
@@ -146,16 +151,8 @@ const mapClaim = (claim: Claim): MappedClaim => {
 };
 
 // Mapear B2BCommission al formato esperado por ClaimItem
-const mapB2BCommission = (commission: B2BCommission): MappedClaim => {
-  const mapStatus = (status: string): string => {
-    const statusLower = status.toLowerCase();
-    if (statusLower === 'available') return 'Disponible';
-    if (statusLower === 'requested') return 'Solicitado';
-    if (statusLower === 'processed' || statusLower === 'claimed') return 'Aprobado';
-    if (statusLower === 'pending') return 'Pendiente';
-    if (statusLower === 'rejected' || statusLower === 'cancelled') return 'Rechazado';
-    return status;
-  };
+const mapB2BCommission = (commission: B2BCommission, t: (key: string) => string): MappedClaim => {
+  const mapStatus = (status: string): string => getStatusTranslation(status, t);
 
   // Función auxiliar para obtener fecha válida en formato ISO
   const getValidDate = (dateString: string | null | undefined): string | null => {
@@ -214,6 +211,7 @@ const mapB2BCommission = (commission: B2BCommission): MappedClaim => {
 };
 
 // Función para obtener comisiones B2C (claims disponibles) de la API con paginación
+// Retorna los claims originales sin mapear para poder aplicar traducciones después
 const fetchB2CCommissions = async ({ 
   page = 1,
   pageSize = 10,
@@ -222,14 +220,12 @@ const fetchB2CCommissions = async ({
   page: number;
   pageSize: number;
   claimType?: 'B2C' | 'B2B' | 'B2T';
-}): Promise<{ data: MappedClaim[], totalItems: number, totalPages: number, summary?: any }> => {
+}): Promise<{ items: Claim[], totalItems: number, totalPages: number, summary?: any }> => {
   // Filtrar solo por estado "available" y agregar claimType
   const response = await getClaims({ page, pageSize, status: 'available', claimType });
   
-  const mappedData = response.items.map(mapClaim);
-  
   return {
-    data: mappedData,
+    items: response.items,
     totalItems: response.pagination.total,
     totalPages: response.pagination.totalPages,
     summary: response.summary,
@@ -237,22 +233,21 @@ const fetchB2CCommissions = async ({
 };
 
 // Función para obtener comisiones B2B de la API con paginación
+// Retorna las comisiones originales sin mapear para poder aplicar traducciones después
 const fetchB2BCommissions = async ({ 
   page = 1,
   pageSize = 20
 }: { 
   page: number;
   pageSize: number;
-}): Promise<{ data: MappedClaim[], totalItems: number, totalPages: number, summary?: any }> => {
+}): Promise<{ commissions: B2BCommission[], totalItems: number, totalPages: number, summary?: any }> => {
   const limit = pageSize;
   const offset = (page - 1) * limit;
   
   const response = await getB2BCommissions({ limit, offset });
   
-  const mappedData = response.commissions.map(mapB2BCommission);
-  
   return {
-    data: mappedData,
+    commissions: response.commissions,
     totalItems: response.total || response.commissions.length,
     totalPages: response.pagination.totalPages,
     summary: response.summary, // B2B commissions ahora tiene summary
@@ -260,6 +255,7 @@ const fetchB2BCommissions = async ({
 };
 
 const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "", activeTab, currentPage, pageSize, onSummaryChange, onPaginationChange }) => {
+  const { t } = useTranslation(['commissions', 'claims', 'common']);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedClaim, setSelectedClaim] = useState<MappedClaim | null>(null);
   const [modalMode, setModalMode] = useState<'view' | 'claim' | 'claimMlm'>('view');
@@ -289,24 +285,49 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
   // - Si está en tab B2T: usar claims con claimType=B2T (si existe) o similar
   const queryFn = React.useCallback(async () => {
     if (activeTab === 'b2c') {
-      return fetchB2CCommissions({ page: currentPage, pageSize, claimType: 'B2C' });
+      const result = await fetchB2CCommissions({ page: currentPage, pageSize, claimType: 'B2C' });
+      // Aplicar mapeo con traducciones
+      return { 
+        data: result.items.map(claim => mapClaim(claim, t)),
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+        summary: result.summary,
+      };
     }
     
     if (activeTab === 'b2t') {
       // Para B2T, usar el mismo endpoint de claims pero con claimType=B2T si el backend lo soporta
       // Por ahora, usar B2B como fallback hasta que el backend soporte B2T
-      return fetchB2CCommissions({ page: currentPage, pageSize, claimType: 'B2B' });
+      const result = await fetchB2CCommissions({ page: currentPage, pageSize, claimType: 'B2B' });
+      return { 
+        data: result.items.map(claim => mapClaim(claim, t)),
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+        summary: result.summary,
+      };
     }
     
     // Si está en tab B2B
     if (userModel === 'b2b') {
       // Usuario B2B usa el endpoint normal de claims
-      return fetchB2CCommissions({ page: currentPage, pageSize, claimType: 'B2B' });
+      const result = await fetchB2CCommissions({ page: currentPage, pageSize, claimType: 'B2B' });
+      return { 
+        data: result.items.map(claim => mapClaim(claim, t)),
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+        summary: result.summary,
+      };
     } else {
       // Usuario B2C con empresas hijas usa el endpoint b2c-from-b2b-commissions
-      return fetchB2BCommissions({ page: currentPage, pageSize });
+      const result = await fetchB2BCommissions({ page: currentPage, pageSize });
+      return { 
+        data: result.commissions.map(commission => mapB2BCommission(commission, t)),
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+        summary: result.summary,
+      };
     }
-  }, [activeTab, userModel, currentPage, pageSize]);
+  }, [activeTab, userModel, currentPage, pageSize, t]);
 
   const {
     data: queryData,
@@ -495,16 +516,16 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
               <div className="flex items-center justify-center h-full min-h-[300px]">
                 <div className="flex flex-col items-center gap-2">
                   <Spinner className="size-6 text-[#FFF000]" />
-                  <span className="text-sm text-[#aaa]">Cargando comisiones...</span>
+                  <span className="text-sm text-[#aaa]">{t('commissions:messages.loading')}</span>
                 </div>
               </div>
             ) : status === "error" ? (
               <div className="flex items-center justify-center h-full min-h-[300px]">
-                <span className="text-sm text-[#ff6d64]">Error al cargar comisiones</span>
+                <span className="text-sm text-[#ff6d64]">{t('commissions:messages.error')}</span>
               </div>
             ) : commissions.length === 0 ? (
               <div className="flex items-center justify-center h-full min-h-[300px]">
-                <span className="text-sm text-[#aaa]">No hay comisiones disponibles</span>
+                <span className="text-sm text-[#aaa]">{t('commissions:messages.noCommissions')}</span>
               </div>
             ) : (
               <>
@@ -537,11 +558,11 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
                     // Si no es retroactive y se deben aplicar cambios, usar lógica según el contexto
                     if (isB2CViewingB2B) {
                       // B2C viendo B2B: mostrar "Empresa" con teamName
-                      usuarioLabel = 'Empresa';
+                      usuarioLabel = t('commissions:labels.company');
                       usuarioValue = commission.originalB2BCommission?.teamName || commission.usuarioValue;
                     } else {
                       // B2C viendo B2C o B2B viendo B2B: mostrar "Usuario" con correo censurado
-                      usuarioLabel = 'Usuario';
+                      usuarioLabel = t('commissions:labels.user');
                       // El correo censurado viene del backend, usar usuarioValue si está disponible, sino userEmail
                       usuarioValue = commission.usuarioValue || commission.userEmail;
                     }
@@ -597,7 +618,7 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
           usuario={
             selectedClaim.originalClaim?.calculationDetails && (selectedClaim.originalClaim.calculationDetails as any)?.userFullName
               ? (selectedClaim.originalClaim.calculationDetails as any).userFullName
-              : (selectedClaim.originalClaim?.userId ? `Usuario ${selectedClaim.originalClaim.userId}` : 'N/A')
+              : (selectedClaim.originalClaim?.userId ? `${t('commissions:labels.user')} ${selectedClaim.originalClaim.userId}` : 'N/A')
           }
           fecha={selectedClaim.fecha}
           estado={selectedClaim.estado}

@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AreaChart,
   Area,
@@ -40,20 +41,7 @@ interface ResumenCardProps {
   model?: string | null; // Modelo seleccionado (B2C, B2B, B2T)
 }
 
-const chartConfig = {
-  ventas: {
-    label: "Ventas",
-    color: "#00BFFF",
-  },
-  recargas: {
-    label: "Recargas",
-    color: "#FFFF00",
-  },
-  comisiones: {
-    label: "Comisiones",
-    color: "#B8860B",
-  },
-} satisfies ChartConfig;
+// chartConfig se inicializará dentro del componente para usar traducciones
 
 // Mapeo de opciones del selector a DateFilter de la API
 const RANGE_TO_DATE_FILTER: Record<string, DateFilter> = {
@@ -83,6 +71,24 @@ const ResumenCard: React.FC<ResumenCardProps> = ({
   currentDateFilter = "last_2_months",
   model
 }) => {
+  const { t, i18n } = useTranslation(['dashboard', 'common']);
+  
+  // Configuración del gráfico con traducciones
+  const chartConfig = useMemo(() => ({
+    ventas: {
+      label: t('dashboard:summary.labels.ventas'),
+      color: "#00BFFF",
+    },
+    recargas: {
+      label: t('dashboard:summary.labels.recargas'),
+      color: "#FFFF00",
+    },
+    comisiones: {
+      label: t('dashboard:summary.labels.comisiones'),
+      color: "#B8860B",
+    },
+  } satisfies ChartConfig), [t]);
+  
   // Obtener el modelo del usuario - inicializar desde localStorage primero para evitar delay
   const getInitialUserModel = (): string | null => {
     try {
@@ -132,14 +138,17 @@ const ResumenCard: React.FC<ResumenCardProps> = ({
   const isB2CViewingB2B = userModel?.toLowerCase() === 'b2c' && model?.toLowerCase() === 'b2b';
   
   // Debug: verificar valores
-  if (process.env.NODE_ENV === 'development') {
-    console.log('ResumenCard debug:', { userModel, model, isB2CViewingB2B });
-  }
+  // if (process.env.NODE_ENV === 'development') {
+  //   console.log('ResumenCard debug:', { userModel, model, isB2CViewingB2B });
+  // }
   
   // Si es B2C viendo B2B, solo mostrar recargas
-  const filteredChartConfig = isB2CViewingB2B 
-    ? { recargas: chartConfig.recargas } 
-    : chartConfig;
+  const filteredChartConfig = useMemo(() => 
+    isB2CViewingB2B 
+      ? { recargas: chartConfig.recargas } 
+      : chartConfig,
+    [isB2CViewingB2B, chartConfig]
+  );
   // Inicializar el rango basado en el currentDateFilter
   const initialRange = DATE_FILTER_TO_RANGE[currentDateFilter] || "2months";
   const [selectedRange, setSelectedRange] = useState<RangeOption>(initialRange as RangeOption);
@@ -277,30 +286,30 @@ const ResumenCard: React.FC<ResumenCardProps> = ({
     <div className="w-full h-full flex flex-col mb-0 pt-10">
       {/* Header con título y selectores */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <h3 className="text-[#FFF000] text-xl font-bold uppercase">RESUMEN GENERAL</h3>
+          <h3 className="text-[#FFF000] text-xl font-bold uppercase">{t('dashboard:summary.title')}</h3>
           
           <div className="flex gap-2">
             {/* Select para tipo de vista (Mensual/Semanal) */}
             <Select value={viewType} onValueChange={(value) => setViewType(value as ViewType)}>
               <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Vista" />
+                <SelectValue placeholder={t('dashboard:summary.view')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="weekly">Semanal</SelectItem>
-                <SelectItem value="monthly">Mensual</SelectItem>
+                <SelectItem value="weekly">{t('dashboard:summary.weekly')}</SelectItem>
+                <SelectItem value="monthly">{t('dashboard:summary.monthly')}</SelectItem>
               </SelectContent>
             </Select>
             
             {/* Select para rango de tiempo */}
             <Select value={selectedRange} onValueChange={handleRangeChange}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Selecciona un rango" />
+                <SelectValue placeholder={t('dashboard:summary.selectRange')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2months">Últimos 2 meses</SelectItem>
-                <SelectItem value="6months">Últimos 6 meses</SelectItem>
-                <SelectItem value="1year">Último año</SelectItem>
-                <SelectItem value="2years">Últimos 2 años</SelectItem>
+                <SelectItem value="2months">{t('dashboard:summary.last2Months')}</SelectItem>
+                <SelectItem value="6months">{t('dashboard:summary.last6Months')}</SelectItem>
+                <SelectItem value="1year">{t('dashboard:summary.lastYear')}</SelectItem>
+                <SelectItem value="2years">{t('dashboard:summary.last2Years')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -312,8 +321,8 @@ const ResumenCard: React.FC<ResumenCardProps> = ({
             <div className="flex items-center justify-center h-full text-gray-400">
               <p>
                 {viewType === "weekly" 
-                  ? "No hay datos semanales disponibles para el período seleccionado"
-                  : "No hay datos disponibles para el período seleccionado"}
+                  ? t('dashboard:summary.noWeeklyData')
+                  : t('dashboard:summary.noData')}
               </p>
             </div>
           ) : (
@@ -437,7 +446,9 @@ const ResumenCard: React.FC<ResumenCardProps> = ({
                             rawValue = typeof item.value === 'number' ? item.value : 0;
                           }
                           
-                          const value = rawValue.toLocaleString('es-MX', { 
+                          // Usar locale según el idioma
+                          const locale = i18n.language === 'en' ? 'en-US' : 'es-MX';
+                          const value = rawValue.toLocaleString(locale, { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
                           });
@@ -522,7 +533,7 @@ const ResumenCard: React.FC<ResumenCardProps> = ({
           {/* Nota sobre escalado de recargas si aplica */}
           {scaleFactor > 1 && (
             <div className="mt-2 text-xs text-[#aaa] text-center">
-              <span className="text-[#FFF100]">*</span> Las recargas se muestran a escala para mejor visualización. Los valores reales se muestran en el tooltip.
+              <span className="text-[#FFF100]">*</span> {t('dashboard:summary.recargasScaleNote')}
             </div>
           )}
         </div>

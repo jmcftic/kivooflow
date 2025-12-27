@@ -1,0 +1,34 @@
+{
+    "notifications": {
+        "deposit_success": {
+            "message": "Hemos recibido tu deposito de {amount} {cryptocurrency} en tu tarjeta finalizada en {cardNumber} y esta siendo procesado. Lo vemos reflejado en tu saldo en unos momentos",
+            "title": "Has depositado {amount} {cryptocurrency} ¡Tu energía ya está en movimiento!",
+            "body": "Valídalo ahora en tu tarjeta {cardNumber} y sigue vibrando con KIVOO"
+        },
+        "deposit_error": {
+            "message": "Hubo un problema al acreditar tu deposito de {amount} {cryptocurrency} en tu tarjeta finalizada en {cardNumber}. Por favor contacta a soporte.",
+            "title": "No pudimos acreditar tu deposito de {amount} {cryptocurrency}",
+            "body": "No pudimos acreditar tu deposito. Por favor contacta a soporte."
+        },
+        "card_purchase_payment_error": {
+            "message": "Hubo un problema al procesar tu pago de {amount} {cryptocurrency} para la compra de tu tarjeta. Por favor contacta a soporte.",
+            "title": "No pudimos procesar tu pago de {amount} {cryptocurrency}",
+            "body": "No pudimos procesar tu pago. Por favor contacta a soporte."
+        },
+        "card_purchase_shipping_error": {
+            "message": "Tu pago ha sido procesado exitosamente. Sin embargo, hubo un error al enviar la orden a nuestro transportista. Por favor contacta a soporte.",
+            "title": "No pudimos procesar el envio de tu tarjeta",
+            "body": "tu pago ha sido procesado exitosamente. Sin embargo, hubo un error al enviar la orden a nuestro transportista. Por favor contacta a soporte."
+        },
+        "admin_native_token_alert": {
+            "message": "Depósito {cryptocurrency} recibido de usuario {userId} - {amount} {cryptocurrency} ({amountMXN} MXN)",
+            "title": "⏸️ {cryptocurrency} Recibido - Acreditación Manual Requerida",
+            "body": "Hash: {transactionHash} | Usuario: {userId} | Tarjeta: {cardNumber}"
+        },
+        "admin_manual_review_alert": {
+            "message": "{errorType} detectado: {errorDetail}",
+            "title": "🚨 Revisión Manual Requerida",
+            "body": "Transacción {transactionHash} pausada - {errorType}"
+        }
+    }
+}

@@ -8,13 +8,17 @@ interface NetworkPaginationBarProps {
   usersLimit: number;
   onChangePage: (page: number) => void;
   onChangeLimit: (limit: number) => void;
+  totalPages?: number; // Prop opcional para usar totalPages del backend cuando esté disponible
 }
 
 const allowedLimits = [10, 20, 50] as const;
 
-const NetworkPaginationBar: React.FC<NetworkPaginationBarProps> = ({ totalItems, currentPage, usersLimit, onChangePage, onChangeLimit }) => {
+const NetworkPaginationBar: React.FC<NetworkPaginationBarProps> = ({ totalItems, currentPage, usersLimit, onChangePage, onChangeLimit, totalPages: backendTotalPages }) => {
   const effectiveLimit = allowedLimits.includes(usersLimit as (typeof allowedLimits)[number]) ? usersLimit : allowedLimits[0];
-  const totalPages = Math.max(1, Math.ceil(totalItems / Math.max(1, effectiveLimit)));
+  // Usar totalPages del backend si está disponible, sino calcularlo basado en totalItems
+  const totalPages = backendTotalPages !== undefined && backendTotalPages > 0 
+    ? backendTotalPages 
+    : Math.max(1, Math.ceil(totalItems / Math.max(1, effectiveLimit)));
   const canPrev = currentPage > 1;
   const canNext = currentPage < totalPages;
 

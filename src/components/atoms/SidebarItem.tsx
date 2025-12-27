@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import SidebarBackgroundItemPrimaryFull from './SidebarBackgroundItemPrimaryFull';
 import SidebarBackgroundItemPrimaryMini from './SidebarBackgroundItemPrimaryMini';
 import SidebarBackgroundItemSecondary from './SidebarBackgroundItemSecondary';
@@ -22,8 +23,10 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   onClick,
   className = "",
   disabled = false,
-  disabledMessage = "El módulo estará disponible próximamente"
+  disabledMessage
 }) => {
+  const { t } = useTranslation('navigation');
+  const defaultDisabledMessage = disabledMessage || t('messages.moduleComingSoon');
   const [showTooltip, setShowTooltip] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const tooltipIdRef = useRef<string>(`${label}-${Math.random().toString(36).slice(2, 8)}`);
@@ -116,7 +119,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
 
       {disabled && showTooltip && (
         <div className={`absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-1 rounded-lg shadow-lg text-xs font-medium text-black bg-[#FFF100] animate-pulse whitespace-nowrap ${isCollapsed ? 'z-50' : ''}`}>
-          {disabledMessage}
+          {defaultDisabledMessage}
         </div>
       )}
     </div>

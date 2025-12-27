@@ -1,0 +1,17 @@
+{
+    "success": {
+        "SHIPPING_METHOD_UPDATED": "Método de envío actualizado correctamente",
+        "SHIPPING_METHOD_DELETED": "Método de envío eliminado correctamente",
+        "SHIPPING_METHOD_SAVED": "Método de envío del usuario guardado correctamente",
+        "SHIPPING_METHODS_RETRIEVED": "Metodos de envío obtenidos correctamente",
+        "SHIPPING_METHOD_RETRIEVED": "Metodo de envío obtenido correctamente",
+        "SHIPPING_METHOD_CREATED": "Metodo de envío creado correctamente"
+    },
+    "errors": {
+        "SHIPPING_METHOD_UPDATE_FAILED": "No se pudo actualizar el metodo de envío",
+        "SHIPPING_METHOD_DELETE_FAILED": "No se pudo eliminar el metodo de envío",
+        "SHIPPING_METHOD_NOT_FOUND": "No se pudo obtener el metodo de envío del usuario",
+        "ORDER_NOT_FOUND": "No se pudo encontrar una orden para el usuario {userId}",
+        "SHIPPING_METHOD_SAVE_FAILED": "No se pudo guardar el metodo de envío del usuario"
+    }
+}

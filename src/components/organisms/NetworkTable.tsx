@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { formatCurrencyWithThreeDecimals } from '@/lib/utils';
 import InfoBanner from '../atoms/InfoBanner';
 import DropDownTringle from '../atoms/DropDownTringle';
@@ -65,6 +66,7 @@ interface NetworkTableProps {
 
 const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLevel, onToggleExpand, childrenByParent = {}, childIndentPx = 30, onViewTree, onViewDetail, disableExpand = false, disableViewTree = false, isLeaderTab = false, onLoadMoreChildren, parentHasMore = {}, parentLoading = {}, loadingTreeUserId = null, parentExhausted = {}, parentErrors = {}, hasDepthLimit = true, maxDepth = 3 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['network', 'common']);
 
   const handleViewTree = (userId: number) => {
     if (onViewTree) {
@@ -174,13 +176,13 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                         className="text-[#FFF100] cursor-pointer hover:text-[#E6D900] transition-colors" 
                         onClick={() => onViewDetail(item.id)}
                       >
-                        Ver detalle
+                        {t('network:table.actions.viewDetail')}
                       </span>
                     </div>
                   ) : canViewTree ? (
                     <div className="flex items-center justify-end gap-2">
                       <span className={`text-[#FFF100] ${isLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !isLoading && handleViewTree(item.id)}>
-                        Ver árbol
+                        {t('network:table.actions.viewTree')}
                       </span>
                       {isLoading && <Spinner className="size-4 text-[#FFF100]" />}
                     </div>
@@ -245,7 +247,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                           {childCanViewTree ? (
                             <div className="flex items-center justify-end gap-2">
                               <span className={`text-[#FFF100] ${childIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !childIsLoading && handleViewTree(child.id)}>
-                                Ver árbol
+                                {t('network:table.actions.viewTree')}
                               </span>
                               {childIsLoading && <Spinner className="size-4 text-[#FFF100]" />}
                             </div>
@@ -309,7 +311,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                       {grandCanViewTree ? (
                                         <div className="flex items-center justify-end gap-2">
                                           <span className={`text-[#FFF100] ${grandIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !grandIsLoading && handleViewTree(grand.id)}>
-                                            Ver árbol
+                                            {t('network:table.actions.viewTree')}
                                           </span>
                                           {grandIsLoading && <Spinner className="size-4 text-[#FFF100]" />}
                                         </div>
@@ -371,7 +373,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                                 {greatGrandCanViewTree ? (
                                                   <div className="flex items-center justify-end gap-2">
                                                     <span className={`text-[#FFF100] ${greatGrandIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !greatGrandIsLoading && handleViewTree(greatGrand.id)}>
-                                                      Ver árbol
+                                                      {t('network:table.actions.viewTree')}
                                                     </span>
                                                     {greatGrandIsLoading && <Spinner className="size-4 text-[#FFF100]" />}
                                                   </div>
@@ -427,7 +429,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                           </div>
                         ) : parentExhausted[child.id] ? (
                           <div className="w-full flex items-center justify-center py-2 text-[#FFF000] text-sm">
-                            No hay más usuarios en este nivel
+                            {t('network:messages.noMoreUsers')}
                           </div>
                         ) : parentHasMore[child.id] ? (
                           <div className="w-full flex items-center justify-center py-2">
@@ -436,7 +438,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                               onClick={() => onLoadMoreChildren && onLoadMoreChildren(child.id, childAuthLevel as 1 | 2 | 3)}
                               disabled={!!parentLoading[child.id]}
                             >
-                              {parentLoading[child.id] ? 'Cargando...' : 'Cargar más'}
+                              {parentLoading[child.id] ? t('network:table.actions.loading') : t('network:table.actions.loadMore')}
                               {parentLoading[child.id] && <Spinner className="size-4 text-[#FFF100]" />}
                             </button>
                           </div>
@@ -455,7 +457,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                   </div>
                 ) : parentExhausted[item.id] ? (
                   <div className="w-full flex items-center justify-center py-2 text-[#FFF000] text-sm">
-                    No hay más usuarios en este nivel
+                    {t('network:messages.noMoreUsers')}
                   </div>
                 ) : parentHasMore[item.id] ? (
                   <div className="w-full flex items-center justify-center py-2">
@@ -464,7 +466,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                       onClick={() => onLoadMoreChildren && onLoadMoreChildren(item.id, authLevel as 1 | 2 | 3)}
                       disabled={!!parentLoading[item.id]}
                     >
-                      {parentLoading[item.id] ? 'Cargando...' : 'Cargar más'}
+                      {parentLoading[item.id] ? t('network:table.actions.loading') : t('network:table.actions.loadMore')}
                       {parentLoading[item.id] && <Spinner className="size-4 text-[#FFF100]" />}
                     </button>
                   </div>

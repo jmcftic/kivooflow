@@ -1,0 +1,17 @@
+{
+    "success": {
+        "SHIPPING_METHOD_UPDATED": "Shipping method successfully updated",
+        "SHIPPING_METHOD_DELETED": "Shipping method successfully deleted",
+        "SHIPPING_METHOD_SAVED": "User shipping method successfully saved",
+        "SHIPPING_METHODS_RETRIEVED": "Shipping methods successfully retrieved",
+        "SHIPPING_METHOD_RETRIEVED": "Shipping method successfully retrieved",
+        "SHIPPING_METHOD_CREATED": "Shipping method successfully created"
+    },
+    "errors": {
+        "SHIPPING_METHOD_UPDATE_FAILED": "Could not update the shipping method",
+        "SHIPPING_METHOD_DELETE_FAILED": "Could not delete the shipping method",
+        "SHIPPING_METHOD_NOT_FOUND": "Could not retrieve the user's shipping method",
+        "ORDER_NOT_FOUND": "Could not find an order for user {userId}",
+        "SHIPPING_METHOD_SAVE_FAILED": "Could not save the user's shipping method"
+    }
+}

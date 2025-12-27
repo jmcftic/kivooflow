@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Button from './Button';
 
 export interface ErrorModalProps {
@@ -12,10 +13,13 @@ export interface ErrorModalProps {
 const ErrorModal: React.FC<ErrorModalProps> = ({
   isOpen,
   onClose,
-  title = "Error",
+  title,
   message,
   className = ""
 }) => {
+  const { t } = useTranslation(['commissions', 'common']);
+  const defaultTitle = title || t('commissions:modals.error.title');
+  
   if (!isOpen) return null;
 
   return (
@@ -31,7 +35,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-white">
-            {title}
+            {defaultTitle}
           </h3>
           <button
             onClick={onClose}
@@ -58,7 +62,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
             size="md"
             className="rounded-xl font-semibold"
           >
-            Entendido
+            {t('commissions:modals.error.understood')}
           </Button>
         </div>
       </div>

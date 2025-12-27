@@ -1,0 +1,19 @@
+{
+    "success": {
+        "CARD_TYPE_CREATED": "Tarjeta creada exitosamente",
+        "CARD_TYPE_UPDATED": "Tarjeta actualizada exitosamente",
+        "CARD_TYPE_DELETED": "Tarjeta eliminada exitosamente",
+        "CARD_TYPES_RETRIEVED": "tarjetas obtenidas exitosamente"
+    },
+    "errors": {
+        "NO_PERMISSION_CREATE": "No tienes permisos para crear tarjetas",
+        "NO_PERMISSION_UPDATE": "No tienes permisos para actualizar tarjetas",
+        "NO_PERMISSION_DELETE": "No tienes permisos para eliminar tarjetas",
+        "CARD_TYPE_EXISTS": "Ya existe una tarjeta con el mismo nombre",
+        "CARD_TYPE_NOT_FOUND": "No se pudo encontrar la tarjeta",
+        "CARD_TYPE_CREATION_FAILED": "No se pudo crear la tarjeta",
+        "CARD_TYPE_UPDATE_FAILED": "No se pudo actualizar la tarjeta",
+        "CARD_TYPE_DELETE_FAILED": "No se pudo eliminar la tarjeta",
+        "USER_NOT_AUTHENTICATED": "Usuario no autenticado"
+    }
+}

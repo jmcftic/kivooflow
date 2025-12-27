@@ -1,6 +1,7 @@
 import { API_BASE_URL, API_ENDPOINTS, HTTP_STATUS } from "../constants/api";
 import { ApiResponse, ApiError } from "../types";
 import authService from "./auth";
+import i18n from "../i18n/config";
 
 class ApiService {
   private baseURL: string;
@@ -38,6 +39,10 @@ class ApiService {
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
+
+    // Añadir header de idioma para que el backend responda en el idioma correcto
+    const currentLanguage = i18n.language || 'es';
+    headers['x-lang'] = currentLanguage;
 
     return headers;
   }

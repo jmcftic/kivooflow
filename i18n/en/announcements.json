@@ -1,0 +1,9 @@
+{
+    "success": {},
+    "errors": {
+        "SAVE_FAILED": "Could not save the ad",
+        "NOT_FOUND": "Could not find the ad",
+        "UPDATE_FAILED": "Could not update the ad",
+        "DELETE_FAILED": "Could not delete the ad"
+    }
+}

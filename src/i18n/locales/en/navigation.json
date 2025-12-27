@@ -1,0 +1,41 @@
+{
+  "menu": {
+    "dashboard": "Dashboard",
+    "network": "Network",
+    "claims": "Claims",
+    "commissions": "Commissions",
+    "cards": "Cards",
+    "cardAcquisition": "Card Acquisition",
+    "activity": "Activity",
+    "reports": "Reports",
+    "manualLoads": "Manual Loads",
+    "help": "Help",
+    "settings": "Settings",
+    "logout": "Logout",
+    "profile": "Profile"
+  },
+  "breadcrumbs": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "network": "Network",
+    "claims": "Claims",
+    "cards": "Cards",
+    "activity": "Activity"
+  },
+  "titles": {
+    "dashboard": "Dashboard",
+    "network": "Network",
+    "claims": "Claims",
+    "commissions": "Commissions",
+    "cards": "Cards",
+    "activity": "Activity",
+    "help": "Help",
+    "settings": "Settings",
+    "profile": "Profile"
+  },
+  "messages": {
+    "moduleComingSoon": "Module will be available soon",
+    "noPermission": "You don't have permission to access this section"
+  }
+}
+

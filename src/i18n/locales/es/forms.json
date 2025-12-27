@@ -1,0 +1,39 @@
+{
+  "login": {
+    "title": "INGRESA O REGISTRATE",
+    "emailPlaceholder": "Correo electrónico",
+    "passwordPlaceholder": "Contraseña",
+    "passwordTitle": "INGRESA CONTRASEÑA",
+    "passwordDescription": "Por seguridad, introduce la contraseña asociada a tu cuenta. Asegúrate de que sea la correcta.",
+    "continue": "Continuar",
+    "loggingIn": "Iniciando sesión...",
+    "forgotPassword": "Olvidé mi contraseña",
+    "changeEmail": "Cambiar email",
+    "biometricAuth": "Autenticación biométrica",
+    "invalidCredentials": "Error al iniciar sesión. Verifica tus credenciales.",
+    "emailRequired": "El correo electrónico es requerido",
+    "passwordRequired": "La contraseña es requerida"
+  },
+  "forgotPassword": {
+    "title": "Recuperar contraseña",
+    "emailPlaceholder": "Correo electrónico",
+    "submit": "Enviar código",
+    "description": "Ingresa tu correo electrónico y te enviaremos un código de verificación"
+  },
+  "resetPassword": {
+    "title": "Restablecer contraseña",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "submit": "Restablecer",
+    "passwordsMismatch": "Las contraseñas no coinciden"
+  },
+  "verificationCode": {
+    "title": "Código de verificación",
+    "description": "Ingresa el código que enviamos a tu correo",
+    "codePlaceholder": "Código",
+    "submit": "Verificar",
+    "resend": "Reenviar código",
+    "invalidCode": "Código inválido"
+  }
+}
+

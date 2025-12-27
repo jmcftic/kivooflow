@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import SidebarApp from '../components/organisms/SidebarApp';
@@ -17,6 +18,7 @@ import { formatCurrencyWithThreeDecimals } from '@/lib/utils';
 type ClaimTabId = 'b2c' | 'b2b' | 'b2t';
 
 const Claims: React.FC = () => {
+  const { t, i18n } = useTranslation(['claims', 'navigation']);
   const { data: availableModelsData, isLoading: isLoadingModels } = useQuery({
     queryKey: ['availableMlmModels'],
     queryFn: getAvailableMlmModels,
@@ -126,7 +128,7 @@ const Claims: React.FC = () => {
           </div>
         )}
         {/* Navbar responsivo */}
-        <DashboardNavbar title="Claims" />
+        <DashboardNavbar title={t('claims:title')} />
 
         {/* 2 Cards mini */}
         <div className="relative z-20 mt-6 mb-6 flex flex-col md:flex-row gap-3 max-w-full">
@@ -134,7 +136,7 @@ const Claims: React.FC = () => {
           <div className="w-full md:flex-1 min-w-0">
             <SuperiorClaimCard
               primaryText={summaryData && typeof summaryData.totalGananciasPorReclamar === 'number' ? `USDT ${formatCurrencyWithThreeDecimals(summaryData.totalGananciasPorReclamar)}` : 'USDT 0'}
-              secondaryText="Ganancias por reclamar"
+              secondaryText={t('claims:cards.earningsToClaim')}
               height={129}
               className="w-full"
               backgroundColor="#FFF100"
@@ -147,7 +149,7 @@ const Claims: React.FC = () => {
           <div className="w-full md:flex-1 min-w-0">
             <SuperiorClaimCard
               primaryText={summaryData && typeof summaryData.claimedUltimoMes === 'number' ? `USDT ${formatCurrencyWithThreeDecimals(summaryData.claimedUltimoMes)}` : 'USDT 0'}
-              secondaryText="Reclamado último mes"
+              secondaryText={t('claims:cards.claimedLastMonth')}
               height={129}
               className="w-full"
               secondaryTextColor="white"

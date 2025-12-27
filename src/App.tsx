@@ -7,6 +7,8 @@ import {
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { preloadLottieAnimation } from '@/utils/lottie-cache';
+import { ClaimAllPollingProvider } from '@/contexts/ClaimAllPollingContext';
+import { initializeLanguageFromStoredUser } from './i18n/config';
 import Home from "./pages/Home";
 import Home2 from "./pages/Home2";
 import Home3 from "./pages/Home3";
@@ -59,6 +61,14 @@ function App() {
   // Precargar la animación Lottie al inicio de la app
   useEffect(() => {
     preloadLottieAnimation();
+  }, []);
+
+  // Inicializar idioma del usuario al cargar la app
+  useEffect(() => {
+    // Verificar si hay un usuario autenticado y establecer su idioma
+    if (authService.isAuthenticated()) {
+      initializeLanguageFromStoredUser();
+    }
   }, []);
 
   useEffect(() => {
@@ -198,23 +208,26 @@ function App() {
   if (isMaintenanceMode) {
     return (
       <QueryClientProvider client={queryClient}>
-        <Routes>
-          <Route path="/maintenance" element={<Maintenance />} />
-          <Route path="*" element={<Maintenance />} />
-        </Routes>
+        <ClaimAllPollingProvider>
+          <Routes>
+            <Route path="/maintenance" element={<Maintenance />} />
+            <Route path="*" element={<Maintenance />} />
+          </Routes>
+        </ClaimAllPollingProvider>
       </QueryClientProvider>
     );
   }
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ErrorModal
-        isOpen={sessionExpired}
-        onClose={handleSessionModalClose}
-        title="Sesión expirada"
-        message="Tu sesión caducó por inactividad. Inicia sesión nuevamente para continuar."
-      />
-      <Routes>
+      <ClaimAllPollingProvider>
+        <ErrorModal
+          isOpen={sessionExpired}
+          onClose={handleSessionModalClose}
+          title="Sesión expirada"
+          message="Tu sesión caducó por inactividad. Inicia sesión nuevamente para continuar."
+        />
+        <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/example" element={<Example />} />
         <Route path="/home2" element={<Home2 />} />
@@ -333,7 +346,8 @@ function App() {
         <Route path="/reset-password/success" element={<ResetPasswordSuccess />} />
         <Route path="/test-bg" element={<TestBg />} />
         <Route path="/maintenance" element={<Maintenance />} />
-      </Routes>
+        </Routes>
+      </ClaimAllPollingProvider>
     </QueryClientProvider>
   );
 }

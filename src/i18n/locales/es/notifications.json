@@ -1,0 +1,40 @@
+{
+  "titles": {
+    "notification": "Notificación",
+    "notifications": "Notificaciones",
+    "noNotifications": "No hay notificaciones",
+    "markAllRead": "Marcar todas como leídas"
+  },
+  "maintenance": {
+    "title": "Estamos realizando tareas de mantenimiento",
+    "description": "Nuestra app está temporalmente fuera de servicio mientras trabajamos en mejoras. La app estará disponible pronto, gracias por tu comprensión.",
+    "contactSupport": "Contactar a soporte"
+  },
+  "noCards": {
+    "title": "NO PUEDES COBRAR TUS COMISIONES",
+    "message": "Para recibir tus pagos necesitas adquirir tu tarjeta KIVOO",
+    "contactSupport": "Contactar a soporte",
+    "requestCard": "Solicitar tarjeta"
+  },
+  "claimAll": {
+    "processing": "Procesando solicitud de comisiones...",
+    "success": "Comisiones solicitadas exitosamente",
+    "error": "Error al solicitar comisiones"
+  },
+  "messages": {
+    "loading": "Cargando notificaciones...",
+    "error": "Error al cargar notificaciones",
+    "tryAgain": "Por favor, intenta nuevamente",
+    "allNotificationsHere": "Todas tus notificaciones aparecerán aquí"
+  },
+  "buttons": {
+    "markAllRead": "Marcar todas como leídas"
+  },
+  "time": {
+    "fewSecondsAgo": "Hace unos segundos",
+    "minutesAgo": "Hace {{count}} minutos",
+    "hoursAgo": "Hace {{count}} horas",
+    "daysAgo": "Hace {{count}} días"
+  }
+}
+

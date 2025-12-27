@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
@@ -64,6 +65,7 @@ const fetchOrders = async ({
 
 const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeTab = null }) => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation(['claims', 'common']);
 
   // Convertir activeTab a claimType (b2c -> B2C, b2b -> B2B)
   // Nota: B2T no está soportado en órdenes según la documentación
@@ -109,7 +111,9 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeT
     try {
       const date = new Date(fecha);
       if (isNaN(date.getTime())) return 'N/A';
-      return date.toLocaleDateString('es-MX', {
+      // Usar locale según el idioma
+      const locale = i18n.language === 'en' ? 'en-US' : 'es-MX';
+      return date.toLocaleDateString(locale, {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit'
@@ -126,11 +130,11 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeT
   const getEstadoLabel = (estado: string): string => {
     switch(estado.toLowerCase()) {
       case 'paid':
-        return 'Pagada';
+        return t('claims:table.status.paid');
       case 'pending':
-        return 'Pendiente';
+        return t('claims:table.status.pending');
       case 'cancelled':
-        return 'Cancelada';
+        return t('claims:table.status.cancelled');
       default:
         return estado;
     }
@@ -156,10 +160,10 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeT
         <div className="w-full mb-3">
           <div className="w-full flex items-center px-6">
             <div className="flex-1 grid grid-cols-4 gap-4 h-10 items-center text-xs text-white">
-              <div className="flex items-center justify-center gap-1">Fecha <OrderArrows /></div>
-              <div className="flex items-center justify-center gap-1">Monto <OrderArrows /></div>
-              <div className="flex items-center justify-center gap-1">Estado <OrderArrows /></div>
-              <div className="flex items-center justify-center gap-1">Acciones</div>
+              <div className="flex items-center justify-center gap-1">{t('claims:table.headers.date')} <OrderArrows /></div>
+              <div className="flex items-center justify-center gap-1">{t('claims:table.headers.amount')} <OrderArrows /></div>
+              <div className="flex items-center justify-center gap-1">{t('claims:table.headers.status')} <OrderArrows /></div>
+              <div className="flex items-center justify-center gap-1">{t('claims:table.headers.actions')}</div>
             </div>
           </div>
         </div>
@@ -170,16 +174,16 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeT
               <div className="flex items-center justify-center h-full min-h-[300px]">
                 <div className="flex flex-col items-center gap-2">
                   <Spinner className="size-6 text-[#FFF000]" />
-                  <span className="text-sm text-[#aaa]">Cargando órdenes...</span>
+                  <span className="text-sm text-[#aaa]">{t('claims:table.messages.loading')}</span>
                 </div>
               </div>
             ) : status === "error" ? (
               <div className="flex items-center justify-center h-full min-h-[300px]">
-                <span className="text-sm text-[#ff6d64]">Error al cargar órdenes</span>
+                <span className="text-sm text-[#ff6d64]">{t('claims:table.messages.error')}</span>
               </div>
             ) : allOrders.length === 0 ? (
               <div className="flex items-center justify-center h-full min-h-[300px]">
-                <span className="text-sm text-[#aaa]">No hay órdenes disponibles</span>
+                <span className="text-sm text-[#aaa]">{t('claims:table.messages.noOrders')}</span>
               </div>
             ) : (
               <>
@@ -198,7 +202,7 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeT
                             <span className="text-white">{formatMonto(order.monto)}</span>
                             {order.originalOrder.netAmount !== null && order.originalOrder.netAmount !== undefined && (
                               <span className="text-xs text-white/60">
-                                Neto: {formatCurrencyWithThreeDecimals(order.originalOrder.netAmount)} USDT
+                                {t('claims:cards.net')}: {formatCurrencyWithThreeDecimals(order.originalOrder.netAmount)} USDT
                               </span>
                             )}
                           </div>
@@ -218,7 +222,7 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeT
                             onClick={() => handleVerDetalle(order.id)}
                             className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer text-sm"
                           >
-                            detalles
+                            {t('claims:table.labels.details')}
                           </button>
                         </div>
                       </div>
@@ -232,14 +236,14 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeT
                     {isFetchingNextPage ? (
                       <div className="flex items-center gap-2">
                         <Spinner className="size-4 text-[#FFF000]" />
-                        <span className="text-sm text-[#aaa]">Cargando más órdenes...</span>
+                        <span className="text-sm text-[#aaa]">{t('claims:table.messages.loadingMore')}</span>
                       </div>
                     ) : (
                       <button
                         onClick={() => fetchNextPage()}
                         className="action-text"
                       >
-                        Cargar más órdenes
+                        {t('claims:table.messages.loadMore')}
                       </button>
                     )}
                   </div>

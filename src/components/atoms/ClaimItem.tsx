@@ -1,4 +1,5 @@
 import React, { FunctionComponent } from "react";
+import { useTranslation } from "react-i18next";
 import FoldedCard from "./FoldedCard";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrencyWithThreeDecimals } from "@/lib/utils";
@@ -33,7 +34,7 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
   labelEmpresa = false,
   onVerDetalle,
   className = "",
-  actionLabel = "Ver detalle",
+  actionLabel,
   userEmail,
   commissionType,
   hideId = false,
@@ -42,6 +43,10 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
   usuarioValue,
   concept,
 }) => {
+  const { t, i18n } = useTranslation(['claims', 'common']);
+  const defaultActionLabel = t('claims:item.actions.viewDetail');
+  const finalActionLabel = actionLabel || defaultActionLabel;
+  
   // Formatear fecha a formato local
   const formatFecha = (fechaStr: string) => {
     if (!fechaStr || fechaStr === 'N/A') {
@@ -56,7 +61,9 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
         return 'N/A';
       }
       
-      const formatted = date.toLocaleDateString('es-ES', { 
+      // Usar locale según el idioma
+      const locale = i18n.language === 'en' ? 'en-US' : 'es-ES';
+      const formatted = date.toLocaleDateString(locale, { 
         day: '2-digit', 
         month: '2-digit', 
         year: 'numeric' 
@@ -113,10 +120,10 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
     let badgeVariant: 'blue' | 'green' | 'default' = 'default';
     
     if (concept === 'fund') {
-      badgeText = 'Recarga';
+      badgeText = t('claims:item.concepts.fund');
       badgeVariant = 'blue';
     } else if (concept === 'card_selling') {
-      badgeText = 'Venta';
+      badgeText = t('claims:item.concepts.card_selling');
       badgeVariant = 'green';
     }
     
@@ -141,19 +148,19 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
       let badgeVariant: 'yellow' | 'green' | 'blue' | 'red' | 'default' = 'default';
 
       if (tipoLower === 'papa' || tipoLower === 'padre') {
-        badgeText = 'Nivel 1';
+        badgeText = t('claims:item.commissionTypes.level1');
         badgeVariant = 'yellow';
       } else if (tipoLower === 'abuelo') {
-        badgeText = 'Nivel 2';
+        badgeText = t('claims:item.commissionTypes.level2');
         badgeVariant = 'green';
       } else if (tipoLower === 'bis_abuelo' || tipoLower === 'bisabuelo') {
-        badgeText = 'Nivel 3';
+        badgeText = t('claims:item.commissionTypes.level3');
         badgeVariant = 'blue';
       } else if (tipoLower === 'leader_markup' || tipoLower === 'leader_retention') {
-        badgeText = 'Comisión Empresa';
+        badgeText = t('claims:item.commissionTypes.companyCommission');
         badgeVariant = 'red';
       } else if (tipoLower === 'retroactive') {
-        badgeText = 'Retroactiva';
+        badgeText = t('claims:item.commissionTypes.retroactive');
         badgeVariant = 'yellow';
       }
 
@@ -169,16 +176,20 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
     
     // Si no hay commissionType pero hay nivel, generar badge basado en el nivel
     if (nivel !== undefined && nivel !== null) {
-      let badgeText = `Nivel ${nivel}`;
+      let badgeText = '';
       let badgeVariant: 'yellow' | 'green' | 'blue' | 'red' | 'default' = 'default';
 
       if (nivel === 1) {
+        badgeText = t('claims:item.commissionTypes.level1');
         badgeVariant = 'yellow';
       } else if (nivel === 2) {
+        badgeText = t('claims:item.commissionTypes.level2');
         badgeVariant = 'green';
       } else if (nivel === 3) {
+        badgeText = t('claims:item.commissionTypes.level3');
         badgeVariant = 'blue';
       } else {
+        badgeText = `${t('claims:item.labels.level')} ${nivel}`;
         badgeVariant = 'default';
       }
 
@@ -272,14 +283,14 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
           <span className="text-white text-sm font-medium mb-1">
             {userEmail ? censorEmail(userEmail) : (id || '—')}
           </span>
-          <span className="text-[#CBCACA] text-xs">{userEmail ? 'Correo' : 'ID'}</span>
+          <span className="text-[#CBCACA] text-xs">{userEmail ? t('claims:item.labels.email') : t('claims:item.labels.id')}</span>
         </div>
       )}
 
       {/* Fecha */}
       <div className="flex flex-col">
         <span className="text-white text-sm font-medium mb-1">{formatFecha(fecha)}</span>
-        <span className="text-[#CBCACA] text-xs">Fecha</span>
+        <span className="text-[#CBCACA] text-xs">{t('claims:item.labels.date')}</span>
       </div>
 
       {/* Concepto - Mostrar si hay concepto */}
@@ -288,7 +299,7 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
           <div className="mb-1">
             {getConceptBadge()}
           </div>
-          <span className="text-[#CBCACA] text-xs">Concepto</span>
+          <span className="text-[#CBCACA] text-xs">{t('claims:item.labels.concept')}</span>
         </div>
       )}
 
@@ -296,7 +307,7 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
       {!hideTarjeta && (
         <div className="flex flex-col">
           <span className="text-white text-sm font-medium mb-1">{tarjeta}</span>
-          <span className="text-[#CBCACA] text-xs">{labelEmpresa ? 'Empresa' : 'Tarjeta'}</span>
+          <span className="text-[#CBCACA] text-xs">{labelEmpresa ? t('claims:item.labels.company') : t('claims:item.labels.card')}</span>
         </div>
       )}
 
@@ -306,7 +317,7 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
           <div className="mb-1">
             {getCommissionTypeBadge()}
           </div>
-          <span className="text-[#CBCACA] text-xs">Tipo de comisión</span>
+          <span className="text-[#CBCACA] text-xs">{t('claims:item.labels.commissionType')}</span>
         </div>
       )}
 
@@ -314,14 +325,14 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
       {nivel !== undefined && !showCommissionTypeBadge && (
         <div className="flex flex-col">
           <span className="text-white text-sm font-medium mb-1">{nivel}</span>
-          <span className="text-[#CBCACA] text-xs">Nivel</span>
+          <span className="text-[#CBCACA] text-xs">{t('claims:item.labels.level')}</span>
         </div>
       )}
 
       {/* Estado */}
       <div className="flex flex-col">
         <span className={`text-sm font-medium mb-1 ${getEstadoColor(estado)}`}>{estado}</span>
-        <span className="text-[#CBCACA] text-xs">Estado</span>
+        <span className="text-[#CBCACA] text-xs">{t('claims:item.labels.status')}</span>
       </div>
 
       {/* Monto/Comisión */}
@@ -329,7 +340,7 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
         <span className="text-[#FFF100] text-sm font-bold mb-1">
           ${formatMonto(monto)}
         </span>
-        <span className="text-[#CBCACA] text-xs">{labelEmpresa ? 'Comisión' : 'Monto'}</span>
+        <span className="text-[#CBCACA] text-xs">{labelEmpresa ? t('claims:item.labels.commission') : t('claims:item.labels.amount')}</span>
       </div>
 
       {/* Acción - Ver detalle */}
@@ -339,9 +350,9 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
           disabled={!onVerDetalle}
           className={`action-text text-left mb-1 py-1 ${!onVerDetalle ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {actionLabel}
+          {finalActionLabel}
         </button>
-        <span className="text-[#CBCACA] text-xs invisible">Acción</span>
+        <span className="text-[#CBCACA] text-xs invisible">{t('claims:item.labels.action')}</span>
       </div>
     </div>
     </FoldedCard>

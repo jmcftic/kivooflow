@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -63,6 +64,8 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
   onConfirm,
   isSubmitting = false,
 }) => {
+  const { t } = useTranslation(['commissions', 'common']);
+  
   if (!commission) return null;
 
   const {
@@ -82,14 +85,14 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
       <DialogContent className="max-w-2xl bg-[#212020] text-white">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
-            {mode === "available" ? "Resumen de comisión" : "Detalle de comisión"}
+            {mode === "available" ? t('commissions:modals.b2bCommissionDetail.summary') : t('commissions:modals.b2bCommissionDetail.detail')}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-6">
           {/* Rango de fechas considerado - Más visible */}
           <div className="p-4 bg-[#2A2A2A] rounded-lg border border-white/10">
             <p className="text-[#CBCACA] text-xs mb-2 uppercase tracking-wide">
-              Rango de fechas considerado para la comisión
+              {t('commissions:modals.b2bCommissionDetail.dateRange')}
             </p>
             <p className="text-white font-semibold text-sm">
               {periodStartDate && periodEndDate 
@@ -100,36 +103,36 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <div>
-              <p className="text-[#CBCACA] text-xs mb-1">Equipo</p>
+              <p className="text-[#CBCACA] text-xs mb-1">{t('commissions:modals.b2bCommissionDetail.team')}</p>
               <p className="text-white font-medium">{teamName || "—"}</p>
             </div>
             <div>
-              <p className="text-[#CBCACA] text-xs mb-1">Nivel</p>
+              <p className="text-[#CBCACA] text-xs mb-1">{t('commissions:modals.b2bCommissionDetail.level')}</p>
               <p className="text-white font-medium">{level ?? "—"}</p>
             </div>
             <div>
-              <p className="text-[#CBCACA] text-xs mb-1">Estado</p>
+              <p className="text-[#CBCACA] text-xs mb-1">{t('commissions:modals.b2bCommissionDetail.status')}</p>
               <p className="text-white font-medium capitalize">
-                {status?.toLowerCase() === 'available' ? 'Disponible' : (status ?? "—")}
+                {status?.toLowerCase() === 'available' ? t('commissions:status.available') : (status ?? "—")}
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div className="p-4 bg-[#2A2A2A] rounded-lg">
-              <p className="text-[#CBCACA] text-xs mb-1">Comisión</p>
+              <p className="text-[#CBCACA] text-xs mb-1">{t('commissions:modals.b2bCommissionDetail.commission')}</p>
               <p className="text-[#32d74b] font-semibold">
                 {commissionAmount !== undefined && commissionAmount !== null ? formatCurrencyWithThreeDecimals(commissionAmount) : '0'} <span className="text-[#FFF100]">USDT</span>
               </p>
             </div>
             <div className="p-4 bg-[#2A2A2A] rounded-lg">
-              <p className="text-[#CBCACA] text-xs mb-1">Volumen total</p>
+              <p className="text-[#CBCACA] text-xs mb-1">{t('commissions:modals.b2bCommissionDetail.totalVolume')}</p>
               <p className="text-[#FFF100] font-semibold">
                 {formatVolume(totalVolume)}
               </p>
             </div>
             <div className="p-4 bg-[#2A2A2A] rounded-lg">
-              <p className="text-[#CBCACA] text-xs mb-1">Porcentaje de comisión</p>
+              <p className="text-[#CBCACA] text-xs mb-1">{t('commissions:modals.b2bCommissionDetail.commissionPercentage')}</p>
               <p className="text-[#FF7A7A] font-semibold">
                 {commissionPercentage !== undefined && commissionPercentage !== null
                   ? `${(commissionPercentage * 100).toFixed(2)}%`
@@ -140,7 +143,7 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div className="p-4 bg-[#2A2A2A] rounded-lg">
-              <p className="text-[#CBCACA] text-xs mb-1">Transacciones</p>
+              <p className="text-[#CBCACA] text-xs mb-1">{t('commissions:modals.b2bCommissionDetail.transactions')}</p>
               <p className="text-white font-semibold">
                 {totalTransactions ?? 0}
               </p>
@@ -154,7 +157,7 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
             className="w-full md:w-auto"
             onClick={() => onOpenChange(false)}
           >
-            Cerrar
+            {t('commissions:modals.b2bCommissionDetail.close')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -72,7 +72,7 @@ const InfoModal: React.FC<InfoModalProps> = ({
           variant="md"
         >
           {/* Contenido centrado */}
-          <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:pt-10 sm:pb-12">
+          <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:pt-10 sm:pb-12 w-full max-w-full overflow-hidden">
             {/* Ilustración, icono personalizado o icono por defecto */}
             {showIllustration ? (
               <div className="mb-4 sm:mb-8 flex-shrink-0">
@@ -101,12 +101,12 @@ const InfoModal: React.FC<InfoModalProps> = ({
             ) : null}
 
             {/* Texto principal */}
-            <h2 className={`${titleClasses} px-2`}>
+            <h2 className={`${titleClasses} px-2 w-full break-words overflow-wrap-anywhere`}>
               {title}
             </h2>
 
             {/* Subtexto blanco */}
-            <p className="text-white text-xs sm:text-sm mb-6 sm:mb-8 text-center px-2">
+            <p className="text-white text-xs sm:text-sm mb-6 sm:mb-8 text-center px-2 w-full break-words overflow-wrap-anywhere">
               {message}
             </p>
 

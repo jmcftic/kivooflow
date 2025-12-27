@@ -1,0 +1,65 @@
+{
+  "title": "Dashboard",
+  "metrics": {
+    "totalCommissions": "Comisiones totales",
+    "pendingClaims": "Reclamos pendientes",
+    "completedClaims": "Reclamos completados",
+    "networkSize": "Tamaño de red",
+    "activeCards": "Tarjetas activas",
+    "totalEarnings": "Ganancias totales",
+    "availableBalance": "Saldo disponible",
+    "activeReferrals": "Referidos Activos",
+    "lastMonthCommissions": "Comisiones último mes",
+    "totalVolume": "Volumen total"
+  },
+  "recentActivity": {
+    "title": "Actividad reciente",
+    "noActivity": "No hay actividad reciente"
+  },
+  "quickActions": {
+    "title": "Acciones rápidas",
+    "claimAll": "Reclamar todas",
+    "viewNetwork": "Ver red",
+    "viewClaims": "Ver comisiones",
+    "requestPayment": "Solicitar pago"
+  },
+  "referralLink": {
+    "title": "Link de",
+    "user": "Usuario",
+    "loading": "Cargando...",
+    "copySuccess": "Link copiado al portapapeles",
+    "shareTitle": "Únete a Kivoo",
+    "shareText": "Únete a Kivoo usando mi link de referido"
+  },
+  "summary": {
+    "title": "RESUMEN GENERAL",
+    "view": "Vista",
+    "weekly": "Semanal",
+    "monthly": "Mensual",
+    "selectRange": "Selecciona un rango",
+    "last2Months": "Últimos 2 meses",
+    "last6Months": "Últimos 6 meses",
+    "lastYear": "Último año",
+    "last2Years": "Últimos 2 años",
+    "noWeeklyData": "No hay datos semanales disponibles para el período seleccionado",
+    "noData": "No hay datos disponibles para el período seleccionado",
+    "recargasScaleNote": "* Las recargas se muestran a escala para mejor visualización. Los valores reales se muestran en el tooltip.",
+    "labels": {
+      "ventas": "Ventas",
+      "recargas": "Recargas",
+      "comisiones": "Comisiones"
+    }
+  },
+  "recentTransactions": {
+    "title": "TRANSACCIONES RECIENTES",
+    "loading": "Cargando transacciones...",
+    "error": "Error al cargar transacciones",
+    "selectModel": "Selecciona un modelo para ver las transacciones",
+    "noTransactions": "No hay transacciones recientes",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "loadingMore": "Cargando más transacciones...",
+    "loadMore": "Cargar más transacciones"
+  }
+}
+

@@ -1,0 +1,53 @@
+{
+  "verification": {
+    "SUBJECT": "KIVOO | Verify your account",
+    "PREHEADER": "Verify your Kivoo account! It will only take one click.",
+    "GREETING": "Hello {name}!",
+    "BODY": "Thank you for joining Kivoo. To complete your registration, please verify your email address.",
+    "BUTTON": "Verify my account",
+    "ACCOUNT_INFO": "Account information",
+    "LABEL_NAME": "Name",
+    "LABEL_REFERRAL": "Referral code",
+    "LABEL_DATE": "Registration date",
+    "ALT_LINK": "If you cannot click the button, copy and paste this link into your browser:",
+    "EXPIRATION": "This link expires in",
+    "EXPIRATION_TIME": "24 hours",
+    "EXPIRATION_SECURITY": "for security reasons.",
+    "FOOTER": "If you did not create this account, you can safely ignore this email.",
+    "RIGHTS_RESERVED": "All rights reserved."
+  },
+  "password_reset": {
+    "SUBJECT": "KIVOO | Verification Code",
+    "PREHEADER": "Your verification code to reset your Kivoo password.",
+    "GREETING": "Hello {name}!",
+    "MESSAGE": "We received a request to",
+    "MESSAGE_RESET_PASSWORD": "reset your password",
+    "IF_NOT_REQUESTED": "If you didn't request this change, you can safely ignore this email.",
+    "CODE_LABEL": "Your verification code is:",
+    "INSTRUCTION": "Enter this code in the app to continue",
+    "IMPORTANT_TITLE": "Important information",
+    "INFO_EXPIRATION": "This code expires in 10 minutes",
+    "INFO_SECURITY": "for security reasons",
+    "INFO_ONCE": "You can only use this code once",
+    "INFO_IGNORE": "If you didn't request this change, ignore this email",
+    "INFO_SHARE": "Do not share this code with anyone",
+    "SECURITY_ALERT_TITLE": "Important:",
+    "SECURITY_ALERT_BODY": "If you did not request this code, someone else might be trying to access your account. We recommend changing your password immediately.",
+    "FOOTER_SAFE": "If you didn't request this change, your account is still secure.",
+    "RIGHTS_RESERVED": "© 2025 Kivoo. All rights reserved."
+  },
+  "welcome_email": {
+    "SUBJECT": "KIVOO | Account successfully verified",
+    "PREHEADER": "Your account has been successfully verified! You can now start using Kivoo.",
+    "GREETING": "Hello {name}!",
+    "VERIFIED_MESSAGE": "Your account has been",
+    "VERIFIED_MESSAGE_SUCESS": " successfully verified.",
+    "WELCOME_MESSAGE": " You can now start using Kivoo!",
+    "ACCOUNT_INFO_TITLE": "Account information",
+    "LABEL_NAME": "Name:",
+    "LABEL_EMAIL": "Email:",
+    "LABEL_REFERRAL": "Referral code:",
+    "CTA_BUTTON": "Access my account",
+    "RIGHTS_RESERVED": "© 2025 Kivoo. All rights reserved."
+  }
+}

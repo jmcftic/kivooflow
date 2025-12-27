@@ -198,6 +198,16 @@ const ManualLoads: React.FC = () => {
       const response = await createManualCommission(requestData);
       setSuccessMessage(response.message || 'Comisión manual creada exitosamente');
       setSuccessModalOpen(true);
+      
+      // Limpiar solo el correo y el valor de comisión después de guardar exitosamente
+      setUserEmail('');
+      setFormData((prev) => ({
+        ...prev,
+        commissionAmount: 0,
+        userId: 0,
+      }));
+      setFoundUserId(null);
+      setUserSearchError('');
     } catch (error: any) {
       // Log detallado del error para debugging
       console.error('Error al crear comisión manual:', {

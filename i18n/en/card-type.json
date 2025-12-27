@@ -1,0 +1,19 @@
+{
+    "success": {
+        "CARD_TYPE_CREATED": "Card type successfully created",
+        "CARD_TYPE_UPDATED": "Card type successfully updated",
+        "CARD_TYPE_DELETED": "Card type successfully deleted",
+        "CARD_TYPES_RETRIEVED": "Card types successfully retrieved"
+    },
+    "errors": {
+        "NO_PERMISSION_CREATE": "You do not have permission to create card types",
+        "NO_PERMISSION_UPDATE": "You do not have permission to update card types",
+        "NO_PERMISSION_DELETE": "You do not have permission to delete card types",
+        "CARD_TYPE_EXISTS": "A card type with this name already exists",
+        "CARD_TYPE_NOT_FOUND": "Could not find the card type",
+        "CARD_TYPE_CREATION_FAILED": "Could not create the card type",
+        "CARD_TYPE_UPDATE_FAILED": "Could not update the card type",
+        "CARD_TYPE_DELETE_FAILED": "Could not delete the card type",
+        "USER_NOT_AUTHENTICATED": "User not authenticated"
+    }
+}

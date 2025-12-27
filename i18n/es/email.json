@@ -1,0 +1,53 @@
+{
+    "verification": {
+        "SUBJECT": "KIVOO | Verifica tu cuenta",
+        "PREHEADER": "¡Verifica tu cuenta en Kivoo! Solo te tomará un clic.",
+        "GREETING": "¡Hola {name}!",
+        "BODY": "Gracias por registrarte en Kivoo. Para completar tu registro, necesitas verificar tu dirección de correo electrónico.",
+        "BUTTON": "Verificar mi cuenta",
+        "ACCOUNT_INFO": "Información de tu cuenta",
+        "LABEL_NAME": "Nombre",
+        "LABEL_REFERRAL": "Código de referido",
+        "LABEL_DATE": "Fecha de registro",
+        "ALT_LINK": "Si no puedes hacer clic en el botón, copia y pega este enlace en tu navegador:",
+        "EXPIRATION": "Este enlace expira en",
+        "EXPIRATION_TIME": "24 horas",
+        "EXPIRATION_SECURITY": "por seguridad.",
+        "FOOTER": "Si no creaste esta cuenta, puedes ignorar este email.",
+        "RIGHTS_RESERVED": "© 2025 Kivoo. Todos los derechos reservados."
+    },
+    "password_reset": {
+        "SUBJECT": "KIVOO | Código de verificación",
+        "PREHEADER": "Tu código de verificación para restablecer tu contraseña en Kivoo.",
+        "GREETING": "¡Hola {name}!",
+        "MESSAGE": "Recibimos una solicitud para",
+        "MESSAGE_RESET_PASSWORD": "restablecer tu contraseña",
+        "IF_NOT_REQUESTED": "Si no solicitaste este cambio, puedes ignorar este email.",
+        "CODE_LABEL": "Tu código de verificación es:",
+        "INSTRUCTION": "Ingresa este código en la aplicación para continuar",
+        "IMPORTANT_TITLE": "Información importante",
+        "INFO_EXPIRATION": "Este código expira en 10 minutos",
+        "INFO_SECURITY": "por seguridad",
+        "INFO_ONCE": "Solo puedes usar este código una vez",
+        "INFO_IGNORE": "Si no solicitaste este cambio, ignora este email",
+        "INFO_SHARE": "No compartas este código con nadie",
+        "SECURITY_ALERT_TITLE": "Importante:",
+        "SECURITY_ALERT_BODY": "Si no fuiste tú quien solicitó este código, alguien más podría estar intentando acceder a tu cuenta. Te recomendamos cambiar tu contraseña inmediatamente.",
+        "FOOTER_SAFE": "Si no solicitaste este cambio, tu cuenta sigue siendo segura.",
+        "RIGHTS_RESERVED": "© 2025 Kivoo. Todos los derechos reservados."
+    },
+    "welcome_email": {
+        "SUBJECT": "KIVOO | Cuenta verificada exitosamente",
+        "PREHEADER": "¡Tu cuenta ha sido verificada exitosamente! Ya puedes empezar a usar Kivoo.",
+        "GREETING": "¡Hola {name}!",
+        "VERIFIED_MESSAGE": "Tu cuenta ha sido",
+        "VERIFIED_MESSAGE_SUCESS":" verificada exitosamente.",
+        "WELCOME_MESSAGE":" ¡Ya puedes empezar a usar Kivoo!",
+        "ACCOUNT_INFO_TITLE": "Información de tu cuenta",
+        "LABEL_NAME": "Nombre:",
+        "LABEL_EMAIL": "Email:",
+        "LABEL_REFERRAL": "Código de referido:",
+        "CTA_BUTTON": "Acceder a mi cuenta",
+        "RIGHTS_RESERVED": "© 2025 Kivoo. Todos los derechos reservados."
+    }
+}

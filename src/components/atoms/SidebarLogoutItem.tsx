@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import SidebarBackgroundItemLogout from './SidebarBackgroundItemLogout';
 import LogoutIcon from './LogoutIcon';
 import { authService } from '../../services/auth';
@@ -12,6 +13,7 @@ const SidebarLogoutItem: React.FC<SidebarLogoutItemProps> = ({
   isCollapsed = false,
   onLoggedOut 
 }) => {
+  const { t } = useTranslation('navigation');
   const handleLogout = async () => {
     try {
       await authService.logout();
@@ -57,7 +59,7 @@ const SidebarLogoutItem: React.FC<SidebarLogoutItemProps> = ({
           }`}
           style={{ color: '#c94740' }}
         >
-          Cerrar sesión
+          {t('menu.logout')}
         </span>
       </div>
     </div>
