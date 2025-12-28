@@ -48,6 +48,10 @@ Frontend (React)                    Backend (NestJS)
 2. El frontend establece automáticamente este idioma al recibirlo
 3. El frontend envía el idioma actual en el header `x-lang` para que el backend responda en el idioma correcto
 
+**¿Necesitas mantener traducciones del backend en el frontend?**
+- **NO**, si el backend siempre traduce los mensajes antes de enviarlos (gracias al header `x-lang`). En este caso, solo necesitas las traducciones de la UI del frontend.
+- **SÍ**, solo si el backend envía claves de traducción (ej: `"network.NOTIFICATION_XXX"`) en lugar de texto traducido. En este caso, necesitas mantener las traducciones del backend en la carpeta `i18n/` como fallback.
+
 ---
 
 ## Instalación
@@ -81,13 +85,13 @@ La configuración principal se encuentra en `src/i18n/config.ts`.
    **IMPORTANTE**: Cuando el usuario hace login, el backend devuelve el campo `lang` con su idioma preferido ('es' o 'en'), y el frontend automáticamente establece ese idioma en la aplicación.
 
 2. **Múltiples Namespaces**:
-   - `common`: Traducciones comunes (botones, labels, mensajes)
-   - `navigation`: Menús y navegación
-   - `forms`: Labels de formularios
-   - `notifications`: Traducciones de notificaciones
-   - `dashboard`: Traducciones del dashboard
-   - `network`: Traducciones relacionadas con la red
-   - `backendNetwork`: Traducciones del backend (para notificaciones)
+   - `common`: Traducciones comunes (botones, labels, mensajes) ✅ **Siempre necesario**
+   - `navigation`: Menús y navegación ✅ **Siempre necesario**
+   - `forms`: Labels de formularios ✅ **Siempre necesario**
+   - `notifications`: Traducciones de notificaciones del frontend ✅ **Siempre necesario**
+   - `dashboard`: Traducciones del dashboard ✅ **Siempre necesario**
+   - `network`: Traducciones relacionadas con la red ✅ **Siempre necesario**
+   - `backendNetwork`: Traducciones del backend ⚠️ **Solo si el backend envía claves** (no recomendado)
 
 3. **Interpolación**:
    - Soporte para variables dinámicas: `{variable}`
@@ -103,13 +107,13 @@ src/
 │   ├── config.ts                    # Configuración principal de i18next
 │   ├── index.ts                     # Exportaciones principales
 │   └── locales/
-│       ├── es/                      # Traducciones en español
-│       │   ├── common.json
-│       │   ├── navigation.json
-│       │   ├── forms.json
-│       │   ├── notifications.json
-│       │   ├── dashboard.json
-│       │   └── network.json
+│       ├── es/                      # Traducciones de la UI del frontend (SIEMPRE necesarias)
+│       │   ├── common.json          # Botones, labels, mensajes comunes
+│       │   ├── navigation.json      # Menús y navegación
+│       │   ├── forms.json           # Formularios
+│       │   ├── notifications.json   # Notificaciones del frontend
+│       │   ├── dashboard.json       # Dashboard
+│       │   └── network.json         # Red y equipos
 │       └── en/                      # Traducciones en inglés
 │           ├── common.json
 │           ├── navigation.json
@@ -118,8 +122,8 @@ src/
 │           ├── dashboard.json
 │           └── network.json
 │
-i18n/                                 # Traducciones del backend (copias)
-├── es/
+i18n/                                 # Traducciones del backend (SOLO si el backend envía claves)
+├── es/                               # ⚠️ Solo necesarias si el backend envía claves de traducción
 │   ├── network.json
 │   ├── auth.json
 │   └── ...
@@ -128,6 +132,10 @@ i18n/                                 # Traducciones del backend (copias)
     ├── auth.json
     └── ...
 ```
+
+**¿Qué archivos necesitas mantener?**
+- ✅ **SIEMPRE**: `src/i18n/locales/` - Traducciones de la UI del frontend (botones, labels, placeholders, etc.)
+- ⚠️ **SOLO SI**: `i18n/` - Traducciones del backend (solo si el backend envía claves en lugar de texto traducido)
 
 ---
 
@@ -271,6 +279,11 @@ El servicio API (`src/services/api.ts`) automáticamente añade el header `x-lan
 headers['x-lang'] = currentLanguage; // 'es' o 'en'
 ```
 
+**Propósito del header `x-lang`**:
+- Indica al backend en qué idioma debe responder todos sus mensajes (errores, validaciones, notificaciones, etc.)
+- Gracias a este header, el backend traduce automáticamente todos los mensajes antes de enviarlos
+- **Resultado**: El frontend recibe mensajes ya traducidos y solo necesita mostrar el texto directamente, sin necesidad de mantener traducciones del backend
+
 ### Idioma del Usuario desde el Backend
 
 **IMPORTANTE**: El backend devuelve el idioma preferido del usuario en las respuestas de autenticación:
@@ -288,9 +301,24 @@ El frontend automáticamente establece este idioma cuando:
 
 1. **Usuario hace login** → Backend devuelve `lang: "es" | "en"` → Frontend establece idioma
 2. **Frontend** detecta/establece idioma → guarda en `localStorage`
-3. **Frontend** hace request → incluye header `x-lang`
-4. **Backend** lee `x-lang` → responde con mensajes traducidos
-5. **Frontend** muestra la respuesta (ya traducida por el backend)
+3. **Frontend** hace request → incluye header `x-lang: "es"` (o `"en"`)
+4. **Backend** lee `x-lang` → traduce todos los mensajes (errores, notificaciones, validaciones) → responde con texto ya traducido
+5. **Frontend** muestra la respuesta directamente (sin necesidad de traducir nada)
+
+**Ejemplo práctico**:
+```typescript
+// Frontend envía:
+GET /api/users/123
+Headers: { 'x-lang': 'es' }
+
+// Backend responde (ya traducido):
+{
+  "error": "Usuario no encontrado"  // ← Ya en español, gracias a x-lang
+}
+
+// Frontend solo muestra el texto:
+<div>{error}</div>  // "Usuario no encontrado"
+```
 
 ### Sincronización Bidireccional
 
@@ -303,18 +331,33 @@ El frontend automáticamente establece este idioma cuando:
 
 Las notificaciones del backend pueden venir de dos formas:
 
-### Opción A: Backend traduce las notificaciones (Recomendada)
+### Opción A: Backend traduce las notificaciones (Recomendada) ✅
 
-El backend traduce las notificaciones antes de guardarlas en la base de datos. En este caso, el frontend solo muestra el texto que viene del backend.
+**Si el backend siempre traduce los mensajes** (gracias al header `x-lang`), entonces:
+
+- ✅ El backend traduce las notificaciones antes de guardarlas/enviarlas
+- ✅ El frontend recibe texto ya traducido
+- ✅ El frontend solo muestra el texto directamente
+- ✅ **NO necesitas mantener traducciones del backend en el frontend**
 
 ```typescript
-// Backend guarda: "Se solicitaron 5 comisiones exitosamente"
+// Backend recibe x-lang: 'es' y traduce:
+// Backend guarda/envía: "Se solicitaron 5 comisiones exitosamente"
 // Frontend muestra: "Se solicitaron 5 comisiones exitosamente"
+// ✅ No necesitas traducciones del backend en el frontend
 ```
 
-### Opción B: Backend envía claves de traducción
+**En este caso, solo necesitas las traducciones de la UI del frontend** (`src/i18n/locales/`).
 
-Si el backend envía claves (ej: `"network.NOTIFICATION_CLAIM_ALL_COMPLETED_TITLE"`), el frontend puede traducirlas usando el namespace `backendNetwork`:
+### Opción B: Backend envía claves de traducción (No recomendada)
+
+**Solo si el backend envía claves** (ej: `"network.NOTIFICATION_CLAIM_ALL_COMPLETED_TITLE"`), entonces:
+
+- ⚠️ El frontend necesita traducir las claves usando el namespace `backendNetwork`
+- ⚠️ **SÍ necesitas mantener las traducciones del backend en `i18n/`**
+- ⚠️ Debes sincronizar manualmente las traducciones cuando el backend agregue nuevas claves
+
+**Nota**: Esta opción no es recomendada porque requiere mantener traducciones duplicadas y sincronización manual.
 
 ```tsx
 import { useTranslation } from 'react-i18next';
@@ -699,19 +742,35 @@ detection: {
 
 ## Notas Finales
 
-1. **Traducciones Independientes**: Las traducciones del frontend son completamente independientes de las del backend. Cada uno mantiene sus propios archivos.
+1. **Traducciones del Frontend (UI)**: **SIEMPRE necesarias**
+   - Ubicación: `src/i18n/locales/`
+   - Contenido: Botones, labels, placeholders, mensajes de la interfaz
+   - Debes actualizarlas cada vez que agregues/modifiques elementos de la UI
 
-2. **Sincronización**: El frontend y backend se sincronizan a través del header `x-lang`, pero las traducciones en sí mismas no están sincronizadas.
+2. **Traducciones del Backend**: **SOLO si el backend envía claves**
+   - Ubicación: `i18n/`
+   - **NO necesarias** si el backend siempre traduce los mensajes (gracias al header `x-lang`)
+   - **SÍ necesarias** solo si el backend envía claves de traducción (ej: `"network.XXX"`)
 
-3. **Idioma del Usuario**: El backend devuelve el idioma preferido del usuario (`lang`) en las respuestas de autenticación. El frontend automáticamente establece este idioma al hacer login, refrescar token, o obtener el perfil del usuario.
+3. **Header `x-lang`**: 
+   - El frontend envía este header en todas las peticiones
+   - El backend lo lee y traduce automáticamente todos los mensajes antes de enviarlos
+   - **Resultado**: El frontend recibe texto ya traducido y no necesita mantener traducciones del backend
 
-4. **Notificaciones**: Si el backend envía claves de traducción, el frontend puede traducirlas usando el namespace `backendNetwork`. Sin embargo, es recomendable que el backend traduzca las notificaciones antes de guardarlas.
+4. **Idioma del Usuario**: 
+   - El backend devuelve el idioma preferido del usuario (`lang`) en las respuestas de autenticación
+   - El frontend automáticamente establece este idioma al hacer login, refrescar token, o obtener el perfil del usuario
 
-5. **Extensibilidad**: Para añadir nuevos idiomas, simplemente:
+5. **Recomendación**:
+   - ✅ Configura el backend para que siempre traduzca los mensajes usando el header `x-lang`
+   - ✅ Mantén solo las traducciones de la UI del frontend en `src/i18n/locales/`
+   - ✅ Elimina o ignora la carpeta `i18n/` si el backend siempre traduce
+
+6. **Extensibilidad**: Para añadir nuevos idiomas:
    - Crea la carpeta `src/i18n/locales/{nuevo-idioma}/`
    - Copia los archivos JSON de `es/` y tradúcelos
    - Añade el nuevo idioma en la configuración de i18next
-   - Actualiza el backend para incluir el nuevo idioma en las respuestas de `lang`
+   - Actualiza el backend para incluir el nuevo idioma en las respuestas de `lang` y en el manejo del header `x-lang`
 
 ---
 

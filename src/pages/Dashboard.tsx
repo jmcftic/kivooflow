@@ -167,7 +167,7 @@ const Dashboard: React.FC = () => {
             showDollarSign={false}
           />
           <MiniBaner 
-            className="h-[90px] md:h-[100px] lg:h-[110px]"
+            className="h-[120px] md:h-[100px] lg:h-[110px]"
             detail={metricsLoading ? t('common:buttons.loading') : metrics ? (
               <>
                 {formatCurrency(metrics.availableBalance, metrics.currency)} <span className="text-[#FFF100]">USDT</span>
@@ -245,7 +245,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Debug: Componente para verificar el idioma (remover en producción) */}
-        <LanguageDebug />
+        {/* <LanguageDebug /> */}
 
         {/* SVG de esquina en inferior derecha (debajo del patrón) */}
         <div className="absolute bottom-0 right-0 pointer-events-none overflow-hidden z-0">

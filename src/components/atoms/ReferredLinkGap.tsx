@@ -7,7 +7,7 @@ export type ReferredLinkGapType = {
 }
 
 const ReferredLinkGap: FunctionComponent<ReferredLinkGapType> = ({ className = "", children, ...props }) => (
-  <div className={`relative w-full h-10 md:h-[49px] ${className}`} {...props}>
+  <div className={`relative w-full h-10 md:h-[49px] overflow-hidden max-w-full ${className}`} {...props}>
     {/* Fondo y borde con CSS en lugar de SVG */}
     <div
       className="absolute inset-0 rounded-xl"
@@ -19,7 +19,7 @@ const ReferredLinkGap: FunctionComponent<ReferredLinkGapType> = ({ className = "
     />
 
     {/* Contenido del gap */}
-    {children && <div className="absolute inset-0 flex items-center justify-start pl-4">{children}</div>}
+    {children && <div className="absolute inset-0 flex items-center justify-start pl-2 pr-2 sm:pl-4 sm:pr-4 overflow-hidden max-w-full">{children}</div>}
   </div>
 )
 

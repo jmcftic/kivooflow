@@ -115,6 +115,9 @@ html, body, #root {
   .action-text {
     @apply text-sm font-medium transition-all duration-200 cursor-pointer;
     color: #FFF000;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   
   .action-text:hover {
