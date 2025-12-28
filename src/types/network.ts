@@ -536,6 +536,7 @@ export interface KfNotification {
   userId: number;
   title: string;
   message: string;
+  body?: string; // Algunas notificaciones pueden tener body en lugar de message
   type?: 'info' | 'success' | 'warning' | 'error';
   isRead: boolean;
   createdAt: string;
