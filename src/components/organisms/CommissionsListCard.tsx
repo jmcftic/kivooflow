@@ -346,11 +346,11 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
   useEffect(() => {
     if (onPaginationChange && queryData) {
       onPaginationChange({
-        totalItems,
-        totalPages,
+        totalItems: queryData.totalItems ?? 0,
+        totalPages: queryData.totalPages ?? 0,
       });
     }
-  }, [queryData, totalItems, totalPages, onPaginationChange]);
+  }, [queryData, onPaginationChange]);
 
   // Extraer summary y notificar al componente padre
   useEffect(() => {

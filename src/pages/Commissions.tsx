@@ -58,7 +58,7 @@ const Commissions: React.FC = () => {
   } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [paginationData, setPaginationData] = useState<{ totalItems: number; totalPages: number } | null>(null);
+  const [paginationData, setPaginationData] = useState<{ totalItems: number; totalPages: number }>({ totalItems: 0, totalPages: 0 });
   const [isRequestingClaims, setIsRequestingClaims] = useState(false);
   const [isLoadingTotal, setIsLoadingTotal] = useState(false);
   const [showClaimAllScreen, setShowClaimAllScreen] = useState(false);
@@ -81,23 +81,6 @@ const Commissions: React.FC = () => {
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [claimAllInProgressModalOpen, setClaimAllInProgressModalOpen] = useState(false);
-  const [hasShownClaimAllModal, setHasShownClaimAllModal] = useState(false);
-
-  // Mostrar modal de claim all en progreso cuando el polling esté activo y no se haya mostrado antes
-  useEffect(() => {
-    if (claimAllInProgress && !hasShownClaimAllModal) {
-      setClaimAllInProgressModalOpen(true);
-      setHasShownClaimAllModal(true);
-    }
-    // Si el polling se detiene, resetear el flag para permitir mostrar el modal nuevamente en el futuro
-    if (!claimAllInProgress && hasShownClaimAllModal) {
-      // Esperar un poco antes de resetear para evitar que se muestre inmediatamente si se reinicia
-      const timeoutId = setTimeout(() => {
-        setHasShownClaimAllModal(false);
-      }, 1000);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [claimAllInProgress, hasShownClaimAllModal]);
 
   // Establecer tabs disponibles cuando se carguen los datos
   useEffect(() => {
@@ -124,7 +107,9 @@ const Commissions: React.FC = () => {
   useEffect(() => {
     if (activeTab) {
       setCurrentPage(1);
-      setPaginationData(null);
+      // Resetear paginación a valores por defecto en lugar de null
+      // para evitar que NetworkPaginationBar calcule incorrectamente totalPages
+      setPaginationData({ totalItems: 0, totalPages: 0 });
     }
   }, [activeTab]);
 
@@ -238,20 +223,16 @@ const Commissions: React.FC = () => {
   const handleClaimAllStarted = () => {
     // Iniciar polling de notificaciones cuando la solicitud tarda más de 1 segundo
     startPolling();
+    // El modal se mostrará cuando el usuario salga de la pantalla final
   };
 
-  const handleFinalContinue = async () => {
-    // Cerrar la pantalla
-    setShowClaimAllScreen(false);
-    
-    // Invalidar todas las queries relacionadas con comisiones para recargar los datos
-    await queryClient.invalidateQueries({ queryKey: ['commissions'] });
-    await queryClient.invalidateQueries({ queryKey: ['claims'] });
-    await queryClient.invalidateQueries({ queryKey: ['availableMlmModels'] });
-    
-    // Recargar la página para asegurar que todos los datos se actualicen
-    window.location.reload();
+  const handleFinalContinue = (shouldShowModal: boolean) => {
+    // Mostrar el modal solo si el polling aún está activo (no se ha recibido respuesta)
+    if (shouldShowModal) {
+      setClaimAllInProgressModalOpen(true);
+    }
   };
+
 
   return (
     <div className="h-screen w-full bg-[#2a2a2a] relative flex flex-col lg:flex-row overflow-hidden">
@@ -488,9 +469,10 @@ const Commissions: React.FC = () => {
               setErrorModalOpen(true);
             }
           }}
-          onFinalContinue={handleFinalContinue}
           onRequestStarted={handleClaimAllStarted}
+          onFinalContinue={handleFinalContinue}
           claimType={claimType}
+          isPollingActive={claimAllInProgress}
         />
       )}
     </div>

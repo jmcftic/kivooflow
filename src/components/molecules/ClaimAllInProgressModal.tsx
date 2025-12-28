@@ -23,9 +23,11 @@ const ClaimAllInProgressModal: React.FC<ClaimAllInProgressModalProps> = ({
       titleSize="large"
       buttonText={t('commissions:modals.claimAllInProgress.understood')}
       onButtonClick={() => onOpenChange(false)}
+      customHeight="h-[450px] sm:h-[480px] lg:h-[500px]"
     />
   );
 };
 
 export default ClaimAllInProgressModal;
+
 

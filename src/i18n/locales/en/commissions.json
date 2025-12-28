@@ -47,6 +47,7 @@
     "willUseMaxAvailable": "Maximum available will be used",
     "continue": "Continue",
     "requestInProcess": "Request in process",
+    "processingRequest": "Your request is being processed",
     "successfulRequest": "SUCCESSFUL REQUEST",
     "defaultCardInfo": "The selected balance will be sent to your default KIVOO card in the application.",
     "back": "Back"

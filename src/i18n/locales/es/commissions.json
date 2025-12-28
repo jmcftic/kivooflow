@@ -47,6 +47,7 @@
     "willUseMaxAvailable": "Se usará el máximo disponible",
     "continue": "Continuar",
     "requestInProcess": "Solicitud en proceso",
+    "processingRequest": "Se está procesando tu solicitud",
     "successfulRequest": "SOLICITUD EXITOSA",
     "defaultCardInfo": "El envió de tu saldo seleccionado sera enviado a tu tarjeta KIVOO predeterminada en la aplicación.",
     "back": "Volver"

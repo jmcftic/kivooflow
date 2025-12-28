@@ -24,6 +24,8 @@ export interface InfoModalProps {
   buttonText: string;
   onButtonClick?: () => void;
   buttonVariant?: 'yellow' | 'outline';
+  // Altura personalizada
+  customHeight?: string; // Altura personalizada del modal (ej: "h-[450px] lg:h-[480px]")
 }
 
 const InfoModal: React.FC<InfoModalProps> = ({
@@ -38,6 +40,7 @@ const InfoModal: React.FC<InfoModalProps> = ({
   buttonText,
   onButtonClick,
   buttonVariant = 'yellow',
+  customHeight,
 }) => {
   const handleButtonClick = () => {
     if (onButtonClick) {
@@ -58,7 +61,7 @@ const InfoModal: React.FC<InfoModalProps> = ({
     titleSize === 'small' ? 'text-[20px] sm:text-[24px]' : 'text-[28px] sm:text-[32px]',
     'font-bold',
     'leading-tight',
-    'mb-4',
+    'mb-2 sm:mb-3',
     'text-center'
   ].join(' ');
 
@@ -66,13 +69,13 @@ const InfoModal: React.FC<InfoModalProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-0 max-w-[500px] bg-transparent border-0 shadow-none sm:max-w-[500px]">
         <FoldedCard
-          className="w-full max-w-[500px] h-[405px] lg:h-[405px]"
+          className={`w-full max-w-[500px] ${customHeight || 'h-[405px] lg:h-[405px]'}`}
           gradientColor="#FFF100"
           backgroundColor="#212020"
           variant="md"
         >
           {/* Contenido centrado */}
-          <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:pt-10 sm:pb-12 w-full max-w-full overflow-hidden">
+          <div className="relative z-10 h-full flex flex-col items-center justify-between px-4 sm:px-6 pt-8 sm:pt-12 pb-6 sm:pb-12 w-full max-w-full overflow-visible">
             {/* Ilustración, icono personalizado o icono por defecto */}
             {showIllustration ? (
               <div className="mb-4 sm:mb-8 flex-shrink-0">
@@ -87,7 +90,7 @@ const InfoModal: React.FC<InfoModalProps> = ({
                 {icon}
               </div>
             ) : showDefaultIcon ? (
-              <div className="mb-4 sm:mb-8 flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 relative">
+              <div className="mb-2 sm:mb-3 flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 relative">
                 {/* Fondo amarillo con YellowFoldedCardMinibackground */}
                 <div className="absolute inset-0">
                   <YellowFoldedCardMinibackground width={56} height={56} className="w-full h-full" />
@@ -106,12 +109,12 @@ const InfoModal: React.FC<InfoModalProps> = ({
             </h2>
 
             {/* Subtexto blanco */}
-            <p className="text-white text-xs sm:text-sm mb-6 sm:mb-8 text-center px-2 w-full break-words overflow-wrap-anywhere">
+            <p className="text-white text-xs sm:text-sm mb-4 sm:mb-5 text-center px-2 w-full break-words overflow-wrap-anywhere">
               {message}
             </p>
 
             {/* Botón con margen inferior responsive */}
-            <div className="w-full px-2 pb-[10px] sm:pb-6">
+            <div className="w-full px-2 flex-shrink-0">
               <Button
                 variant={buttonVariant}
                 size="lg"
