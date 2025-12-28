@@ -139,13 +139,15 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
     label: t('menu.help'),
     icon: <HelpIcon />,
     path: '/help',
-    disabled: true,
+    disabled: false,
   }), [t]);
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
       <div className="space-y-2 flex-1">
-      {primaryNavItems.map((item) => (
+      {primaryNavItems
+        .filter((item) => item.key !== 'card' && item.key !== 'activity') // Ocultar Adquisición y Activity
+        .map((item) => (
         <SidebarItem
           key={item.key}
           icon={item.icon}
@@ -171,9 +173,9 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
           key={helpItem.key}
           icon={helpItem.icon}
           label={helpItem.label}
-          isActive={false}
+          isActive={location.pathname === helpItem.path}
           isCollapsed={isCollapsed}
-          onClick={undefined}
+          onClick={!helpItem.disabled ? () => navigate(helpItem.path) : undefined}
           disabled={helpItem.disabled}
           disabledMessage={t('messages.moduleComingSoon')}
         />

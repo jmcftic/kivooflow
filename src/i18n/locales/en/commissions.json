@@ -69,6 +69,11 @@
       "subtext": "Your claim is in the approval process",
       "understood": "Understood"
     },
+    "claimAllInProgress": {
+      "title": "REQUEST IN PROCESS",
+      "message": "Your claim request is being processed. Once it is completed, you will receive a confirmation notification in the notifications section. If you don't receive the notification after a few moments, check your notifications inbox or contact support.",
+      "understood": "Understood"
+    },
     "error": {
       "title": "Error",
       "understood": "Understood"

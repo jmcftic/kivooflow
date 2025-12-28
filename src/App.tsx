@@ -308,7 +308,7 @@ function App() {
         <Route
           path="/help"
           element={
-            <ProtectedRoute allowed={false}>
+            <ProtectedRoute allowed={true}>
               <Help />
             </ProtectedRoute>
           }

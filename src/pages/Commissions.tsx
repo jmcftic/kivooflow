@@ -22,6 +22,7 @@ import ErrorModal from '@/components/atoms/ErrorModal';
 import ClaimSuccessModal from '@/components/molecules/ClaimSuccessModal';
 import NoCardsModal from '@/components/molecules/NoCardsModal';
 import NoClaimsModal from '@/components/molecules/NoClaimsModal';
+import ClaimAllInProgressModal from '@/components/molecules/ClaimAllInProgressModal';
 import ClaimAllScreen from '@/components/organisms/ClaimAllScreen';
 import { useMinimumLoading } from '../hooks/useMinimumLoading';
 
@@ -30,7 +31,7 @@ type CommissionTabId = 'b2c' | 'b2b' | 'b2t';
 const Commissions: React.FC = () => {
   const { t } = useTranslation(['commissions', 'common']);
   const queryClient = useQueryClient();
-  const { startPolling } = useClaimAllPollingContext();
+  const { startPolling, claimAllInProgress } = useClaimAllPollingContext();
   
   // Usar la misma query de React Query que CommissionsListCard para evitar duplicados
   const { data: availableModelsData, isLoading: isLoadingModels } = useQuery({
@@ -79,6 +80,24 @@ const Commissions: React.FC = () => {
   const [noClaimableModalOpen, setNoClaimableModalOpen] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [claimAllInProgressModalOpen, setClaimAllInProgressModalOpen] = useState(false);
+  const [hasShownClaimAllModal, setHasShownClaimAllModal] = useState(false);
+
+  // Mostrar modal de claim all en progreso cuando el polling esté activo y no se haya mostrado antes
+  useEffect(() => {
+    if (claimAllInProgress && !hasShownClaimAllModal) {
+      setClaimAllInProgressModalOpen(true);
+      setHasShownClaimAllModal(true);
+    }
+    // Si el polling se detiene, resetear el flag para permitir mostrar el modal nuevamente en el futuro
+    if (!claimAllInProgress && hasShownClaimAllModal) {
+      // Esperar un poco antes de resetear para evitar que se muestre inmediatamente si se reinicia
+      const timeoutId = setTimeout(() => {
+        setHasShownClaimAllModal(false);
+      }, 1000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [claimAllInProgress, hasShownClaimAllModal]);
 
   // Establecer tabs disponibles cuando se carguen los datos
   useEffect(() => {
@@ -441,6 +460,12 @@ const Commissions: React.FC = () => {
         }}
         message={successMessage}
         showSubtext={true}
+      />
+
+      {/* Modal de claim all en progreso */}
+      <ClaimAllInProgressModal
+        open={claimAllInProgressModalOpen}
+        onOpenChange={setClaimAllInProgressModalOpen}
       />
 
       {/* Pantalla completa de Claim All */}

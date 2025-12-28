@@ -69,6 +69,11 @@
       "subtext": "Tu claim está en proceso de aprobación",
       "understood": "Entendido"
     },
+    "claimAllInProgress": {
+      "title": "SOLICITUD EN PROCESO",
+      "message": "Tu solicitud de reclamación está siendo procesada. Una vez que se complete, recibirás una notificación de confirmación en la sección de notificaciones. Si no recibes la notificación después de unos momentos, verifica tu bandeja de notificaciones o contacta a soporte.",
+      "understood": "Entendido"
+    },
     "error": {
       "title": "Error",
       "understood": "Entendido"

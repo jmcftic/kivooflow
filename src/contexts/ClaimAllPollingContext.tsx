@@ -5,6 +5,7 @@ import { getUserNotifications } from '@/services/network';
 interface ClaimAllPollingContextType {
   startPolling: () => void;
   stopPolling: () => void;
+  claimAllInProgress: boolean;
 }
 
 const ClaimAllPollingContext = createContext<ClaimAllPollingContextType | undefined>(undefined);
@@ -71,7 +72,7 @@ export const ClaimAllPollingProvider: React.FC<ClaimAllPollingProviderProps> = (
   const stopPolling = () => setClaimAllInProgress(false);
   
   return (
-    <ClaimAllPollingContext.Provider value={{ startPolling, stopPolling }}>
+    <ClaimAllPollingContext.Provider value={{ startPolling, stopPolling, claimAllInProgress }}>
       {children}
     </ClaimAllPollingContext.Provider>
   );

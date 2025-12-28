@@ -24,7 +24,8 @@
     "refresh": "Refresh",
     "loading": "Loading...",
     "send": "Send",
-    "retry": "Retry"
+    "retry": "Retry",
+    "contactSupport": "Contact Support"
   },
   "labels": {
     "email": "Email",

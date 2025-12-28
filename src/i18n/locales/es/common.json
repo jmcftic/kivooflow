@@ -24,7 +24,8 @@
     "refresh": "Actualizar",
     "loading": "Cargando...",
     "send": "Enviar",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "contactSupport": "Hablar con soporte"
   },
   "labels": {
     "email": "Correo electrónico",

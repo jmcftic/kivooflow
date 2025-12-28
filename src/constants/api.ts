@@ -14,7 +14,7 @@
 export const API_BASE_URL = import.meta.env.VITE_API_URL || (
   // Fallback SOLO para desarrollo local si no hay .env
   // En Cloudflare, VITE_API_URL siempre debe estar configurada
-  import.meta.env.DEV ? "http://localhost:3001" : "https://dev.kivooapp.co"
+  import.meta.env.DEV ? "https://dev.kivooapp.co" : "https://dev.kivooapp.co"
 );
 // API Endpoints
 export const API_ENDPOINTS = {
