@@ -2,7 +2,7 @@
   "menu": {
     "dashboard": "Dashboard",
     "network": "Red",
-    "claims": "Comisiones",
+    "claims": "Claims",
     "commissions": "Comisiones",
     "cards": "Tarjetas",
     "cardAcquisition": "Adquisición de tarjeta",
@@ -18,14 +18,14 @@
     "home": "Inicio",
     "dashboard": "Dashboard",
     "network": "Red",
-    "claims": "Comisiones",
+    "claims": "Claims",
     "cards": "Tarjetas",
     "activity": "Actividad"
   },
   "titles": {
     "dashboard": "Dashboard",
     "network": "Red",
-    "claims": "Comisiones",
+    "claims": "Claims",
     "commissions": "Comisiones",
     "cards": "Tarjetas",
     "activity": "Actividad",
