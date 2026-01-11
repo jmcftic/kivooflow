@@ -44,6 +44,7 @@ export const API_ENDPOINTS = {
     BLOCK: "/cards/:id/block",
     UNBLOCK: "/cards/:id/unblock",
     MIS_TARJETAS: "/cards/mis-tarjetas",
+    CHECK_DESCENDANT_ACTIVE_CARD: "/cards/check-descendant-active-card",
   },
   TRANSACTIONS: {
     LIST: "/transactions",
@@ -77,6 +78,8 @@ export const API_ENDPOINTS = {
     NOTIFICATIONS: "/network/notifications",
     NOTIFICATION_MARK_READ: "/network/notifications/:id/read",
     NOTIFICATIONS_MARK_ALL_READ: "/network/notifications/read-all",
+    TESTING_USER: "/network/testing",
+    RESET_USER_CLAIMS: "/network/reset-user-claims/:userId",
   },
   DASHBOARD: {
     METRICS: "/dashboard/metrics",

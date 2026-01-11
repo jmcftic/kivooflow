@@ -62,7 +62,7 @@ const NetworkTree: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const showLoader = useMinimumLoading(loading, 3000);
   const [subtreeMode, setSubtreeMode] = useState(false);
-  const [usersLimit, setUsersLimit] = useState(10);
+  const [usersLimit, setUsersLimit] = useState(50);
 
   // Usuario B2B en tab B2B no tiene límite de profundidad
   const hasDepthLimit = useMemo(() => {
@@ -196,6 +196,9 @@ const NetworkTree: React.FC = () => {
             : (typeof u.volumen === 'string' 
                 ? parseFloat(u.volumen) || 0 
                 : (u.volumen ?? 0)),
+          // Si levelInSubtree === 1, incluir información del padre directo
+          directParentFullName: levelInSubtree === 1 ? (u.directParentFullName || null) : null,
+          directParentEmail: levelInSubtree === 1 ? (u.directParentEmail || null) : null,
         };
       });
 
@@ -467,28 +470,39 @@ const NetworkTree: React.FC = () => {
           <div className="relative z-20 mt-4 mb-0 flex flex-col flex-1 min-h-0">
             {/* Breadcrumb con nivel - alineado a la izquierda, y nombre/correo a la derecha */}
             {subtreeRootName && (
-              <div className="mt-2 mb-4 flex items-center justify-between text-white text-sm">
-                {/* History alineado a la izquierda */}
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={handleBack}
-                    className="hover:opacity-80 transition-opacity"
-                  >
-                    {t('network:networkGeneral', { tab: activeTab.toUpperCase() })}
-                  </button>
-                  <SingleArrowHistory className="mx-2" />
-                  <span className="font-bold">{t('network:level')} {subtreeRootLevel}</span>
-                  <SingleArrowHistory className="mx-2" />
-                  <span className="font-normal">{subtreeRootName}</span>
+              <div className="mt-2 mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0 text-white text-sm">
+                {/* History alineado a la izquierda - 2 elementos por fila en móvil */}
+                <div className="flex flex-col md:flex-row md:items-center gap-2">
+                  {/* Fila 1: B2B Network General → Level X */}
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={handleBack}
+                      className="hover:opacity-80 transition-opacity"
+                    >
+                      {t('network:networkGeneral', { tab: activeTab.toUpperCase() })}
+                    </button>
+                    <SingleArrowHistory className="mx-2" />
+                    <span className="font-bold">{t('network:level')} {subtreeRootLevel}</span>
+                  </div>
+                  {/* Fila 2: Level X → Nombre (solo en móvil) */}
+                  <div className="flex items-center gap-2 md:hidden">
+                    <span className="font-bold">{t('network:level')} {subtreeRootLevel}</span>
+                    <SingleArrowHistory className="mx-2" />
+                    <span className="font-normal">{subtreeRootName}</span>
+                  </div>
+                  {/* Nombre en desktop */}
+                  <div className="hidden md:flex items-center gap-2">
+                    <SingleArrowHistory className="mx-2" />
+                    <span className="font-normal">{subtreeRootName}</span>
+                  </div>
                 </div>
                 
-                {/* Nombre y correo alineados a la derecha */}
-                <div className="flex flex-col items-end">
-                  <span className="font-normal">{subtreeRootName}</span>
-                  {subtreeRootEmail && (
+                {/* Email alineado a la derecha */}
+                {subtreeRootEmail && (
+                  <div className="flex items-start md:items-end">
                     <span className="text-gray-400 text-sm">{subtreeRootEmail}</span>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
 

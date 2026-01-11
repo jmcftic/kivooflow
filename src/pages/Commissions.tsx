@@ -34,10 +34,12 @@ const Commissions: React.FC = () => {
   const { startPolling, claimAllInProgress } = useClaimAllPollingContext();
   
   // Usar la misma query de React Query que CommissionsListCard para evitar duplicados
+  // staleTime Infinity ya que los datos se guardan en localStorage y solo cambian al login/logout
+  // La función getAvailableMlmModels ya maneja su propio cache en localStorage
   const { data: availableModelsData, isLoading: isLoadingModels } = useQuery({
     queryKey: ['availableMlmModels'],
-    queryFn: getAvailableMlmModels,
-    staleTime: 5 * 60 * 1000, // Cache por 5 minutos
+    queryFn: () => getAvailableMlmModels(), // Envolver para compatibilidad con React Query
+    staleTime: Infinity, // Los datos solo cambian en login/logout, así que nunca se consideran stale
   });
 
   const [activeTab, setActiveTab] = useState<CommissionTabId | null>(null);
@@ -254,7 +256,27 @@ const Commissions: React.FC = () => {
         <div className="flex-1 min-h-0 overflow-y-auto pl-6 pr-6 pb-8" style={{ paddingBottom: '84px' }}>
           {/* Navbar responsivo */}
           <DashboardNavbar 
-            title={t('commissions:title')} 
+            title={t('commissions:title')}
+            rightAction={
+              /* Botón visible solo en móviles/tablets pequeños junto al título, en desktop se muestra junto a las tabs */
+              <div className="lg:hidden">
+                <SingleButtonNoClipPath
+                  size="default"
+                  className="rounded-xl font-urbanist-medium h-[42px] px-4 text-base leading-[20px]"
+                  onClick={handleRequestAllClaims}
+                  disabled={isRequestingClaims || isLoadingTotal}
+                >
+                  {isRequestingClaims || isLoadingTotal ? (
+                    <>
+                      <Spinner className="size-4 text-black" />
+                      <span>{isLoadingTotal ? t('commissions:button.loading') : t('commissions:button.requesting')}</span>
+                    </>
+                  ) : (
+                    t('commissions:button.requestEarnings')
+                  )}
+                </SingleButtonNoClipPath>
+              </div>
+            }
           />
 
           {/* Tabs - Debajo del label Comisiones */}
@@ -276,8 +298,8 @@ const Commissions: React.FC = () => {
                   tabHeight={55}
                 />
               </div>
-              {/* Botón Solicitar ganancias - Alineado a la derecha y justo sobre la línea */}
-              <div className="absolute bottom-0 right-0" style={{ marginBottom: '-1px' }}>
+              {/* Botón Solicitar ganancias - Solo visible en desktop, alineado a la derecha y justo sobre la línea */}
+              <div className="hidden lg:block absolute bottom-0 right-0" style={{ marginBottom: '-1px' }}>
                 <SingleButtonNoClipPath
                   size="default"
                   className="rounded-xl font-urbanist-medium h-[42px] px-4 text-base leading-[20px]"

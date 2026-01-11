@@ -49,7 +49,7 @@ const Network: React.FC = () => {
 
   const [levels, setLevels] = useState<NetworkLevel[]>([]);
   const [totalDescendants, setTotalDescendants] = useState(0);
-  const [usersLimit, setUsersLimit] = useState(10);
+  const [usersLimit, setUsersLimit] = useState(50);
   const [usersOffset, setUsersOffset] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [childrenByParent, setChildrenByParent] = useState<Record<number, any[]>>({});
@@ -1499,6 +1499,7 @@ const Network: React.FC = () => {
                   loadingTreeUserId={loadingTreeUserId}
                   parentExhausted={isLeaderTab ? {} : parentExhausted}
                   parentErrors={isLeaderTab ? {} : parentErrors}
+                  userModel={userModel}
                 />
               ) : (
                 <div className="py-10 text-center text-sm text-white/60">

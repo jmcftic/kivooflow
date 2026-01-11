@@ -15,14 +15,21 @@ const NetworkTableHeader: React.FC<NetworkTableHeaderProps> = ({ activeTab = 'b2
     ? (userModel?.toLowerCase() === 'b2b' ? t('network:table.headers.user') : t('network:table.headers.company'))
     : t('network:table.headers.email');
   
+  // Ocultar columna Actividad cuando es B2C viendo tab B2B (empresas)
+  const showActivityColumn = !(activeTab === 'b2b' && userModel?.toLowerCase() !== 'b2b');
+  const gridCols = showActivityColumn ? 'grid-cols-6' : 'grid-cols-5';
+  
   return (
-    <div className="w-full mb-3">
+    <div className="w-full mb-3 hidden md:block">
       <div className="w-full flex items-center px-6">
-        <div className="flex-1 grid grid-cols-5 gap-4 h-10 items-center text-xs text-white"> 
+        <div className={`flex-1 grid ${gridCols} gap-4 h-10 items-center text-xs text-white`}> 
           <div className="flex items-center justify-center gap-1">{emailColumnLabel} <OrderArrows /></div>
           <div className="flex items-center justify-center gap-1">{t('network:table.headers.joinDate')} <OrderArrows /></div>
           <div className="flex items-center justify-center gap-1">{t('network:table.headers.level')} <OrderArrows /></div>
           <div className="flex items-center justify-center gap-1">{t('network:table.headers.volume')} <OrderArrows /></div>
+          {showActivityColumn && (
+            <div className="flex items-center justify-center gap-1">{t('network:table.headers.activity')}</div>
+          )}
           <div className="flex items-center justify-end pr-20">{t('network:table.headers.actions')}</div>
         </div>
       </div>

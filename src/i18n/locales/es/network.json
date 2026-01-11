@@ -16,14 +16,25 @@
       "joinDate": "Fecha de unión",
       "level": "Nivel",
       "volume": "Volumen",
+      "activity": "Actividad",
       "actions": "Acciones"
     },
     "actions": {
       "viewTree": "Ver árbol",
       "viewDetail": "Ver detalle",
       "loadMore": "Cargar más",
-      "loading": "Cargando..."
+      "loading": "Cargando...",
+      "checkCard": "Verificar tarjeta activa"
     }
+  },
+  "cardStatus": {
+    "title": "Estado de tarjeta",
+    "loading": "Verificando estado de tarjeta...",
+    "hasActiveCard": "El usuario ya activó su tarjeta",
+    "hasNotActiveCard": "El usuario no ha activado su tarjeta",
+    "error": "Error al verificar el estado de la tarjeta",
+    "errorForbidden": "El usuario no pertenece a tu red",
+    "errorUnauthorized": "No autorizado. Por favor, inicia sesión nuevamente"
   },
   "stats": {
     "activeReferrals": "Referidos activos",

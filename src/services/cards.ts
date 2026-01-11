@@ -18,3 +18,29 @@ export async function getMisTarjetas(): Promise<MisTarjetasResponse> {
   };
 }
 
+export interface CheckDescendantActiveCardResponse {
+  statusCode: number;
+  message: string;
+  data: {
+    hasActiveCard: boolean;
+  };
+}
+
+export async function checkDescendantActiveCard(userId: number): Promise<boolean> {
+  const res = await apiService.post<CheckDescendantActiveCardResponse>(
+    API_ENDPOINTS.CARDS.CHECK_DESCENDANT_ACTIVE_CARD,
+    { userId }
+  );
+  
+  const payload: any = res;
+  const data = payload?.data ?? payload;
+  
+  // El endpoint retorna un objeto con formato estándar: { statusCode, message, data: { hasActiveCard } }
+  if (data?.hasActiveCard !== undefined) {
+    return data.hasActiveCard;
+  }
+  
+  // Fallback por si acaso el formato cambia
+  return Boolean(data);
+}
+

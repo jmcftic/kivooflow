@@ -19,25 +19,27 @@ const NetworkFilter: React.FC<NetworkFilterProps> = ({
   showLevelTabs = true,
 }) => {
   return (
-    <div className={`flex items-center ${showLevelTabs ? 'justify-between' : 'justify-start'}`}>
-      {/* Input de filtro a la izquierda */}
-      <div className="flex-1 max-w-md">
-        <div className="relative">
+    <div className={`flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-0 ${showLevelTabs ? 'md:justify-between' : 'md:justify-start'}`}>
+      {/* Tabs de nivel - Primero en móvil, a la derecha en desktop */}
+      {showLevelTabs && (
+        <div className="order-1 md:order-2 flex items-center">
+          <LevelTabs activeLevel={activeLevel} onLevelChange={onLevelChange} />
+        </div>
+      )}
+
+      {/* Input de filtro - Segundo en móvil, a la izquierda en desktop */}
+      <div className={`order-2 md:order-1 ${showLevelTabs ? 'flex-1' : ''} max-w-md w-full md:w-auto flex items-center`}>
+        <div className="relative w-full">
           <SearchIconMini className="absolute left-3 top-1/2 -translate-y-1/2" />
           <Input
             type="text"
             placeholder="Buscar usuario"
             value={searchFilter}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="bg-[#2e2d29] border-[#333] text-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-[#333] pl-9"
+            className="bg-[#2e2d29] border-[#333] text-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-[#333] pl-9 w-full"
           />
         </div>
       </div>
-
-      {/* Tabs de nivel a la derecha */}
-      {showLevelTabs && (
-        <LevelTabs activeLevel={activeLevel} onLevelChange={onLevelChange} />
-      )}
     </div>
   );
 };

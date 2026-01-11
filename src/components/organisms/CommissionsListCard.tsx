@@ -135,12 +135,25 @@ const mapClaim = (claim: Claim, t: (key: string) => string): MappedClaim => {
     }
   }
 
+  // Obtener nivel desde calculationDetails si está disponible
+  let nivel: number | undefined = undefined;
+  if (claim.calculationDetails && 'ancestorDepth' in claim.calculationDetails) {
+    const ancestorDepth = (claim.calculationDetails as any).ancestorDepth;
+    if (ancestorDepth !== undefined && ancestorDepth !== null) {
+      nivel = typeof ancestorDepth === 'number' ? ancestorDepth : parseInt(String(ancestorDepth), 10);
+      if (isNaN(nivel)) {
+        nivel = undefined;
+      }
+    }
+  }
+
   return {
     id: `CLM-${String(claim.id).padStart(3, '0')}`,
     fecha: claim.createdAt,
     tarjeta,
     estado: mapStatus(claim.status),
     monto,
+    nivel,
     originalClaim: claim,
     commissionType: claim.commissionType,
     userEmail,
@@ -270,10 +283,12 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
   const queryClient = useQueryClient();
 
   // Obtener el modelo del usuario para determinar qué endpoint usar
+  // staleTime Infinity ya que los datos se guardan en localStorage y solo cambian al login/logout
+  // La función getAvailableMlmModels ya maneja su propio cache en localStorage
   const { data: userModelData } = useQuery({
     queryKey: ['availableMlmModels'],
-    queryFn: getAvailableMlmModels,
-    staleTime: 5 * 60 * 1000, // Cache por 5 minutos
+    queryFn: () => getAvailableMlmModels(), // Envolver para compatibilidad con React Query
+    staleTime: Infinity, // Los datos solo cambian en login/logout, así que nunca se consideran stale
   });
 
   const userModel = userModelData?.my_model?.trim().toLowerCase() || '';
@@ -590,7 +605,7 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
                       hideTarjeta={finalHideTarjeta}
                       usuarioLabel={usuarioLabel}
                       usuarioValue={usuarioValue}
-                      concept={commission.concept}
+                      concept={activeTab === 'b2b' ? undefined : commission.concept}
                     />
                   );
                 })}
@@ -625,11 +640,17 @@ const CommissionsListCard: React.FC<CommissionsListCardProps> = ({ className = "
           nivel={
             selectedClaim.nivel !== undefined 
               ? selectedClaim.nivel 
-              : (selectedClaim.originalClaim?.calculationDetails && 'ancestorDepth' in selectedClaim.originalClaim.calculationDetails
-                  ? (selectedClaim.originalClaim.calculationDetails as any).ancestorDepth
-                  : undefined)
+              : (selectedClaim.originalB2BCommission?.level !== undefined
+                  ? selectedClaim.originalB2BCommission.level
+                  : (selectedClaim.originalClaim?.calculationDetails && 'ancestorDepth' in selectedClaim.originalClaim.calculationDetails
+                      ? (selectedClaim.originalClaim.calculationDetails as any).ancestorDepth
+                      : undefined))
           }
-          tipoComision={selectedClaim.originalClaim?.commissionType || 'N/A'}
+          tipoComision={
+            selectedClaim.originalB2BCommission?.commissionType 
+              ? selectedClaim.originalB2BCommission.commissionType 
+              : (selectedClaim.commissionType || selectedClaim.originalClaim?.commissionType || 'N/A')
+          }
           baseAmount={selectedClaim.originalClaim?.baseAmount}
           commissionPercentage={selectedClaim.originalClaim?.commissionPercentage !== null && selectedClaim.originalClaim?.commissionPercentage !== undefined
             ? selectedClaim.originalClaim.commissionPercentage

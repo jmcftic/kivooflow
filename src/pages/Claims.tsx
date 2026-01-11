@@ -19,10 +19,12 @@ type ClaimTabId = 'b2c' | 'b2b' | 'b2t';
 
 const Claims: React.FC = () => {
   const { t, i18n } = useTranslation(['claims', 'navigation']);
+  // staleTime Infinity ya que los datos se guardan en localStorage y solo cambian al login/logout
+  // La función getAvailableMlmModels ya maneja su propio cache en localStorage
   const { data: availableModelsData, isLoading: isLoadingModels } = useQuery({
     queryKey: ['availableMlmModels'],
-    queryFn: getAvailableMlmModels,
-    staleTime: 5 * 60 * 1000,
+    queryFn: () => getAvailableMlmModels(), // Envolver para compatibilidad con React Query
+    staleTime: Infinity, // Los datos solo cambian en login/logout, así que nunca se consideran stale
   });
 
   const [activeTab, setActiveTab] = useState<ClaimTabId | null>(null);
@@ -33,6 +35,7 @@ const Claims: React.FC = () => {
   });
   const [hasSetInitialTab, setHasSetInitialTab] = useState(false);
   const [isChangingTab, setIsChangingTab] = useState(false);
+  const [pageSize, setPageSize] = useState(50); // Inicializar con 50 para mantener consistencia con Network
 
   // Obtener el summary calculado desde las órdenes con status pending y paid en una sola petición
   const { data: summaryData, isLoading: isLoadingSummary } = useQuery({
@@ -123,7 +126,7 @@ const Claims: React.FC = () => {
       <div className="flex-1 relative flex flex-col pl-6 pr-6 overflow-y-auto pb-8 pt-16 lg:pt-0">
         {/* Overlay con animación Lottie cuando está cargando */}
         {showLoader && (
-          <div className="absolute inset-0 bg-[#2a2a2a] z-[9999] flex items-center justify-center">
+          <div className="fixed inset-0 bg-[#2a2a2a] z-[9999] flex items-center justify-center">
             <LottieLoader className="w-32 h-32 lg:w-48 lg:h-48" />
           </div>
         )}
@@ -177,7 +180,7 @@ const Claims: React.FC = () => {
 
         {/* Contenido de Claims */}
         <div className="relative z-20 mt-6 mb-8">
-          <ClaimsListCard activeTab={activeTab} />
+          <ClaimsListCard activeTab={activeTab} pageSize={pageSize} />
         </div>
 
         {/* SVG de esquina en inferior derecha */}

@@ -16,14 +16,25 @@
       "joinDate": "Join date",
       "level": "Level",
       "volume": "Volume",
+      "activity": "Activity",
       "actions": "Actions"
     },
     "actions": {
       "viewTree": "View tree",
       "viewDetail": "View detail",
       "loadMore": "Load more",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "checkCard": "Check active card"
     }
+  },
+  "cardStatus": {
+    "title": "Card status",
+    "loading": "Checking card status...",
+    "hasActiveCard": "The user has already activated their card",
+    "hasNotActiveCard": "The user has not activated their card",
+    "error": "Error checking card status",
+    "errorForbidden": "The user does not belong to your network",
+    "errorUnauthorized": "Unauthorized. Please log in again"
   },
   "stats": {
     "activeReferrals": "Active referrals",

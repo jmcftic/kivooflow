@@ -8,6 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { B2BCommission } from "@/types/network";
 import { cn, formatCurrencyWithThreeDecimals } from "@/lib/utils";
 
@@ -64,7 +65,7 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
   onConfirm,
   isSubmitting = false,
 }) => {
-  const { t } = useTranslation(['commissions', 'common']);
+  const { t } = useTranslation(['commissions', 'claims', 'common']);
   
   if (!commission) return null;
 
@@ -79,6 +80,37 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
     periodEndDate,
     commissionPercentage,
   } = commission;
+
+  // Función para obtener el badge de nivel
+  const getLevelBadge = () => {
+    if (level === undefined || level === null) return null;
+    
+    let badgeText = '';
+    let badgeVariant: 'yellow' | 'green' | 'blue' | 'red' | 'default' = 'default';
+
+    if (level === 1) {
+      badgeText = t('claims:item.commissionTypes.level1');
+      badgeVariant = 'yellow';
+    } else if (level === 2) {
+      badgeText = t('claims:item.commissionTypes.level2');
+      badgeVariant = 'green';
+    } else if (level === 3) {
+      badgeText = t('claims:item.commissionTypes.level3');
+      badgeVariant = 'blue';
+    } else {
+      badgeText = `${t('claims:item.labels.level')} ${level}`;
+      badgeVariant = 'default';
+    }
+
+    return (
+      <Badge 
+        variant={badgeVariant}
+        className="text-xs"
+      >
+        {badgeText}
+      </Badge>
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -108,7 +140,11 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
             </div>
             <div>
               <p className="text-[#CBCACA] text-xs mb-1">{t('commissions:modals.b2bCommissionDetail.level')}</p>
-              <p className="text-white font-medium">{level ?? "—"}</p>
+              {level !== undefined && level !== null ? (
+                getLevelBadge()
+              ) : (
+                <p className="text-white font-medium">—</p>
+              )}
             </div>
             <div>
               <p className="text-[#CBCACA] text-xs mb-1">{t('commissions:modals.b2bCommissionDetail.status')}</p>

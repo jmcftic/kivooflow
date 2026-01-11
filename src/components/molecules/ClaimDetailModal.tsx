@@ -83,6 +83,66 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
   // Detectar si es retroactive
   const isRetroactive = tipoComision?.toLowerCase() === 'retroactive';
 
+  // Función para obtener el color del estado
+  const getEstadoColor = (estado: string) => {
+    if (!estado) return 'text-[#aaa]';
+    
+    const estadoLower = estado.toLowerCase().trim();
+    
+    // Estados que son verdes (aprobado/disponible)
+    if (estadoLower === 'aprobado' || estadoLower === 'approved' || 
+        estadoLower === 'recibida' || estadoLower === 'disponible' || 
+        estadoLower === 'available' || estadoLower === 'processed' || 
+        estadoLower === 'claimed') {
+      return 'text-[#32d74b]';
+    }
+    
+    // Estados que son amarillos (solicitado/pendiente)
+    if (estadoLower === 'solicitado' || estadoLower === 'requested' || 
+        estadoLower === 'pendiente' || estadoLower === 'pending') {
+      return 'text-[#FFF100]';
+    }
+    
+    // Estados que son rojos (rechazado)
+    if (estadoLower === 'rechazado' || estadoLower === 'rejected' || 
+        estadoLower === 'cancelled') {
+      return 'text-[#ff6d64]';
+    }
+    
+    return 'text-[#aaa]';
+  };
+
+  // Función para obtener el badge de nivel
+  const getLevelBadge = () => {
+    if (nivel === undefined || nivel === null) return null;
+    
+    let badgeText = '';
+    let badgeVariant: 'yellow' | 'green' | 'blue' | 'red' | 'default' = 'default';
+
+    if (nivel === 1) {
+      badgeText = t('claims:item.commissionTypes.level1');
+      badgeVariant = 'yellow';
+    } else if (nivel === 2) {
+      badgeText = t('claims:item.commissionTypes.level2');
+      badgeVariant = 'green';
+    } else if (nivel === 3) {
+      badgeText = t('claims:item.commissionTypes.level3');
+      badgeVariant = 'blue';
+    } else {
+      badgeText = `${t('claims:item.labels.level')} ${nivel}`;
+      badgeVariant = 'default';
+    }
+
+    return (
+      <Badge 
+        variant={badgeVariant}
+        className="text-xs"
+      >
+        {badgeText}
+      </Badge>
+    );
+  };
+
   // Función para censurar email
   const censorEmail = (email: string): string => {
     if (!email || email === 'N/A') return 'N/A';
@@ -210,23 +270,33 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 max-w-[500px] bg-transparent border-0 shadow-none">
-        <FoldedCard
-          className="w-[500px] h-[369px]"
-          gradientColor="#FFF100"
-          backgroundColor="#212020"
-          variant="md"
-        >
+      <DialogContent className="p-0 max-w-[95vw] md:max-w-[500px] bg-transparent border-0 shadow-none">
+        <div className="relative w-full md:w-[500px] h-auto min-h-[400px] md:h-[369px] rounded-lg overflow-hidden isolate">
+          {/* Background con clipPath */}
+          <div
+            className="absolute inset-0 rounded-lg"
+            style={{
+              backgroundColor: "#212020",
+              clipPath: `polygon(0 0, calc(100% - 30px) 0, 100% 30px, 100% 100%, 0 100%)`,
+              transform: "translateZ(0)",
+            }}
+          >
+            {/* Gradient overlay */}
+            <div
+              className="absolute inset-0 opacity-10"
+              style={{
+                background: `linear-gradient(to top, #FFF10000 0%, #FFF10047 100%)`,
+              }}
+            />
+          </div>
+          {/* Content container */}
+          <div className="relative z-10 h-full flex flex-col">
           {/* Modo view o cuando se oculta la selección de tarjeta: Mostrar datos de la comisión con estilos específicos */}
           {mode === 'view' || hideCardSelection ? (
             <div 
-              className="flex flex-col items-center relative"
+              className="flex flex-col items-center relative w-full py-6 px-4 md:py-8 md:px-6 gap-6 md:gap-8 min-h-[400px] md:min-h-[369px] md:justify-center"
               style={{
-                padding: '32px 24px',
-                gap: '32px',
                 isolation: 'isolate',
-                width: '500px',
-                height: '369px',
                 borderRadius: '24px'
               }}
             >
@@ -237,7 +307,7 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
 
               {/* ScrollArea con datos en filas */}
               <ScrollArea className="flex-1 w-full">
-                <div className="flex flex-col gap-2 w-full pr-4">
+                <div className="flex flex-col gap-2 w-full pr-4 md:justify-center md:min-h-full">
                   {/* Usuario - Solo mostrar si hay valor */}
                   {getLoggedUserDisplay() && (
                     <div className="flex items-center justify-between w-full">
@@ -272,12 +342,20 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
                   {estado && (
                     <div className="flex items-center justify-between w-full">
                       <span className="text-white/60 text-sm">{t('commissions:labels.status')}</span>
-                      <span className="text-white text-sm">{estado}</span>
+                      <span className={`text-sm ${getEstadoColor(estado)}`}>{estado}</span>
                     </div>
                   )}
                   
-                  {/* Tipo de comisión - Solo mostrar si hay tipoComision */}
-                  {tipoComision && (
+                  {/* Nivel - Mostrar si hay nivel, independientemente de tipoComision */}
+                  {nivel !== undefined && nivel !== null && (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-white/60 text-sm">{t('claims:item.labels.level')}</span>
+                      {getLevelBadge()}
+                    </div>
+                  )}
+                  
+                  {/* Tipo de comisión - Solo mostrar si hay tipoComision válido y no hay nivel (para evitar duplicados) */}
+                  {tipoComision && tipoComision !== 'N/A' && (typeof tipoComision !== 'string' || tipoComision.trim() !== '') && (nivel === undefined || nivel === null) && (
                     <div className="flex items-center justify-between w-full">
                       <span className="text-white/60 text-sm">{t('commissions:labels.commissionType')}</span>
                       {(() => {
@@ -390,7 +468,7 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
               </ScrollArea>
             </div>
           ) : (
-            <div className="w-full h-full flex flex-col p-6">
+            <div className="w-full h-full flex flex-col p-4 md:p-6">
               {/* Título */}
               <h2 className="text-[#FFF100] text-xl font-bold mb-6">
                 {t('commissions:modals.claimDetail.requestCommission')}
@@ -484,7 +562,8 @@ const ClaimDetailModal: React.FC<ClaimDetailModalProps> = ({
               </div>
             </div>
           )}
-        </FoldedCard>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

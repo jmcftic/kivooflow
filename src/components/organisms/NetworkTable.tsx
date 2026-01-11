@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatCurrencyWithThreeDecimals } from '@/lib/utils';
@@ -9,6 +9,9 @@ import LevelTwoTag from '../atoms/LevelTwoTag';
 import LevelThreeTag from '../atoms/LevelThreeTag';
 import LevelFourPlusTag from '../atoms/LevelFourPlusTag';
 import { Spinner } from '@/components/ui/spinner';
+import DescendantCardStatusModal from '../molecules/DescendantCardStatusModal';
+import { checkDescendantActiveCard } from '@/services/cards';
+import HelpIcon from '../atoms/HelpIcon';
 
 // Función para truncar a 3 decimales sin redondear y mostrar con coma
 // Si los 3 decimales son 0, no mostrar decimales
@@ -62,11 +65,28 @@ interface NetworkTableProps {
   parentErrors?: Record<number, string>;
   hasDepthLimit?: boolean;
   maxDepth?: number;
+  userModel?: string | null; // Para determinar si es B2C viendo B2B
 }
 
-const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLevel, onToggleExpand, childrenByParent = {}, childIndentPx = 30, onViewTree, onViewDetail, disableExpand = false, disableViewTree = false, isLeaderTab = false, onLoadMoreChildren, parentHasMore = {}, parentLoading = {}, loadingTreeUserId = null, parentExhausted = {}, parentErrors = {}, hasDepthLimit = true, maxDepth = 3 }) => {
+const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLevel, onToggleExpand, childrenByParent = {}, childIndentPx = 30, onViewTree, onViewDetail, disableExpand = false, disableViewTree = false, isLeaderTab = false, onLoadMoreChildren, parentHasMore = {}, parentLoading = {}, loadingTreeUserId = null, parentExhausted = {}, parentErrors = {}, hasDepthLimit = true, maxDepth = 3, userModel = null }) => {
   const navigate = useNavigate();
   const { t } = useTranslation(['network', 'common']);
+  const [cardStatusModalOpen, setCardStatusModalOpen] = useState(false);
+  const [hasActiveCard, setHasActiveCard] = useState<boolean | null>(null);
+  const [checkingUserId, setCheckingUserId] = useState<number | null>(null);
+  const [cardStatusError, setCardStatusError] = useState<string | null>(null);
+
+  // Ocultar columna Actividad cuando es B2C viendo tab B2B (empresas)
+  const showActivityColumn = !(activeTab === 'b2b' && userModel?.toLowerCase() !== 'b2b');
+  const gridCols = showActivityColumn ? 'grid-cols-6' : 'grid-cols-5';
+  
+  // Determinar el label de la columna de email/usuario/empresa
+  const getEmailColumnLabel = () => {
+    if (activeTab === 'b2b') {
+      return userModel?.toLowerCase() === 'b2b' ? t('network:table.headers.user') : t('network:table.headers.company');
+    }
+    return t('network:table.headers.email');
+  };
 
   const handleViewTree = (userId: number) => {
     if (onViewTree) {
@@ -77,6 +97,35 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
       sessionStorage.setItem('networkTreeUserId', userId.toString());
       // Navegar a la ruta del árbol (sin parámetro en la URL)
       navigate('/network/tree');
+    }
+  };
+
+  const handleCheckCardStatus = async (userId: number) => {
+    setCheckingUserId(userId);
+    setHasActiveCard(null);
+    setCardStatusError(null);
+    setCardStatusModalOpen(false);
+
+    try {
+      const result = await checkDescendantActiveCard(userId);
+      setHasActiveCard(result);
+      setCardStatusModalOpen(true);
+    } catch (error: any) {
+      console.error('Error al verificar tarjeta activa:', error);
+      let errorMsg = t('network:cardStatus.error');
+      
+      if (error?.response?.status === 403) {
+        errorMsg = t('network:cardStatus.errorForbidden');
+      } else if (error?.response?.status === 401) {
+        errorMsg = t('network:cardStatus.errorUnauthorized');
+      } else if (error?.message) {
+        errorMsg = error.message;
+      }
+      
+      setCardStatusError(errorMsg);
+      setCardStatusModalOpen(true);
+    } finally {
+      setCheckingUserId(null);
     }
   };
 
@@ -100,10 +149,115 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
         return (
         <div key={item.id} className="space-y-2">
           {/** Determinar si el padre está expandido para resaltar su red */}
-          <InfoBanner className="w-full h-16" backgroundColor={isExpanded ? "#3c3c3c" : "#212020"}>
-            <div className="w-full flex items-center px-6 py-2">
-              <div className="flex-1 grid grid-cols-5 gap-4 items-center text-sm text-white">
-                <div className="relative flex items-center justify-center pl-6 gap-2">
+          <InfoBanner className="w-full h-auto min-h-[200px] md:h-16 md:min-h-[64px]" backgroundColor={isExpanded ? "#3c3c3c" : "#212020"}>
+            {/* Layout móvil: cada campo en su propia row */}
+            <div className="flex flex-col md:hidden gap-2 w-full">
+              {/* Email/Usuario/Empresa */}
+              <div className="flex flex-row items-center justify-between w-full py-1.5">
+                <span className="text-[#CBCACA] text-xs">{getEmailColumnLabel()}</span>
+                <div className="flex items-center gap-2">
+                  {canExpand && (
+                    <DropDownTringle 
+                      className="cursor-pointer" 
+                      isExpanded={isExpanded}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleExpand && onToggleExpand(item.id, authLevel as 1 | 2 | 3);
+                      }}
+                    />
+                  )}
+                  {activeTab === 'b2b' && item.profileIconUrl && (
+                    <div className="flex-shrink-0 relative" style={{ width: '24px', height: '24px', overflow: 'hidden', borderRadius: '50%' }}>
+                      <img 
+                        src={item.profileIconUrl}
+                        alt=""
+                        style={{
+                          width: 'auto',
+                          height: 'auto',
+                          maxWidth: 'none',
+                          maxHeight: 'none',
+                          objectFit: 'none'
+                        }}
+                      />
+                    </div>
+                  )}
+                  <span className="text-white text-sm font-medium truncate" title={item.email || item.name}>
+                    {item.email || item.name}
+                  </span>
+                </div>
+              </div>
+              {/* Fecha de unión */}
+              <div className="flex flex-row items-center justify-between w-full py-1.5">
+                <span className="text-[#CBCACA] text-xs">{t('network:table.headers.joinDate')}</span>
+                <span className="text-white text-sm font-medium">{item.createdAt ? new Date(item.createdAt).toISOString().slice(0,10) : '—'}</span>
+              </div>
+              {/* Nivel */}
+              <div className="flex flex-row items-center justify-between w-full py-1.5">
+                <span className="text-[#CBCACA] text-xs">{t('network:table.headers.level')}</span>
+                <div className="flex items-center justify-center">
+                  {(() => {
+                    if (authLevel === 1) return <LevelOneTag />;
+                    if (authLevel === 2) return <LevelTwoTag />;
+                    if (authLevel === 3) return <LevelThreeTag />;
+                    return <LevelFourPlusTag level={authLevel} />;
+                  })()}
+                </div>
+              </div>
+              {/* Volumen */}
+              <div className="flex flex-row items-center justify-between w-full py-1.5">
+                <span className="text-[#CBCACA] text-xs">{t('network:table.headers.volume')}</span>
+                <span className="text-white text-sm font-medium">
+                  {typeof item.volumen === 'number' || (typeof item.volumen === 'string' && item.volumen !== '')
+                    ? `USDT ${truncateTo3Decimals(item.volumen)}`
+                    : (typeof item.comisionesGeneradas === 'number' 
+                        ? `USDT ${formatCurrencyWithThreeDecimals(item.comisionesGeneradas)}` 
+                        : 'USDT 0.00')}
+                </span>
+              </div>
+              {/* Actividad */}
+              {showActivityColumn && (
+                <div className="flex flex-row items-center justify-between w-full py-1.5">
+                  <span className="text-[#CBCACA] text-xs">{t('network:table.headers.activity')}</span>
+                  <div className="flex items-center justify-center">
+                    {checkingUserId === item.id ? (
+                      <Spinner className="size-4 text-[#FFF100]" />
+                    ) : (
+                      <button
+                        onClick={() => handleCheckCardStatus(item.id)}
+                        className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer"
+                        title={t('network:table.actions.checkCard')}
+                        disabled={checkingUserId !== null}
+                      >
+                        <HelpIcon />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+              {/* Acciones */}
+              <div className="flex flex-row items-center justify-center w-full py-1.5">
+                {isLeaderTab && onViewDetail ? (
+                  <span 
+                    className="text-[#FFF100] cursor-pointer hover:text-[#E6D900] transition-colors text-sm" 
+                    onClick={() => onViewDetail(item.id)}
+                  >
+                    {t('network:table.actions.viewDetail')}
+                  </span>
+                ) : canViewTree ? (
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[#FFF100] ${isLoading ? 'cursor-default opacity-70' : 'cursor-pointer'} text-sm`} onClick={() => !isLoading && handleViewTree(item.id)}>
+                      {t('network:table.actions.viewTree')}
+                    </span>
+                    {isLoading && <Spinner className="size-4 text-[#FFF100]" />}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+            
+            {/* Layout desktop: grid */}
+            <div className="hidden md:flex w-full items-center h-full px-4 md:px-6 py-2">
+              <div className={`flex-1 grid ${gridCols} gap-2 md:gap-4 items-center text-sm text-white h-full`}>
+                <div className="relative flex items-center justify-center h-full pl-6 gap-2">
                   {canExpand && (
                     <DropDownTringle 
                       className="absolute left-0 cursor-pointer" 
@@ -151,10 +305,10 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                     {item.email || item.name}
                   </span>
                 </div>
-                <div className="text-center">
+                <div className="text-center flex items-center justify-center h-full">
                   {item.createdAt ? new Date(item.createdAt).toISOString().slice(0,10) : '—'}
                 </div>
-                <div className="flex items-center justify-center">
+                <div className="flex items-center justify-center h-full">
                   {(() => {
                     if (authLevel === 1) return <LevelOneTag />;
                     if (authLevel === 2) return <LevelTwoTag />;
@@ -162,14 +316,30 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                     return <LevelFourPlusTag level={authLevel} />;
                   })()}
                 </div>
-                <div className="text-center">
+                <div className="text-center flex items-center justify-center h-full">
                   {typeof item.volumen === 'number' || (typeof item.volumen === 'string' && item.volumen !== '')
                     ? `USDT ${truncateTo3Decimals(item.volumen)}`
                     : (typeof item.comisionesGeneradas === 'number' 
                         ? `USDT ${formatCurrencyWithThreeDecimals(item.comisionesGeneradas)}` 
                         : 'USDT 0.00')}
                 </div>
-                <div className="text-right pr-6">
+                {showActivityColumn && (
+                  <div className="flex items-center justify-center h-full">
+                    {checkingUserId === item.id ? (
+                      <Spinner className="size-4 text-[#FFF100]" />
+                    ) : (
+                      <button
+                        onClick={() => handleCheckCardStatus(item.id)}
+                        className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer"
+                        title={t('network:table.actions.checkCard')}
+                        disabled={checkingUserId !== null}
+                      >
+                        <HelpIcon />
+                      </button>
+                    )}
+                  </div>
+                )}
+                <div className="text-right pr-6 flex items-center justify-end h-full">
                   {isLeaderTab && onViewDetail ? (
                     <div className="flex items-center justify-end gap-2">
                       <span 
@@ -208,10 +378,85 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
 
                 return (
                 <div key={child.id} className="space-y-2">
-                  <InfoBanner className="w-full h-16" backgroundColor="#3c3c3c">
-                    <div className="w-full flex items-center px-6 py-2">
-                      <div className="flex-1 grid grid-cols-5 gap-4 items-center text-sm text-white">
-                        <div className="relative flex items-center justify-center pl-6">
+                  <InfoBanner className="w-full h-auto min-h-[200px] md:h-16 md:min-h-[64px]" backgroundColor="#3c3c3c">
+                    {/* Layout móvil */}
+                    <div className="flex flex-col md:hidden gap-2 w-full">
+                      <div className="flex flex-row items-center justify-between w-full py-1.5">
+                        <span className="text-[#CBCACA] text-xs">{getEmailColumnLabel()}</span>
+                        <div className="flex items-center gap-2">
+                          {childCanExpand && (
+                            <DropDownTringle 
+                              className="cursor-pointer" 
+                              isExpanded={childExpanded}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleExpand && onToggleExpand(child.id, childAuthLevel as 1 | 2 | 3);
+                              }}
+                            />
+                          )}
+                          <span className="text-white text-sm font-medium truncate" title={child.email || `${child.name}@email.com`}>
+                            {child.email || `${child.name}@email.com`}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-row items-center justify-between w-full py-1.5">
+                        <span className="text-[#CBCACA] text-xs">{t('network:table.headers.joinDate')}</span>
+                        <span className="text-white text-sm font-medium">{child.createdAt ? new Date(child.createdAt).toISOString().slice(0,10) : '—'}</span>
+                      </div>
+                      <div className="flex flex-row items-center justify-between w-full py-1.5">
+                        <span className="text-[#CBCACA] text-xs">{t('network:table.headers.level')}</span>
+                        <div className="flex items-center justify-center">
+                          {childAuthLevel === 1 && <LevelOneTag />}
+                          {childAuthLevel === 2 && <LevelTwoTag />}
+                          {childAuthLevel === 3 && <LevelThreeTag />}
+                          {childAuthLevel > 3 && <LevelFourPlusTag level={childAuthLevel} />}
+                        </div>
+                      </div>
+                      <div className="flex flex-row items-center justify-between w-full py-1.5">
+                        <span className="text-[#CBCACA] text-xs">{t('network:table.headers.volume')}</span>
+                        <span className="text-white text-sm font-medium">
+                          {typeof (child as any).volumen === 'number' || (typeof (child as any).volumen === 'string' && (child as any).volumen !== '')
+                            ? `USDT ${truncateTo3Decimals((child as any).volumen)}`
+                            : (typeof child.comisionesGeneradas === 'number' 
+                                ? `USDT ${formatCurrencyWithThreeDecimals(child.comisionesGeneradas)}` 
+                                : 'USDT 0.00')}
+                        </span>
+                      </div>
+                      {showActivityColumn && (
+                        <div className="flex flex-row items-center justify-between w-full py-1.5">
+                          <span className="text-[#CBCACA] text-xs">{t('network:table.headers.activity')}</span>
+                          <div className="flex items-center justify-center">
+                            {checkingUserId === child.id ? (
+                              <Spinner className="size-4 text-[#FFF100]" />
+                            ) : (
+                              <button
+                                onClick={() => handleCheckCardStatus(child.id)}
+                                className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer"
+                                title={t('network:table.actions.checkCard')}
+                                disabled={checkingUserId !== null}
+                              >
+                                <HelpIcon />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex flex-row items-center justify-center w-full py-1.5">
+                        {childCanViewTree ? (
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[#FFF100] ${childIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'} text-sm`} onClick={() => !childIsLoading && handleViewTree(child.id)}>
+                              {t('network:table.actions.viewTree')}
+                            </span>
+                            {childIsLoading && <Spinner className="size-4 text-[#FFF100]" />}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                    
+                    {/* Layout desktop */}
+                    <div className="hidden md:flex w-full items-center h-full px-4 md:px-6 py-2">
+                      <div className={`flex-1 grid ${gridCols} gap-2 md:gap-4 items-center text-sm text-white h-full`}>
+                        <div className="relative flex items-center justify-center h-full pl-6">
                           {childCanExpand && (
                             <DropDownTringle 
                               className="absolute left-0 cursor-pointer" 
@@ -229,21 +474,37 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                             {child.email || `${child.name}@email.com`}
                           </span>
                         </div>
-                        <div className="text-center">{child.createdAt ? new Date(child.createdAt).toISOString().slice(0,10) : '—'}</div>
-                        <div className="flex items-center justify-center">
+                        <div className="text-center flex items-center justify-center h-full">{child.createdAt ? new Date(child.createdAt).toISOString().slice(0,10) : '—'}</div>
+                        <div className="flex items-center justify-center h-full">
                           {childAuthLevel === 1 && <LevelOneTag />}
                           {childAuthLevel === 2 && <LevelTwoTag />}
                           {childAuthLevel === 3 && <LevelThreeTag />}
                           {childAuthLevel > 3 && <LevelFourPlusTag level={childAuthLevel} />}
                         </div>
-                        <div className="text-center">
+                        <div className="text-center flex items-center justify-center h-full">
                           {typeof (child as any).volumen === 'number' || (typeof (child as any).volumen === 'string' && (child as any).volumen !== '')
                             ? `$${truncateTo3Decimals((child as any).volumen)}`
                             : (typeof child.comisionesGeneradas === 'number' 
                                 ? `$${child.comisionesGeneradas.toFixed(2)}` 
                                 : '$0.00')}
                         </div>
-                        <div className="text-right pr-6">
+                        {showActivityColumn && (
+                          <div className="flex items-center justify-center h-full">
+                            {checkingUserId === child.id ? (
+                              <Spinner className="size-4 text-[#FFF100]" />
+                            ) : (
+                              <button
+                                onClick={() => handleCheckCardStatus(child.id)}
+                                className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer"
+                                title={t('network:table.actions.checkCard')}
+                                disabled={checkingUserId !== null}
+                              >
+                                <HelpIcon />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        <div className="text-right pr-6 flex items-center justify-end h-full">
                           {childCanViewTree ? (
                             <div className="flex items-center justify-end gap-2">
                               <span className={`text-[#FFF100] ${childIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !childIsLoading && handleViewTree(child.id)}>
@@ -272,10 +533,85 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                           
                           return (
                             <div key={grand.id} className="space-y-2">
-                              <InfoBanner className="w-full h-16" backgroundColor="#3c3c3c">
-                                <div className="w-full flex items-center px-6 py-2">
-                                  <div className="flex-1 grid grid-cols-5 gap-4 items-center text-sm text-white">
-                                    <div className="relative flex items-center justify-center pl-6">
+                              <InfoBanner className="w-full h-auto min-h-[200px] md:h-16 md:min-h-[64px]" backgroundColor="#3c3c3c">
+                                {/* Layout móvil */}
+                                <div className="flex flex-col md:hidden gap-2 w-full">
+                                  <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                    <span className="text-[#CBCACA] text-xs">{getEmailColumnLabel()}</span>
+                                    <div className="flex items-center gap-2">
+                                      {grandCanExpand && (
+                                        <DropDownTringle 
+                                          className="cursor-pointer" 
+                                          isExpanded={grandExpanded}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            onToggleExpand && onToggleExpand(grand.id, grandAuthLevel as 1 | 2 | 3);
+                                          }}
+                                        />
+                                      )}
+                                      <span className="text-white text-sm font-medium truncate" title={grand.email || `${grand.name}@email.com`}>
+                                        {grand.email || `${grand.name}@email.com`}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                    <span className="text-[#CBCACA] text-xs">{t('network:table.headers.joinDate')}</span>
+                                    <span className="text-white text-sm font-medium">{grand.createdAt ? new Date(grand.createdAt).toISOString().slice(0,10) : '—'}</span>
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                    <span className="text-[#CBCACA] text-xs">{t('network:table.headers.level')}</span>
+                                    <div className="flex items-center justify-center">
+                                      {grandAuthLevel === 1 && <LevelOneTag />}
+                                      {grandAuthLevel === 2 && <LevelTwoTag />}
+                                      {grandAuthLevel === 3 && <LevelThreeTag />}
+                                      {grandAuthLevel > 3 && <LevelFourPlusTag level={grandAuthLevel} />}
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                    <span className="text-[#CBCACA] text-xs">{t('network:table.headers.volume')}</span>
+                                    <span className="text-white text-sm font-medium">
+                                      {typeof (grand as any).volumen === 'number' || (typeof (grand as any).volumen === 'string' && (grand as any).volumen !== '')
+                                        ? `USDT ${truncateTo3Decimals((grand as any).volumen)}`
+                                        : (typeof (grand as any).comisionesGeneradas === 'number' 
+                                            ? `USDT ${formatCurrencyWithThreeDecimals((grand as any).comisionesGeneradas)}` 
+                                            : 'USDT 0.00')}
+                                    </span>
+                                  </div>
+                                  {showActivityColumn && (
+                                    <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                      <span className="text-[#CBCACA] text-xs">{t('network:table.headers.activity')}</span>
+                                      <div className="flex items-center justify-center">
+                                        {checkingUserId === grand.id ? (
+                                          <Spinner className="size-4 text-[#FFF100]" />
+                                        ) : (
+                                          <button
+                                            onClick={() => handleCheckCardStatus(grand.id)}
+                                            className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer"
+                                            title={t('network:table.actions.checkCard')}
+                                            disabled={checkingUserId !== null}
+                                          >
+                                            <HelpIcon />
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                  <div className="flex flex-row items-center justify-center w-full py-1.5">
+                                    {grandCanViewTree ? (
+                                      <div className="flex items-center gap-2">
+                                        <span className={`text-[#FFF100] ${grandIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'} text-sm`} onClick={() => !grandIsLoading && handleViewTree(grand.id)}>
+                                          {t('network:table.actions.viewTree')}
+                                        </span>
+                                        {grandIsLoading && <Spinner className="size-4 text-[#FFF100]" />}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                </div>
+                                
+                                {/* Layout desktop */}
+                                <div className="hidden md:flex w-full items-center h-full px-4 md:px-6 py-2">
+                                  <div className={`flex-1 grid ${gridCols} gap-2 md:gap-4 items-center text-sm text-white h-full`}>
+                                    <div className="relative flex items-center justify-center h-full pl-6">
                                       {grandCanExpand && (
                                         <DropDownTringle 
                                           className="absolute left-0 cursor-pointer" 
@@ -293,21 +629,37 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                         {grand.email || `${grand.name}@email.com`}
                                       </span>
                                     </div>
-                                    <div className="text-center">{grand.createdAt ? new Date(grand.createdAt).toISOString().slice(0,10) : '—'}</div>
-                                    <div className="flex items-center justify-center">
+                                    <div className="text-center flex items-center justify-center h-full">{grand.createdAt ? new Date(grand.createdAt).toISOString().slice(0,10) : '—'}</div>
+                                    <div className="flex items-center justify-center h-full">
                                       {grandAuthLevel === 1 && <LevelOneTag />}
                                       {grandAuthLevel === 2 && <LevelTwoTag />}
                                       {grandAuthLevel === 3 && <LevelThreeTag />}
                                       {grandAuthLevel > 3 && <LevelFourPlusTag level={grandAuthLevel} />}
                                     </div>
-                                    <div className="text-center">
+                                    <div className="text-center flex items-center justify-center h-full">
                                       {typeof (grand as any).volumen === 'number' || (typeof (grand as any).volumen === 'string' && (grand as any).volumen !== '')
                                         ? `$${truncateTo3Decimals((grand as any).volumen)}`
                                         : (typeof (grand as any).comisionesGeneradas === 'number' 
                                             ? `$${(grand as any).comisionesGeneradas.toFixed(2)}` 
                                             : '$0.00')}
                                     </div>
-                                    <div className="text-right pr-6">
+                                    {showActivityColumn && (
+                                      <div className="flex items-center justify-center h-full">
+                                        {checkingUserId === grand.id ? (
+                                          <Spinner className="size-4 text-[#FFF100]" />
+                                        ) : (
+                                          <button
+                                            onClick={() => handleCheckCardStatus(grand.id)}
+                                            className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer"
+                                            title={t('network:table.actions.checkCard')}
+                                            disabled={checkingUserId !== null}
+                                          >
+                                            <HelpIcon />
+                                          </button>
+                                        )}
+                                      </div>
+                                    )}
+                                    <div className="text-right pr-6 flex items-center justify-end h-full">
                                       {grandCanViewTree ? (
                                         <div className="flex items-center justify-end gap-2">
                                           <span className={`text-[#FFF100] ${grandIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !grandIsLoading && handleViewTree(grand.id)}>
@@ -334,10 +686,85 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                     
                                     return (
                                       <div key={greatGrand.id} className="space-y-2">
-                                        <InfoBanner className="w-full h-16" backgroundColor="#3c3c3c">
-                                          <div className="w-full flex items-center px-6 py-2">
-                                            <div className="flex-1 grid grid-cols-5 gap-4 items-center text-sm text-white">
-                                              <div className="relative flex items-center justify-center pl-6">
+                                        <InfoBanner className="w-full h-auto min-h-[200px] md:h-16 md:min-h-[64px]" backgroundColor="#3c3c3c">
+                                          {/* Layout móvil */}
+                                          <div className="flex flex-col md:hidden gap-2 w-full">
+                                            <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                              <span className="text-[#CBCACA] text-xs">{getEmailColumnLabel()}</span>
+                                              <div className="flex items-center gap-2">
+                                                {greatGrandCanExpand && (
+                                                  <DropDownTringle 
+                                                    className="cursor-pointer" 
+                                                    isExpanded={greatGrandExpanded}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      onToggleExpand && onToggleExpand(greatGrand.id, greatGrandAuthLevel as 1 | 2 | 3);
+                                                    }}
+                                                  />
+                                                )}
+                                                <span className="text-white text-sm font-medium truncate" title={greatGrand.email || `${greatGrand.name}@email.com`}>
+                                                  {greatGrand.email || `${greatGrand.name}@email.com`}
+                                                </span>
+                                              </div>
+                                            </div>
+                                            <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                              <span className="text-[#CBCACA] text-xs">{t('network:table.headers.joinDate')}</span>
+                                              <span className="text-white text-sm font-medium">{greatGrand.createdAt ? new Date(greatGrand.createdAt).toISOString().slice(0,10) : '—'}</span>
+                                            </div>
+                                            <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                              <span className="text-[#CBCACA] text-xs">{t('network:table.headers.level')}</span>
+                                              <div className="flex items-center justify-center">
+                                                {greatGrandAuthLevel === 1 && <LevelOneTag />}
+                                                {greatGrandAuthLevel === 2 && <LevelTwoTag />}
+                                                {greatGrandAuthLevel === 3 && <LevelThreeTag />}
+                                                {greatGrandAuthLevel > 3 && <LevelFourPlusTag level={greatGrandAuthLevel} />}
+                                              </div>
+                                            </div>
+                                            <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                              <span className="text-[#CBCACA] text-xs">{t('network:table.headers.volume')}</span>
+                                              <span className="text-white text-sm font-medium">
+                                                {typeof (greatGrand as any).volumen === 'number' || (typeof (greatGrand as any).volumen === 'string' && (greatGrand as any).volumen !== '')
+                                                  ? `USDT ${truncateTo3Decimals((greatGrand as any).volumen)}`
+                                                  : (typeof (greatGrand as any).comisionesGeneradas === 'number' 
+                                                      ? `USDT ${formatCurrencyWithThreeDecimals((greatGrand as any).comisionesGeneradas)}` 
+                                                      : 'USDT 0.00')}
+                                              </span>
+                                            </div>
+                                            {showActivityColumn && (
+                                              <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                                <span className="text-[#CBCACA] text-xs">{t('network:table.headers.activity')}</span>
+                                                <div className="flex items-center justify-center">
+                                                  {checkingUserId === greatGrand.id ? (
+                                                    <Spinner className="size-4 text-[#FFF100]" />
+                                                  ) : (
+                                                    <button
+                                                      onClick={() => handleCheckCardStatus(greatGrand.id)}
+                                                      className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer"
+                                                      title={t('network:table.actions.checkCard')}
+                                                      disabled={checkingUserId !== null}
+                                                    >
+                                                      <HelpIcon />
+                                                    </button>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            )}
+                                            <div className="flex flex-row items-center justify-center w-full py-1.5">
+                                              {greatGrandCanViewTree ? (
+                                                <div className="flex items-center gap-2">
+                                                  <span className={`text-[#FFF100] ${greatGrandIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'} text-sm`} onClick={() => !greatGrandIsLoading && handleViewTree(greatGrand.id)}>
+                                                    {t('network:table.actions.viewTree')}
+                                                  </span>
+                                                  {greatGrandIsLoading && <Spinner className="size-4 text-[#FFF100]" />}
+                                                </div>
+                                              ) : null}
+                                            </div>
+                                          </div>
+                                          
+                                          {/* Layout desktop */}
+                                          <div className="hidden md:flex w-full items-center h-full px-4 md:px-6 py-2">
+                                            <div className={`flex-1 grid ${gridCols} gap-2 md:gap-4 items-center text-sm text-white h-full`}>
+                                              <div className="relative flex items-center justify-center h-full pl-6">
                                                 {greatGrandCanExpand && (
                                                   <DropDownTringle 
                                                     className="absolute left-0 cursor-pointer" 
@@ -355,21 +782,37 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                                   {greatGrand.email || `${greatGrand.name}@email.com`}
                                                 </span>
                                               </div>
-                                              <div className="text-center">{greatGrand.createdAt ? new Date(greatGrand.createdAt).toISOString().slice(0,10) : '—'}</div>
-                                              <div className="flex items-center justify-center">
+                                              <div className="text-center flex items-center justify-center h-full">{greatGrand.createdAt ? new Date(greatGrand.createdAt).toISOString().slice(0,10) : '—'}</div>
+                                              <div className="flex items-center justify-center h-full">
                                                 {greatGrandAuthLevel === 1 && <LevelOneTag />}
                                                 {greatGrandAuthLevel === 2 && <LevelTwoTag />}
                                                 {greatGrandAuthLevel === 3 && <LevelThreeTag />}
                                                 {greatGrandAuthLevel > 3 && <LevelFourPlusTag level={greatGrandAuthLevel} />}
                                               </div>
-                                              <div className="text-center">
+                                              <div className="text-center flex items-center justify-center h-full">
                                                 {typeof (greatGrand as any).volumen === 'number' || (typeof (greatGrand as any).volumen === 'string' && (greatGrand as any).volumen !== '')
                                                   ? `$${truncateTo3Decimals((greatGrand as any).volumen)}`
                                                   : (typeof (greatGrand as any).comisionesGeneradas === 'number' 
                                                       ? `$${(greatGrand as any).comisionesGeneradas.toFixed(2)}` 
                                                       : '$0.00')}
                                               </div>
-                                              <div className="text-right pr-6">
+                                              {showActivityColumn && (
+                                                <div className="flex items-center justify-center h-full">
+                                                  {checkingUserId === greatGrand.id ? (
+                                                    <Spinner className="size-4 text-[#FFF100]" />
+                                                  ) : (
+                                                    <button
+                                                      onClick={() => handleCheckCardStatus(greatGrand.id)}
+                                                      className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer"
+                                                      title={t('network:table.actions.checkCard')}
+                                                      disabled={checkingUserId !== null}
+                                                    >
+                                                      <HelpIcon />
+                                                    </button>
+                                                  )}
+                                                </div>
+                                              )}
+                                              <div className="text-right pr-6 flex items-center justify-end h-full">
                                                 {greatGrandCanViewTree ? (
                                                   <div className="flex items-center justify-end gap-2">
                                                     <span className={`text-[#FFF100] ${greatGrandIsLoading ? 'cursor-default opacity-70' : 'cursor-pointer'}`} onClick={() => !greatGrandIsLoading && handleViewTree(greatGrand.id)}>
@@ -385,33 +828,102 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                         {/* A partir del nivel 5, no se incrementa más la indentación */}
                                         {Array.isArray(childrenByParent[greatGrand.id]) && (
                                           <div className="space-y-2" style={{ marginLeft: `${Math.round(childIndentPx * 1.4)}px` }}>
-                                            {childrenByParent[greatGrand.id].map(greatGreatGrand => (
-                                              <InfoBanner key={greatGreatGrand.id} className="w-full h-16" backgroundColor="#3c3c3c">
-                                                <div className="w-full flex items-center px-6 py-2">
-                                                  <div className="flex-1 grid grid-cols-5 gap-4 items-center text-sm text-white">
-                                                    <div className="relative pl-10 text-left truncate" title={greatGreatGrand.email || `${greatGreatGrand.name}@email.com`}>{greatGreatGrand.email || `${greatGreatGrand.name}@email.com`}</div>
-                                                    <div className="text-center">{greatGreatGrand.createdAt ? new Date(greatGreatGrand.createdAt).toISOString().slice(0,10) : '—'}</div>
-                                                    <div className="flex items-center justify-center">
-                                                      {(() => {
-                                                        const greatGreatGrandLevel = (greatGreatGrand as any).authLevel ?? (greatGreatGrand as any).level ?? 5;
-                                                        if (greatGreatGrandLevel === 1) return <LevelOneTag />;
-                                                        if (greatGreatGrandLevel === 2) return <LevelTwoTag />;
-                                                        if (greatGreatGrandLevel === 3) return <LevelThreeTag />;
-                                                        return <LevelFourPlusTag level={greatGreatGrandLevel} />;
-                                                      })()}
+                                            {childrenByParent[greatGrand.id].map(greatGreatGrand => {
+                                              const greatGreatGrandLevel = (greatGreatGrand as any).authLevel ?? (greatGreatGrand as any).level ?? 5;
+                                              return (
+                                                <InfoBanner key={greatGreatGrand.id} className="w-full h-auto min-h-[200px] md:h-16 md:min-h-[64px]" backgroundColor="#3c3c3c">
+                                                  {/* Layout móvil */}
+                                                  <div className="flex flex-col md:hidden gap-2 w-full">
+                                                    <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                                      <span className="text-[#CBCACA] text-xs">{getEmailColumnLabel()}</span>
+                                                      <span className="text-white text-sm font-medium truncate" title={greatGreatGrand.email || `${greatGreatGrand.name}@email.com`}>
+                                                        {greatGreatGrand.email || `${greatGreatGrand.name}@email.com`}
+                                                      </span>
                                                     </div>
-                                                    <div className="text-center">
-                                                      {typeof (greatGreatGrand as any).volumen === 'number' || (typeof (greatGreatGrand as any).volumen === 'string' && (greatGreatGrand as any).volumen !== '')
-                                                        ? `$${truncateTo3Decimals((greatGreatGrand as any).volumen)}`
-                                                        : (typeof (greatGreatGrand as any).comisionesGeneradas === 'number' 
-                                                            ? `$${(greatGreatGrand as any).comisionesGeneradas.toFixed(2)}` 
-                                                            : '$0.00')}
+                                                    <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                                      <span className="text-[#CBCACA] text-xs">{t('network:table.headers.joinDate')}</span>
+                                                      <span className="text-white text-sm font-medium">{greatGreatGrand.createdAt ? new Date(greatGreatGrand.createdAt).toISOString().slice(0,10) : '—'}</span>
                                                     </div>
-                                                    <div className="text-right">{/* Nivel 5+ no tiene "Ver red" */}</div>
+                                                    <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                                      <span className="text-[#CBCACA] text-xs">{t('network:table.headers.level')}</span>
+                                                      <div className="flex items-center justify-center">
+                                                        {greatGreatGrandLevel === 1 && <LevelOneTag />}
+                                                        {greatGreatGrandLevel === 2 && <LevelTwoTag />}
+                                                        {greatGreatGrandLevel === 3 && <LevelThreeTag />}
+                                                        {greatGreatGrandLevel > 3 && <LevelFourPlusTag level={greatGreatGrandLevel} />}
+                                                      </div>
+                                                    </div>
+                                                    <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                                      <span className="text-[#CBCACA] text-xs">{t('network:table.headers.volume')}</span>
+                                                      <span className="text-white text-sm font-medium">
+                                                        {typeof (greatGreatGrand as any).volumen === 'number' || (typeof (greatGreatGrand as any).volumen === 'string' && (greatGreatGrand as any).volumen !== '')
+                                                          ? `USDT ${truncateTo3Decimals((greatGreatGrand as any).volumen)}`
+                                                          : (typeof (greatGreatGrand as any).comisionesGeneradas === 'number' 
+                                                              ? `USDT ${formatCurrencyWithThreeDecimals((greatGreatGrand as any).comisionesGeneradas)}` 
+                                                              : 'USDT 0.00')}
+                                                      </span>
+                                                    </div>
+                                                    {showActivityColumn && (
+                                                      <div className="flex flex-row items-center justify-between w-full py-1.5">
+                                                        <span className="text-[#CBCACA] text-xs">{t('network:table.headers.activity')}</span>
+                                                        <div className="flex items-center justify-center">
+                                                          {checkingUserId === greatGreatGrand.id ? (
+                                                            <Spinner className="size-4 text-[#FFF100]" />
+                                                          ) : (
+                                                            <button
+                                                              onClick={() => handleCheckCardStatus(greatGreatGrand.id)}
+                                                              className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer"
+                                                              title={t('network:table.actions.checkCard')}
+                                                              disabled={checkingUserId !== null}
+                                                            >
+                                                              <HelpIcon />
+                                                            </button>
+                                                          )}
+                                                        </div>
+                                                      </div>
+                                                    )}
                                                   </div>
-                                                </div>
-                                              </InfoBanner>
-                                            ))}
+                                                  
+                                                  {/* Layout desktop */}
+                                                  <div className="hidden md:flex w-full items-center h-full px-4 md:px-6 py-2">
+                                                    <div className={`flex-1 grid ${gridCols} gap-2 md:gap-4 items-center text-sm text-white h-full`}>
+                                                      <div className="relative pl-10 text-left truncate flex items-center h-full" title={greatGreatGrand.email || `${greatGreatGrand.name}@email.com`}>{greatGreatGrand.email || `${greatGreatGrand.name}@email.com`}</div>
+                                                      <div className="text-center flex items-center justify-center h-full">{greatGreatGrand.createdAt ? new Date(greatGreatGrand.createdAt).toISOString().slice(0,10) : '—'}</div>
+                                                      <div className="flex items-center justify-center h-full">
+                                                        {greatGreatGrandLevel === 1 && <LevelOneTag />}
+                                                        {greatGreatGrandLevel === 2 && <LevelTwoTag />}
+                                                        {greatGreatGrandLevel === 3 && <LevelThreeTag />}
+                                                        {greatGreatGrandLevel > 3 && <LevelFourPlusTag level={greatGreatGrandLevel} />}
+                                                      </div>
+                                                      <div className="text-center flex items-center justify-center h-full">
+                                                        {typeof (greatGreatGrand as any).volumen === 'number' || (typeof (greatGreatGrand as any).volumen === 'string' && (greatGreatGrand as any).volumen !== '')
+                                                          ? `$${truncateTo3Decimals((greatGreatGrand as any).volumen)}`
+                                                          : (typeof (greatGreatGrand as any).comisionesGeneradas === 'number' 
+                                                              ? `$${(greatGreatGrand as any).comisionesGeneradas.toFixed(2)}` 
+                                                              : '$0.00')}
+                                                      </div>
+                                                      {showActivityColumn && (
+                                                        <div className="flex items-center justify-center h-full">
+                                                          {checkingUserId === greatGreatGrand.id ? (
+                                                            <Spinner className="size-4 text-[#FFF100]" />
+                                                          ) : (
+                                                            <button
+                                                              onClick={() => handleCheckCardStatus(greatGreatGrand.id)}
+                                                              className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer"
+                                                              title={t('network:table.actions.checkCard')}
+                                                              disabled={checkingUserId !== null}
+                                                            >
+                                                              <HelpIcon />
+                                                            </button>
+                                                          )}
+                                                        </div>
+                                                      )}
+                                                      <div className="text-right flex items-center justify-end h-full">{/* Nivel 5+ no tiene "Ver red" */}</div>
+                                                    </div>
+                                                  </div>
+                                                </InfoBanner>
+                                              );
+                                            })}
                                           </div>
                                         )}
                                       </div>
@@ -478,6 +990,13 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
         </div>
         );
       })}
+      {/* Modal de estado de tarjeta */}
+      <DescendantCardStatusModal
+        open={cardStatusModalOpen}
+        onOpenChange={setCardStatusModalOpen}
+        hasActiveCard={hasActiveCard}
+        error={cardStatusError}
+      />
     </div>
   );
 };
