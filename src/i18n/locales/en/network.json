@@ -13,6 +13,7 @@
       "email": "Email",
       "user": "User",
       "company": "Company",
+      "name": "Name",
       "joinDate": "Join date",
       "level": "Level",
       "volume": "Volume",

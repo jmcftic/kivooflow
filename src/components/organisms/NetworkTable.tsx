@@ -37,6 +37,7 @@ interface NetworkTableProps {
     id: number;
     name: string;
     email?: string;
+    userFullName?: string; // Nombre completo del usuario (user_full_name)
     createdAt?: string;
     totalDescendants?: number;
     hasDescendants?: boolean;
@@ -78,7 +79,18 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
 
   // Ocultar columna Actividad cuando es B2C viendo tab B2B (empresas)
   const showActivityColumn = !(activeTab === 'b2b' && userModel?.toLowerCase() !== 'b2b');
-  const gridCols = showActivityColumn ? 'grid-cols-6' : 'grid-cols-5';
+  // Mostrar columna Nombre cuando es B2C en tab B2C o B2B en tab B2B
+  const showNameColumn = (activeTab === 'b2c' && userModel?.toLowerCase() === 'b2c') || (activeTab === 'b2b' && userModel?.toLowerCase() === 'b2b');
+  // Calcular número de columnas: base 5 (email, fecha, nivel, volumen, acciones) + actividad (condicional) + nombre (condicional)
+  // Usar clases específicas de Tailwind para grid-cols
+  let gridCols = 'grid-cols-5'; // Base: email, fecha, nivel, volumen, acciones
+  if (showActivityColumn && showNameColumn) {
+    gridCols = 'grid-cols-7'; // email, nombre, fecha, nivel, volumen, actividad, acciones
+  } else if (showActivityColumn) {
+    gridCols = 'grid-cols-6'; // email, fecha, nivel, volumen, actividad, acciones
+  } else if (showNameColumn) {
+    gridCols = 'grid-cols-6'; // email, nombre, fecha, nivel, volumen, acciones
+  }
   
   // Determinar el label de la columna de email/usuario/empresa
   const getEmailColumnLabel = () => {
@@ -186,6 +198,15 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                   </span>
                 </div>
               </div>
+              {/* Nombre */}
+              {showNameColumn && (
+                <div className="flex flex-row items-center justify-between w-full py-1.5">
+                  <span className="text-[#CBCACA] text-xs">{t('network:table.headers.name')}</span>
+                  <span className="text-white text-sm font-medium truncate" title={item.userFullName || '—'}>
+                    {item.userFullName || '—'}
+                  </span>
+                </div>
+              )}
               {/* Fecha de unión */}
               <div className="flex flex-row items-center justify-between w-full py-1.5">
                 <span className="text-[#CBCACA] text-xs">{t('network:table.headers.joinDate')}</span>
@@ -305,6 +326,13 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                     {item.email || item.name}
                   </span>
                 </div>
+                {showNameColumn && (
+                  <div className="text-center flex items-center justify-center h-full">
+                    <span className="truncate" title={item.userFullName || '—'}>
+                      {item.userFullName || '—'}
+                    </span>
+                  </div>
+                )}
                 <div className="text-center flex items-center justify-center h-full">
                   {item.createdAt ? new Date(item.createdAt).toISOString().slice(0,10) : '—'}
                 </div>
