@@ -291,8 +291,8 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
         </div>
       )}
 
-      {/* ID/Email - Mostrar siempre en móviles, condicional en desktop */}
-      <div className={`flex flex-row md:flex-col items-center md:items-center justify-between md:justify-center w-full md:w-auto py-2 md:py-0 md:h-full ${hideId ? 'md:hidden' : ''}`}>
+      {/* ID/Email - Ocultar en móviles si hay userEmail (ya se muestra en Usuario), condicional en desktop */}
+      <div className={`flex flex-row md:flex-col items-center md:items-center justify-between md:justify-center w-full md:w-auto py-2 md:py-0 md:h-full ${hideId ? 'md:hidden' : ''} ${userEmail ? 'hidden md:flex' : ''}`}>
         <span className="text-[#CBCACA] text-xs md:mb-1">{userEmail ? t('claims:item.labels.email') : t('claims:item.labels.id')}</span>
         <span className="text-white text-sm font-medium md:mb-1">
           {userEmail ? censorEmail(userEmail) : (id || '—')}
