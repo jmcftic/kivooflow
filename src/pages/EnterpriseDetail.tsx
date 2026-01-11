@@ -148,7 +148,7 @@ const EnterpriseDetail: React.FC = () => {
             )}
           </div>
 
-          {/* Fila de 2 EnterpriseInfoCardLarge - Responsive: columna en móvil, fila en desktop, se estira hasta 2k */}
+          {/* Fila de 2 EnterpriseInfoCardLarge - Responsive: una columna en móvil, 2 columnas en desktop, se estira hasta 2k */}
           <div 
             className="mb-6 flex flex-col md:flex-row gap-[26px]"
             style={{

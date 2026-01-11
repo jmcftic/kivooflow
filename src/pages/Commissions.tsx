@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import SidebarApp from '../components/organisms/SidebarApp';
 import DashboardNavbar from '../components/atoms/DashboardNavbar';
@@ -32,6 +33,7 @@ const Commissions: React.FC = () => {
   const { t } = useTranslation(['commissions', 'common']);
   const queryClient = useQueryClient();
   const { startPolling, claimAllInProgress } = useClaimAllPollingContext();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Usar la misma query de React Query que CommissionsListCard para evitar duplicados
   // staleTime Infinity ya que los datos se guardan en localStorage y solo cambian al login/logout
@@ -41,6 +43,12 @@ const Commissions: React.FC = () => {
     queryFn: () => getAvailableMlmModels(), // Envolver para compatibilidad con React Query
     staleTime: Infinity, // Los datos solo cambian en login/logout, así que nunca se consideran stale
   });
+
+  // Leer parámetros de la URL al inicializar
+  const urlPage = parseInt(searchParams.get('page') || '1', 10);
+  const urlPageSize = parseInt(searchParams.get('pageSize') || '10', 10);
+  const urlStatus = searchParams.get('status') || 'available';
+  const urlClaimType = searchParams.get('claimType') as 'B2C' | 'B2B' | 'B2T' | null;
 
   const [activeTab, setActiveTab] = useState<CommissionTabId | null>(null);
   const [tabAvailability, setTabAvailability] = useState<Record<CommissionTabId, boolean>>({
@@ -58,8 +66,8 @@ const Commissions: React.FC = () => {
     gainsFromRechargesPercentageChange?: number;
     gainsFromCardsPercentageChange?: number;
   } | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(urlPage);
+  const [pageSize, setPageSize] = useState(urlPageSize);
   const [paginationData, setPaginationData] = useState<{ totalItems: number; totalPages: number }>({ totalItems: 0, totalPages: 0 });
   const [isRequestingClaims, setIsRequestingClaims] = useState(false);
   const [isLoadingTotal, setIsLoadingTotal] = useState(false);
@@ -83,6 +91,9 @@ const Commissions: React.FC = () => {
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [claimAllInProgressModalOpen, setClaimAllInProgressModalOpen] = useState(false);
+  
+  // Referencia para evitar loops infinitos entre URL y estado
+  const isUpdatingFromUrlRef = useRef(false);
 
   // Establecer tabs disponibles cuando se carguen los datos
   useEffect(() => {
@@ -104,6 +115,51 @@ const Commissions: React.FC = () => {
       setHasSetInitialTab(true);
     }
   }, [availableModelsData, hasSetInitialTab]);
+
+  // Sincronizar estado con URL cuando cambien los parámetros (solo si no estamos actualizando desde el estado)
+  useEffect(() => {
+    if (isUpdatingFromUrlRef.current) {
+      isUpdatingFromUrlRef.current = false;
+      return;
+    }
+    
+    const urlPage = parseInt(searchParams.get('page') || '1', 10);
+    const urlPageSize = parseInt(searchParams.get('pageSize') || '10', 10);
+    
+    if (urlPage !== currentPage) {
+      setCurrentPage(urlPage);
+    }
+    if (urlPageSize !== pageSize) {
+      setPageSize(urlPageSize);
+    }
+  }, [searchParams, currentPage, pageSize]);
+
+  // Actualizar URL cuando cambien currentPage o pageSize (solo si el cambio viene del usuario)
+  useEffect(() => {
+    const urlPage = parseInt(searchParams.get('page') || '1', 10);
+    const urlPageSize = parseInt(searchParams.get('pageSize') || '10', 10);
+    
+    // Solo actualizar si hay diferencia entre estado y URL
+    if (currentPage !== urlPage || pageSize !== urlPageSize) {
+      isUpdatingFromUrlRef.current = true;
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.set('page', currentPage.toString());
+      newSearchParams.set('pageSize', pageSize.toString());
+      newSearchParams.set('status', 'available');
+      
+      // Agregar claimType según el tab activo
+      if (activeTab) {
+        const claimTypeMap: Record<CommissionTabId, string> = {
+          b2c: 'B2C',
+          b2b: 'B2B',
+          b2t: 'B2T',
+        };
+        newSearchParams.set('claimType', claimTypeMap[activeTab]);
+      }
+      
+      setSearchParams(newSearchParams, { replace: true });
+    }
+  }, [currentPage, pageSize, activeTab, searchParams, setSearchParams]);
 
   // Resetear página cuando cambie el tab activo
   useEffect(() => {
