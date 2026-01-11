@@ -29,6 +29,10 @@ import { useMinimumLoading } from '../hooks/useMinimumLoading';
 
 type CommissionTabId = 'b2c' | 'b2b' | 'b2t';
 
+// Opciones válidas para pageSize (deben coincidir con NetworkPaginationBar)
+const ALLOWED_PAGE_SIZES = [50, 100] as const;
+const DEFAULT_PAGE_SIZE = 50;
+
 const Commissions: React.FC = () => {
   const { t } = useTranslation(['commissions', 'common']);
   const queryClient = useQueryClient();
@@ -44,9 +48,13 @@ const Commissions: React.FC = () => {
     staleTime: Infinity, // Los datos solo cambian en login/logout, así que nunca se consideran stale
   });
 
-  // Leer parámetros de la URL al inicializar
+  // Leer parámetros de la URL al inicializar y validar pageSize
   const urlPage = parseInt(searchParams.get('page') || '1', 10);
-  const urlPageSize = parseInt(searchParams.get('pageSize') || '10', 10);
+  const urlPageSizeRaw = parseInt(searchParams.get('pageSize') || String(DEFAULT_PAGE_SIZE), 10);
+  // Validar que el pageSize esté en las opciones permitidas, si no, usar el valor por defecto
+  const urlPageSize = ALLOWED_PAGE_SIZES.includes(urlPageSizeRaw as typeof ALLOWED_PAGE_SIZES[number]) 
+    ? urlPageSizeRaw 
+    : DEFAULT_PAGE_SIZE;
   const urlStatus = searchParams.get('status') || 'available';
   const urlClaimType = searchParams.get('claimType') as 'B2C' | 'B2B' | 'B2T' | null;
 
@@ -93,7 +101,8 @@ const Commissions: React.FC = () => {
   const [claimAllInProgressModalOpen, setClaimAllInProgressModalOpen] = useState(false);
   
   // Referencia para evitar loops infinitos entre URL y estado
-  const isUpdatingFromUrlRef = useRef(false);
+  const isUpdatingFromStateRef = useRef(false);
+  const hasInitializedRef = useRef(false);
 
   // Establecer tabs disponibles cuando se carguen los datos
   useEffect(() => {
@@ -116,33 +125,67 @@ const Commissions: React.FC = () => {
     }
   }, [availableModelsData, hasSetInitialTab]);
 
-  // Sincronizar estado con URL cuando cambien los parámetros (solo si no estamos actualizando desde el estado)
+  // Inicializar desde URL solo una vez al montar el componente
   useEffect(() => {
-    if (isUpdatingFromUrlRef.current) {
-      isUpdatingFromUrlRef.current = false;
+    if (hasInitializedRef.current) return;
+    
+    const urlPage = parseInt(searchParams.get('page') || '1', 10);
+    const urlPageSizeRaw = parseInt(searchParams.get('pageSize') || String(DEFAULT_PAGE_SIZE), 10);
+    const urlPageSize = ALLOWED_PAGE_SIZES.includes(urlPageSizeRaw as typeof ALLOWED_PAGE_SIZES[number]) 
+      ? urlPageSizeRaw 
+      : DEFAULT_PAGE_SIZE;
+    
+    // Actualizar el estado con los valores de la URL
+    setCurrentPage(urlPage);
+    setPageSize(urlPageSize);
+    
+    // Si el pageSize de la URL es inválido, corregir la URL
+    if (!ALLOWED_PAGE_SIZES.includes(urlPageSizeRaw as typeof ALLOWED_PAGE_SIZES[number])) {
+      isUpdatingFromStateRef.current = true;
+      const newSearchParams = new URLSearchParams(window.location.search);
+      newSearchParams.set('page', urlPage.toString());
+      newSearchParams.set('pageSize', String(DEFAULT_PAGE_SIZE));
+      newSearchParams.set('status', 'available');
+      if (activeTab) {
+        const claimTypeMap: Record<CommissionTabId, string> = {
+          b2c: 'B2C',
+          b2b: 'B2B',
+          b2t: 'B2T',
+        };
+        newSearchParams.set('claimType', claimTypeMap[activeTab]);
+      }
+      setSearchParams(newSearchParams, { replace: true });
+    }
+    
+    hasInitializedRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar una vez al montar
+
+  // Actualizar URL cuando cambien currentPage o pageSize (solo cuando el usuario cambia el estado)
+  useEffect(() => {
+    // No hacer nada si aún no se ha inicializado
+    if (!hasInitializedRef.current) {
       return;
     }
     
-    const urlPage = parseInt(searchParams.get('page') || '1', 10);
-    const urlPageSize = parseInt(searchParams.get('pageSize') || '10', 10);
+    // Si estamos actualizando desde el estado, resetear el flag y salir
+    if (isUpdatingFromStateRef.current) {
+      isUpdatingFromStateRef.current = false;
+      return;
+    }
     
-    if (urlPage !== currentPage) {
-      setCurrentPage(urlPage);
-    }
-    if (urlPageSize !== pageSize) {
-      setPageSize(urlPageSize);
-    }
-  }, [searchParams, currentPage, pageSize]);
-
-  // Actualizar URL cuando cambien currentPage o pageSize (solo si el cambio viene del usuario)
-  useEffect(() => {
-    const urlPage = parseInt(searchParams.get('page') || '1', 10);
-    const urlPageSize = parseInt(searchParams.get('pageSize') || '10', 10);
+    // Crear nuevos searchParams desde la URL actual
+    const currentSearchParams = new URLSearchParams(window.location.search);
+    const currentUrlPage = parseInt(currentSearchParams.get('page') || '1', 10);
+    const currentUrlPageSizeRaw = parseInt(currentSearchParams.get('pageSize') || String(DEFAULT_PAGE_SIZE), 10);
+    const currentUrlPageSize = ALLOWED_PAGE_SIZES.includes(currentUrlPageSizeRaw as typeof ALLOWED_PAGE_SIZES[number])
+      ? currentUrlPageSizeRaw
+      : DEFAULT_PAGE_SIZE;
     
     // Solo actualizar si hay diferencia entre estado y URL
-    if (currentPage !== urlPage || pageSize !== urlPageSize) {
-      isUpdatingFromUrlRef.current = true;
-      const newSearchParams = new URLSearchParams(searchParams);
+    if (currentPage !== currentUrlPage || pageSize !== currentUrlPageSize) {
+      isUpdatingFromStateRef.current = true;
+      const newSearchParams = new URLSearchParams();
       newSearchParams.set('page', currentPage.toString());
       newSearchParams.set('pageSize', pageSize.toString());
       newSearchParams.set('status', 'available');
@@ -159,7 +202,8 @@ const Commissions: React.FC = () => {
       
       setSearchParams(newSearchParams, { replace: true });
     }
-  }, [currentPage, pageSize, activeTab, searchParams, setSearchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, pageSize, activeTab]); // Solo depender del estado, no de setSearchParams
 
   // Resetear página cuando cambie el tab activo
   useEffect(() => {
