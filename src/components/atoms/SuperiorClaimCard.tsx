@@ -69,14 +69,19 @@ export const SuperiorClaimCard: React.FC<SuperiorClaimCardProps> = ({
   const hasPercentageChange = percentageChange != null && !isNaN(percentageChange);
   const isPositive = hasPercentageChange && percentageChange >= 0;
   
-  // Contar dígitos numéricos en el texto (sin contar el símbolo $ y puntos decimales)
-  const countDigits = (text: string): number => {
-    const numericText = text.replace(/[^0-9.]/g, '');
-    return numericText.replace(/\./g, '').length;
-  };
-  
-  const digitCount = countDigits(primaryText);
-  const shouldReduceFontSize = forceSmallFont || digitCount > 6;
+  // Si forceSmallFont está definido (true o false), usar ese valor directamente para mantener consistencia entre cards
+  // Si no está definido, calcular basándose en los dígitos de esta card individual
+  const shouldReduceFontSize = forceSmallFont !== undefined 
+    ? forceSmallFont 
+    : (() => {
+        // Contar dígitos numéricos en el texto (sin contar el símbolo $ y puntos decimales)
+        const countDigits = (text: string): number => {
+          const numericText = text.replace(/[^0-9.]/g, '');
+          return numericText.replace(/\./g, '').length;
+        };
+        const digitCount = countDigits(primaryText);
+        return digitCount > 6;
+      })();
   const fontSize = shouldReduceFontSize ? '12.5px' : '25px'; // Aumentado 25%: 20px->25px, 10px->12.5px
   
   // Generar un ID único para este componente

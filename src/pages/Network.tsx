@@ -49,7 +49,7 @@ const Network: React.FC = () => {
 
   const [levels, setLevels] = useState<NetworkLevel[]>([]);
   const [totalDescendants, setTotalDescendants] = useState(0);
-  const [usersLimit, setUsersLimit] = useState(10);
+  const [usersLimit, setUsersLimit] = useState(50);
   const [usersOffset, setUsersOffset] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [childrenByParent, setChildrenByParent] = useState<Record<number, any[]>>({});
@@ -528,6 +528,7 @@ const Network: React.FC = () => {
             id: u.user_id,
             name: u.user_full_name || u.user_email,
             email: u.user_email,
+            userFullName: u.user_full_name,
             createdAt: u.user_created_at,
             levelInSubtree: 1,
             level: childrenLevel,
@@ -642,6 +643,7 @@ const Network: React.FC = () => {
         id: u.user_id,
         name: u.user_full_name || u.user_email,
         email: u.user_email,
+        userFullName: u.user_full_name, // Mapear user_full_name para la columna Nombre
         createdAt: u.user_created_at,
         level: levelGroup.level,
         authLevel: levelGroup.level,
@@ -769,6 +771,7 @@ const Network: React.FC = () => {
           id: u.user_id,
           name: u.user_full_name || u.user_email,
           email: u.user_email,
+          userFullName: u.user_full_name,
           createdAt: u.user_created_at,
           levelInSubtree: 1,
           level: nextLevel,
@@ -872,6 +875,7 @@ const Network: React.FC = () => {
             id: u.user_id,
             name: u.user_full_name || u.user_email,
             email: u.user_email,
+            userFullName: u.user_full_name,
             createdAt: u.user_created_at,
             levelInSubtree: 1,
             level: nextLevel,
@@ -944,6 +948,7 @@ const Network: React.FC = () => {
             id: u.user_id,
             name: u.user_full_name || u.user_email,
             email: u.user_email,
+            userFullName: u.user_full_name,
             createdAt: u.user_created_at,
             levelInSubtree: 1,
             level: nextLevel,
@@ -1108,6 +1113,7 @@ const Network: React.FC = () => {
               id: u.user_id,
               name: u.user_full_name || u.user_email,
               email: u.user_email,
+              userFullName: u.user_full_name,
               createdAt: u.user_created_at,
               levelInSubtree: 1,
               level: displayLevel,
@@ -1499,6 +1505,7 @@ const Network: React.FC = () => {
                   loadingTreeUserId={loadingTreeUserId}
                   parentExhausted={isLeaderTab ? {} : parentExhausted}
                   parentErrors={isLeaderTab ? {} : parentErrors}
+                  userModel={userModel}
                 />
               ) : (
                 <div className="py-10 text-center text-sm text-white/60">

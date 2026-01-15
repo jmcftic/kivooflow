@@ -26,6 +26,7 @@ import Activity from "./pages/Activity";
 import Help from "./pages/Help";
 import ReporteClaims from "./pages/ReporteClaims";
 import ManualLoads from "./pages/ManualLoads";
+import Testing from "./pages/Testing";
 import ForgotPassword from "./pages/ForgotPassword";
 import VerificationCode from "./pages/VerificationCode";
 import VerificationSent from "./pages/VerificationSent";
@@ -159,6 +160,10 @@ function App() {
       case "/manual-loads":
         title = "Kivoo Web - Cargas Manuales";
         metaDescription = "Crear comisiones manuales MLM";
+        break;
+      case "/testing":
+        title = "Kivoo Web - Pruebas";
+        metaDescription = "Módulo de pruebas y testing";
         break;
       case "/maintenance":
         title = "Kivoo Web - Mantenimiento";
@@ -336,6 +341,19 @@ function App() {
               }}
             >
               <ManualLoads />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/testing"
+          element={
+            <ProtectedRoute
+              userCheck={(user) => {
+                const allowedIds = ['49', '335', '57', '291', '53'];
+                return user !== null && allowedIds.includes(String(user.id));
+              }}
+            >
+              <Testing />
             </ProtectedRoute>
           }
         />

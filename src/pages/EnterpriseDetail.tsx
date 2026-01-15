@@ -148,14 +148,14 @@ const EnterpriseDetail: React.FC = () => {
             )}
           </div>
 
-          {/* Fila de 2 EnterpriseInfoCardLarge - Responsive: oculto en móvil, se estira hasta 2k en desktop */}
+          {/* Fila de 2 EnterpriseInfoCardLarge - Responsive: una columna en móvil, 2 columnas en desktop, se estira hasta 2k */}
           <div 
-            className="mb-6 hidden md:flex gap-[26px]"
+            className="mb-6 flex flex-col md:flex-row gap-[26px]"
             style={{
               maxWidth: '2000px'
             }}
           >
-            <div className="flex-1 min-w-0">
+            <div className="w-full md:flex-1 min-w-0">
               <EnterpriseInfoCardLarge
                 primaryText={
                   loading || !teamDetails ? (
@@ -172,7 +172,7 @@ const EnterpriseDetail: React.FC = () => {
                 showChart={true}
               />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="w-full md:flex-1 min-w-0">
               <EnterpriseInfoCardLarge
                 primaryText={
                   loading || !teamDetails ? (

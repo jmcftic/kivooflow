@@ -18,9 +18,9 @@ const LevelTabs: React.FC<LevelTabsProps> = ({ activeLevel, onLevelChange }) => 
   ];
 
   return (
-    <div className="flex" style={{ gap: '3px' }}>
+    <div className="flex items-center" style={{ gap: '3px' }}>
       {levels.map((level) => (
-        <div key={level.id} onClick={() => onLevelChange(level.id)} className="cursor-pointer" style={{ width: '74.27px' }}>
+        <div key={level.id} onClick={() => onLevelChange(level.id)} className="cursor-pointer flex items-center" style={{ width: '74.27px' }}>
           <FoldedTabCard
             height={33.14}
             gradientColor={activeLevel === level.id ? '#FFF100' : '#333333'}

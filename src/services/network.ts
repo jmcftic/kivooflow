@@ -97,18 +97,53 @@ export async function getB2CNetworkExcludingB2BB2T({ level = 1, limit = 10, offs
   return res as unknown as B2CNetworkResponse;
 }
 
-export async function getAvailableMlmModels(): Promise<AvailableMlmModelsData> {
+const AVAILABLE_MLM_MODELS_STORAGE_KEY = 'availableMlmModels';
+
+export async function getAvailableMlmModels(forceRefresh: boolean = false): Promise<AvailableMlmModelsData> {
+  // Primero verificar localStorage (a menos que se fuerce la actualización)
+  if (!forceRefresh) {
+    try {
+      const cachedStr = localStorage.getItem(AVAILABLE_MLM_MODELS_STORAGE_KEY);
+      if (cachedStr) {
+        const cached = JSON.parse(cachedStr);
+        // Validar que tiene la estructura esperada
+        if (cached && typeof cached === 'object' && 
+            typeof cached.user_id === 'number' && 
+            typeof cached.my_model === 'string' &&
+            typeof cached.show_b2c_tab === 'boolean' &&
+            typeof cached.show_b2t_tab === 'boolean' &&
+            typeof cached.show_b2b_tab === 'boolean') {
+          return cached as AvailableMlmModelsData;
+        }
+      }
+    } catch (error) {
+      // Si hay error al leer localStorage, continuar con la llamada al API
+      console.warn('Error leyendo availableMlmModels del localStorage:', error);
+    }
+  }
+
+  // Si no hay cache válido, hacer la llamada al API
   const res = await apiService.get<AvailableMlmModelsResponse>(API_ENDPOINTS.NETWORK.AVAILABLE_MODEL);
   const payload: any = res;
   const data = payload?.data ?? payload;
 
-  return {
+  const result: AvailableMlmModelsData = {
     user_id: data?.user_id ?? 0,
     my_model: data?.my_model ?? '',
     show_b2c_tab: data?.show_b2c_tab === true,
     show_b2t_tab: data?.show_b2t_tab === true,
     show_b2b_tab: data?.show_b2b_tab === true,
   };
+
+  // Guardar en localStorage para próximas llamadas
+  try {
+    localStorage.setItem(AVAILABLE_MLM_MODELS_STORAGE_KEY, JSON.stringify(result));
+  } catch (error) {
+    // Si hay error al guardar, no es crítico, solo registrar
+    console.warn('Error guardando availableMlmModels en localStorage:', error);
+  }
+
+  return result;
 }
 
 export interface GetNetworkLeadersParams {
@@ -767,6 +802,81 @@ export async function markAllNotificationsAsRead(): Promise<MarkAllNotifications
     message: payload?.message ?? 'Todas las notificaciones marcadas como leídas exitosamente',
     data: {
       updatedCount: data?.updatedCount ?? 0,
+    },
+  };
+}
+
+export interface TestingUserResponse {
+  statusCode: number;
+  message: string;
+  data: {
+    id: number;
+    email: string;
+    full_name: string;
+    document_type: string;
+    document_number: string;
+    phone: string;
+    country_code: string;
+    dial_code: string;
+    address?: string;
+    city?: string;
+    state_province?: string;
+    postal_code?: string;
+    country?: string;
+    referral_code: string;
+    referred_by_code?: string;
+    is_email_verified: boolean;
+    is_phone_verified: boolean;
+    is_document_verified: boolean;
+    has_card: boolean;
+    status: string;
+    created_at: string;
+    updated_at: string;
+    last_login?: string;
+    mlm_model?: string;
+    network_model?: string;
+  };
+}
+
+export async function getTestingUser(): Promise<TestingUserResponse> {
+  const res = await apiService.get<TestingUserResponse>(
+    API_ENDPOINTS.NETWORK.TESTING_USER,
+  );
+
+  const payload: any = res;
+  const data = payload?.data ?? payload;
+
+  return {
+    statusCode: payload?.statusCode ?? 200,
+    message: payload?.message ?? 'Usuario obtenido exitosamente',
+    data: data,
+  };
+}
+
+export interface ResetUserClaimsResponse {
+  statusCode: number;
+  message: string;
+  data: {
+    userId: number;
+    claimsReset: number;
+    message: string;
+  };
+}
+
+export async function resetUserClaims(userId: number): Promise<ResetUserClaimsResponse> {
+  const endpoint = apiService.buildEndpoint(API_ENDPOINTS.NETWORK.RESET_USER_CLAIMS, { userId });
+  const res = await apiService.post<ResetUserClaimsResponse>(endpoint, {});
+
+  const payload: any = res;
+  const data = payload?.data ?? payload;
+
+  return {
+    statusCode: payload?.statusCode ?? 200,
+    message: payload?.message ?? 'Claims reseteados exitosamente',
+    data: {
+      userId: data?.userId ?? userId,
+      claimsReset: data?.claimsReset ?? 0,
+      message: data?.message ?? 'Claims reseteados exitosamente',
     },
   };
 }

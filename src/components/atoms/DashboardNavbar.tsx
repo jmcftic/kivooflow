@@ -31,13 +31,6 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
             <NotificationBell />
           </div>
         )}
-        
-        {/* Right Action - Optional */}
-        {rightAction && (
-          <div className="flex-shrink-0 flex items-center">
-            {rightAction}
-          </div>
-        )}
       </div>
 
       {/* Navbar normal - visible en pantallas grandes */}
@@ -64,9 +57,9 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
               </div>
             )}
             
-            {/* Right Action - Optional */}
+            {/* Right Action - Optional - Solo se muestra si no es móvil (ya que en móvil se muestra junto al título) */}
             {rightAction && (
-              <div className="flex-shrink-0 flex items-center">
+              <div className="flex-shrink-0 flex items-center hidden lg:flex">
                 {rightAction}
               </div>
             )}
@@ -83,6 +76,12 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
               {title}
             </h1>
           </div>
+          {/* Right Action - Solo en móviles, junto al título */}
+          {rightAction && (
+            <div className="flex-shrink-0 flex items-center ml-4">
+              {rightAction}
+            </div>
+          )}
         </div>
       </div>
     </>

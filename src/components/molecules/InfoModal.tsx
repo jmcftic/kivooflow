@@ -24,6 +24,9 @@ export interface InfoModalProps {
   buttonText: string;
   onButtonClick?: () => void;
   buttonVariant?: 'yellow' | 'outline';
+  buttonSize?: 'sm' | 'md' | 'lg'; // Tamaño del botón
+  buttonClassName?: string; // Clases adicionales para el botón
+  buttonContainerClassName?: string; // Clases adicionales para el contenedor del botón
   // Altura personalizada
   customHeight?: string; // Altura personalizada del modal (ej: "h-[450px] lg:h-[480px]")
 }
@@ -40,6 +43,9 @@ const InfoModal: React.FC<InfoModalProps> = ({
   buttonText,
   onButtonClick,
   buttonVariant = 'yellow',
+  buttonSize = 'lg',
+  buttonClassName = '',
+  buttonContainerClassName = '',
   customHeight,
 }) => {
   const handleButtonClick = () => {
@@ -114,11 +120,11 @@ const InfoModal: React.FC<InfoModalProps> = ({
             </p>
 
             {/* Botón con margen inferior responsive */}
-            <div className="w-full px-2 flex-shrink-0">
+            <div className={`w-full px-2 flex-shrink-0 ${buttonContainerClassName}`}>
               <Button
                 variant={buttonVariant}
-                size="lg"
-                className="w-full rounded-xl font-semibold text-base sm:text-lg"
+                size={buttonSize}
+                className={`w-full rounded-xl font-semibold ${buttonClassName}`}
                 onClick={handleButtonClick}
               >
                 {buttonText}

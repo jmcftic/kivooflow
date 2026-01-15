@@ -260,102 +260,110 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
   const gridCols = `grid-cols-2 ${gridColsMap[columnCount] || 'md:grid-cols-6'}`;
 
   return (
-    <FoldedCard 
-      className={`min-h-[180px] md:min-h-[92px] ${className}`}
-      gradientColor="#FFF100"
-      backgroundColor="#212020"
-      variant="md"
-    >
-    <div className={`grid grid-cols-2 ${gridCols} gap-4 md:gap-4 lg:gap-6 w-full py-4 md:py-0`}>
-      {/* Usuario/Empresa - Primera columna si está presente */}
-      {usuarioLabel && usuarioValue && (
-        <div className="flex flex-col">
-          <span className="text-white text-sm font-medium mb-1">
-            {usuarioValue}
-          </span>
-          <span className="text-[#CBCACA] text-xs">{usuarioLabel}</span>
-        </div>
-      )}
-
-      {/* ID/Email - Solo mostrar si no está oculto */}
-      {!hideId && (
-        <div className="flex flex-col">
-          <span className="text-white text-sm font-medium mb-1">
-            {userEmail ? censorEmail(userEmail) : (id || '—')}
-          </span>
-          <span className="text-[#CBCACA] text-xs">{userEmail ? t('claims:item.labels.email') : t('claims:item.labels.id')}</span>
-        </div>
-      )}
-
-      {/* Fecha */}
-      <div className="flex flex-col">
-        <span className="text-white text-sm font-medium mb-1">{formatFecha(fecha)}</span>
-        <span className="text-[#CBCACA] text-xs">{t('claims:item.labels.date')}</span>
+    <div className={`relative w-full rounded-lg overflow-visible md:overflow-hidden isolate h-auto min-h-[400px] md:h-24 md:min-h-[92px] flex flex-col md:flex-row ${className}`}>
+      {/* Background con clipPath */}
+      <div
+        className="absolute inset-0 rounded-lg"
+        style={{
+          backgroundColor: "#212020",
+          clipPath: `polygon(0 0, calc(100% - 30px) 0, 100% 30px, 100% 100%, 0 100%)`,
+          transform: "translateZ(0)",
+        }}
+      >
+        {/* Gradient overlay */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            background: `linear-gradient(to top, #FFF10000 0%, #FFF10047 100%)`,
+          }}
+        />
       </div>
 
-      {/* Concepto - Mostrar si hay concepto */}
+      {/* Content container */}
+      <div className={`relative z-10 flex flex-col md:grid ${gridCols} gap-4 md:gap-4 lg:gap-6 w-full py-6 md:py-0 px-4 md:px-6 md:px-8 lg:px-10 md:items-center md:justify-center md:h-full`}>
+      {/* Usuario/Empresa - Primera columna si está presente */}
+      {usuarioLabel && usuarioValue && (
+        <div className="flex flex-row md:flex-col items-center md:items-center justify-between md:justify-center w-full md:w-auto py-2 md:py-0 md:h-full">
+          <span className="text-[#CBCACA] text-xs md:mb-1">{usuarioLabel}</span>
+          <span className="text-white text-sm font-medium md:mb-1">
+            {usuarioValue}
+          </span>
+        </div>
+      )}
+
+      {/* ID/Email - Ocultar en móviles si hay userEmail (ya se muestra en Usuario), condicional en desktop */}
+      <div className={`flex flex-row md:flex-col items-center md:items-center justify-between md:justify-center w-full md:w-auto py-2 md:py-0 md:h-full ${hideId ? 'md:hidden' : ''} ${userEmail ? 'hidden md:flex' : ''}`}>
+        <span className="text-[#CBCACA] text-xs md:mb-1">{userEmail ? t('claims:item.labels.email') : t('claims:item.labels.id')}</span>
+        <span className="text-white text-sm font-medium md:mb-1">
+          {userEmail ? censorEmail(userEmail) : (id || '—')}
+        </span>
+      </div>
+
+      {/* Fecha - Siempre visible */}
+      <div className="flex flex-row md:flex-col items-center md:items-center justify-between md:justify-center w-full md:w-auto py-2 md:py-0 md:h-full">
+        <span className="text-[#CBCACA] text-xs md:mb-1">{t('claims:item.labels.date')}</span>
+        <span className="text-white text-sm font-medium md:mb-1">{formatFecha(fecha)}</span>
+      </div>
+
+      {/* Concepto - Mostrar solo si hay concepto, ocultar en desktop si no hay badge */}
       {showConceptBadge && (
-        <div className="flex flex-col">
-          <div className="mb-1">
-            {getConceptBadge()}
+        <div className={`flex flex-row md:flex-col items-center md:items-center justify-between md:justify-center w-full md:w-auto py-2 md:py-0 md:h-full`}>
+          <span className="text-[#CBCACA] text-xs md:mb-1">{t('claims:item.labels.concept')}</span>
+          <div className="md:mb-1">
+            {getConceptBadge() || <span className="text-white text-sm">—</span>}
           </div>
-          <span className="text-[#CBCACA] text-xs">{t('claims:item.labels.concept')}</span>
         </div>
       )}
 
-      {/* Tarjeta/Empresa - Solo mostrar si no está oculta */}
-      {!hideTarjeta && (
-        <div className="flex flex-col">
-          <span className="text-white text-sm font-medium mb-1">{tarjeta}</span>
-          <span className="text-[#CBCACA] text-xs">{labelEmpresa ? t('claims:item.labels.company') : t('claims:item.labels.card')}</span>
-        </div>
-      )}
+      {/* Tarjeta/Empresa - Mostrar siempre en móviles, condicional en desktop */}
+      <div className={`flex flex-row md:flex-col items-center md:items-center justify-between md:justify-center w-full md:w-auto py-2 md:py-0 md:h-full ${hideTarjeta ? 'md:hidden' : ''}`}>
+        <span className="text-[#CBCACA] text-xs md:mb-1">{labelEmpresa ? t('claims:item.labels.company') : t('claims:item.labels.card')}</span>
+        <span className="text-white text-sm font-medium md:mb-1">{tarjeta}</span>
+      </div>
 
-      {/* Tipo de Comisión - Mostrar si hay commissionType o nivel */}
-      {(commissionType || (nivel !== undefined && nivel !== null)) && (
-        <div className="flex flex-col">
-          <div className="mb-1">
-            {getCommissionTypeBadge()}
-          </div>
-          <span className="text-[#CBCACA] text-xs">{t('claims:item.labels.commissionType')}</span>
+      {/* Tipo de Comisión - Mostrar siempre en móviles, condicional en desktop */}
+      <div className={`flex flex-row md:flex-col items-center md:items-center justify-between md:justify-center w-full md:w-auto py-2 md:py-0 md:h-full ${!(commissionType || (nivel !== undefined && nivel !== null)) ? 'md:hidden' : ''}`}>
+        <span className="text-[#CBCACA] text-xs md:mb-1">{t('claims:item.labels.commissionType')}</span>
+        <div className="md:mb-1">
+          {getCommissionTypeBadge() || <span className="text-white text-sm">—</span>}
         </div>
-      )}
+      </div>
 
       {/* Nivel - NO mostrar si se está mostrando el badge de tipo de comisión */}
       {nivel !== undefined && !showCommissionTypeBadge && (
-        <div className="flex flex-col">
-          <span className="text-white text-sm font-medium mb-1">{nivel}</span>
-          <span className="text-[#CBCACA] text-xs">{t('claims:item.labels.level')}</span>
+        <div className="flex flex-row md:flex-col items-center md:items-center justify-between md:justify-center w-full md:w-auto py-2 md:py-0 md:h-full">
+          <span className="text-[#CBCACA] text-xs md:mb-1">{t('claims:item.labels.level')}</span>
+          <span className="text-white text-sm font-medium md:mb-1">{nivel}</span>
         </div>
       )}
 
-      {/* Estado */}
-      <div className="flex flex-col">
-        <span className={`text-sm font-medium mb-1 ${getEstadoColor(estado)}`}>{estado}</span>
-        <span className="text-[#CBCACA] text-xs">{t('claims:item.labels.status')}</span>
+      {/* Estado - Siempre visible */}
+      <div className="flex flex-row md:flex-col items-center md:items-center justify-between md:justify-center w-full md:w-auto py-2 md:py-0 md:h-full">
+        <span className="text-[#CBCACA] text-xs md:mb-1">{t('claims:item.labels.status')}</span>
+        <span className={`text-sm font-medium md:mb-1 ${getEstadoColor(estado)}`}>{estado}</span>
       </div>
 
-      {/* Monto/Comisión */}
-      <div className="flex flex-col">
-        <span className="text-[#FFF100] text-sm font-bold mb-1">
+      {/* Monto/Comisión - Siempre visible */}
+      <div className="flex flex-row md:flex-col items-center md:items-center justify-between md:justify-center w-full md:w-auto py-2 md:py-0 md:h-full">
+        <span className="text-[#CBCACA] text-xs md:mb-1">{labelEmpresa ? t('claims:item.labels.commission') : t('claims:item.labels.amount')}</span>
+        <span className="text-[#FFF100] text-sm font-bold md:mb-1">
           ${formatMonto(monto)}
         </span>
-        <span className="text-[#CBCACA] text-xs">{labelEmpresa ? t('claims:item.labels.commission') : t('claims:item.labels.amount')}</span>
       </div>
 
-      {/* Acción - Ver detalle */}
-      <div className="flex flex-col col-span-2 md:col-span-1 justify-start">
+      {/* Acción - Ver detalle - Siempre visible */}
+      <div className="flex flex-col md:flex-col items-center md:items-center justify-center md:justify-center w-full md:w-auto md:col-span-1 py-2 md:py-0 md:h-full">
+        <span className="text-[#CBCACA] text-xs invisible md:visible md:mb-1">{t('claims:item.labels.action')}</span>
         <button
           onClick={onVerDetalle}
           disabled={!onVerDetalle}
-          className={`action-text text-left mb-1 py-1 ${!onVerDetalle ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`action-text text-center md:text-left md:mb-1 py-1 ${!onVerDetalle ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           {finalActionLabel}
         </button>
-        <span className="text-[#CBCACA] text-xs invisible">{t('claims:item.labels.action')}</span>
+      </div>
       </div>
     </div>
-    </FoldedCard>
   );
 };
 

@@ -11,6 +11,7 @@ import ActivityIcon from '../atoms/ActivityIcon';
 import ReportsIcon from '../atoms/ReportsIcon';
 import HelpIcon from '../atoms/HelpIcon';
 import ManualLoadsIcon from '../atoms/ManualLoadsIcon';
+import TestingIcon from '../atoms/TestingIcon';
 import SidebarDivider from '../atoms/SidebarDivider';
 import SidebarLogoutItem from '../atoms/SidebarLogoutItem';
 import { User } from '../../types/auth';
@@ -50,6 +51,9 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
   
   // Verificar si el usuario tiene acceso a Cargas manuales (mismos IDs que Reportes)
   const hasManualLoadsAccess = user && allowedReportUserIds.includes(String(user.id));
+  
+  // Verificar si el usuario tiene acceso a Pruebas (mismos IDs que Reportes)
+  const hasTestingAccess = user && allowedReportUserIds.includes(String(user.id));
   
   // Debug: verificar acceso a reportes
   // useEffect(() => {
@@ -131,8 +135,19 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
       });
     }
 
+    // Agregar Pruebas después de Cargas manuales si el usuario tiene acceso
+    if (hasTestingAccess) {
+      items.push({
+        key: 'testing',
+        label: t('menu.testing'),
+        icon: <TestingIcon />,
+        path: '/testing',
+        disabled: false,
+      });
+    }
+
     return items;
-  }, [hasReportsAccess, hasManualLoadsAccess, user?.id, t]);
+  }, [hasReportsAccess, hasManualLoadsAccess, hasTestingAccess, user?.id, t]);
 
   const helpItem = useMemo(() => ({
     key: 'help',
@@ -152,7 +167,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ className = "", i
           key={item.key}
           icon={item.icon}
           label={item.label}
-          isActive={!item.disabled && (location.pathname === item.path || (item.key === 'reports' && location.pathname.startsWith('/reports')) || (item.key === 'manual-loads' && location.pathname.startsWith('/manual-loads')))}
+          isActive={!item.disabled && (location.pathname === item.path || (item.key === 'reports' && location.pathname.startsWith('/reports')) || (item.key === 'manual-loads' && location.pathname.startsWith('/manual-loads')) || (item.key === 'testing' && location.pathname.startsWith('/testing')))}
           isCollapsed={isCollapsed}
           onClick={!item.disabled ? () => navigate(item.path) : undefined}
           disabled={item.disabled}

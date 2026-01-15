@@ -12,6 +12,9 @@ const InfoBanner: FunctionComponent<InfoBannerType> = ({
   backgroundColor = "#ffff79",
   children 
 }) => {
+  // Detectar si className tiene h-auto para ajustar el comportamiento
+  const hasAutoHeight = className?.includes('h-auto') || className?.includes('min-h-');
+  
   return (
     <FoldedCard
       className={className}
@@ -19,7 +22,7 @@ const InfoBanner: FunctionComponent<InfoBannerType> = ({
       backgroundColor={backgroundColor}
       variant="lg"
     >
-      <div className="w-full h-full flex items-center">
+      <div className={`w-full ${hasAutoHeight ? 'min-h-full md:h-full' : 'h-full'} flex ${hasAutoHeight ? 'flex-col md:flex-row md:items-center' : 'items-center'}`}>
         {children}
       </div>
     </FoldedCard>

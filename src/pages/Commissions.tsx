@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import Ki6SvgIcon from '../components/atoms/Ki6SvgIcon';
 import SidebarApp from '../components/organisms/SidebarApp';
 import DashboardNavbar from '../components/atoms/DashboardNavbar';
@@ -28,17 +29,34 @@ import { useMinimumLoading } from '../hooks/useMinimumLoading';
 
 type CommissionTabId = 'b2c' | 'b2b' | 'b2t';
 
+// Opciones válidas para pageSize (deben coincidir con NetworkPaginationBar)
+const ALLOWED_PAGE_SIZES = [50, 100] as const;
+const DEFAULT_PAGE_SIZE = 50;
+
 const Commissions: React.FC = () => {
   const { t } = useTranslation(['commissions', 'common']);
   const queryClient = useQueryClient();
   const { startPolling, claimAllInProgress } = useClaimAllPollingContext();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Usar la misma query de React Query que CommissionsListCard para evitar duplicados
+  // staleTime Infinity ya que los datos se guardan en localStorage y solo cambian al login/logout
+  // La función getAvailableMlmModels ya maneja su propio cache en localStorage
   const { data: availableModelsData, isLoading: isLoadingModels } = useQuery({
     queryKey: ['availableMlmModels'],
-    queryFn: getAvailableMlmModels,
-    staleTime: 5 * 60 * 1000, // Cache por 5 minutos
+    queryFn: () => getAvailableMlmModels(), // Envolver para compatibilidad con React Query
+    staleTime: Infinity, // Los datos solo cambian en login/logout, así que nunca se consideran stale
   });
+
+  // Leer parámetros de la URL al inicializar y validar pageSize
+  const urlPage = parseInt(searchParams.get('page') || '1', 10);
+  const urlPageSizeRaw = parseInt(searchParams.get('pageSize') || String(DEFAULT_PAGE_SIZE), 10);
+  // Validar que el pageSize esté en las opciones permitidas, si no, usar el valor por defecto
+  const urlPageSize = ALLOWED_PAGE_SIZES.includes(urlPageSizeRaw as typeof ALLOWED_PAGE_SIZES[number]) 
+    ? urlPageSizeRaw 
+    : DEFAULT_PAGE_SIZE;
+  const urlStatus = searchParams.get('status') || 'available';
+  const urlClaimType = searchParams.get('claimType') as 'B2C' | 'B2B' | 'B2T' | null;
 
   const [activeTab, setActiveTab] = useState<CommissionTabId | null>(null);
   const [tabAvailability, setTabAvailability] = useState<Record<CommissionTabId, boolean>>({
@@ -56,8 +74,8 @@ const Commissions: React.FC = () => {
     gainsFromRechargesPercentageChange?: number;
     gainsFromCardsPercentageChange?: number;
   } | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(urlPage);
+  const [pageSize, setPageSize] = useState(urlPageSize);
   const [paginationData, setPaginationData] = useState<{ totalItems: number; totalPages: number }>({ totalItems: 0, totalPages: 0 });
   const [isRequestingClaims, setIsRequestingClaims] = useState(false);
   const [isLoadingTotal, setIsLoadingTotal] = useState(false);
@@ -81,6 +99,10 @@ const Commissions: React.FC = () => {
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [claimAllInProgressModalOpen, setClaimAllInProgressModalOpen] = useState(false);
+  
+  // Referencia para evitar loops infinitos entre URL y estado
+  const isUpdatingFromStateRef = useRef(false);
+  const hasInitializedRef = useRef(false);
 
   // Establecer tabs disponibles cuando se carguen los datos
   useEffect(() => {
@@ -102,6 +124,86 @@ const Commissions: React.FC = () => {
       setHasSetInitialTab(true);
     }
   }, [availableModelsData, hasSetInitialTab]);
+
+  // Inicializar desde URL solo una vez al montar el componente
+  useEffect(() => {
+    if (hasInitializedRef.current) return;
+    
+    const urlPage = parseInt(searchParams.get('page') || '1', 10);
+    const urlPageSizeRaw = parseInt(searchParams.get('pageSize') || String(DEFAULT_PAGE_SIZE), 10);
+    const urlPageSize = ALLOWED_PAGE_SIZES.includes(urlPageSizeRaw as typeof ALLOWED_PAGE_SIZES[number]) 
+      ? urlPageSizeRaw 
+      : DEFAULT_PAGE_SIZE;
+    
+    // Actualizar el estado con los valores de la URL
+    setCurrentPage(urlPage);
+    setPageSize(urlPageSize);
+    
+    // Si el pageSize de la URL es inválido, corregir la URL
+    if (!ALLOWED_PAGE_SIZES.includes(urlPageSizeRaw as typeof ALLOWED_PAGE_SIZES[number])) {
+      isUpdatingFromStateRef.current = true;
+      const newSearchParams = new URLSearchParams(window.location.search);
+      newSearchParams.set('page', urlPage.toString());
+      newSearchParams.set('pageSize', String(DEFAULT_PAGE_SIZE));
+      newSearchParams.set('status', 'available');
+      if (activeTab) {
+        const claimTypeMap: Record<CommissionTabId, string> = {
+          b2c: 'B2C',
+          b2b: 'B2B',
+          b2t: 'B2T',
+        };
+        newSearchParams.set('claimType', claimTypeMap[activeTab]);
+      }
+      setSearchParams(newSearchParams, { replace: true });
+    }
+    
+    hasInitializedRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar una vez al montar
+
+  // Actualizar URL cuando cambien currentPage o pageSize (solo cuando el usuario cambia el estado)
+  useEffect(() => {
+    // No hacer nada si aún no se ha inicializado
+    if (!hasInitializedRef.current) {
+      return;
+    }
+    
+    // Si estamos actualizando desde el estado, resetear el flag y salir
+    if (isUpdatingFromStateRef.current) {
+      isUpdatingFromStateRef.current = false;
+      return;
+    }
+    
+    // Crear nuevos searchParams desde la URL actual
+    const currentSearchParams = new URLSearchParams(window.location.search);
+    const currentUrlPage = parseInt(currentSearchParams.get('page') || '1', 10);
+    const currentUrlPageSizeRaw = parseInt(currentSearchParams.get('pageSize') || String(DEFAULT_PAGE_SIZE), 10);
+    const currentUrlPageSize = ALLOWED_PAGE_SIZES.includes(currentUrlPageSizeRaw as typeof ALLOWED_PAGE_SIZES[number])
+      ? currentUrlPageSizeRaw
+      : DEFAULT_PAGE_SIZE;
+    
+    // Solo actualizar si hay diferencia entre estado y URL
+    if (currentPage !== currentUrlPage || pageSize !== currentUrlPageSize) {
+      isUpdatingFromStateRef.current = true;
+      const newSearchParams = new URLSearchParams();
+      newSearchParams.set('page', currentPage.toString());
+      newSearchParams.set('pageSize', pageSize.toString());
+      newSearchParams.set('status', 'available');
+      
+      // Agregar claimType según el tab activo
+      if (activeTab) {
+        const claimTypeMap: Record<CommissionTabId, string> = {
+          b2c: 'B2C',
+          b2b: 'B2B',
+          b2t: 'B2T',
+        };
+        newSearchParams.set('claimType', claimTypeMap[activeTab]);
+      }
+      
+      setSearchParams(newSearchParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, pageSize, activeTab]); // Solo depender del estado, no de setSearchParams
 
   // Resetear página cuando cambie el tab activo
   useEffect(() => {
@@ -254,7 +356,27 @@ const Commissions: React.FC = () => {
         <div className="flex-1 min-h-0 overflow-y-auto pl-6 pr-6 pb-8" style={{ paddingBottom: '84px' }}>
           {/* Navbar responsivo */}
           <DashboardNavbar 
-            title={t('commissions:title')} 
+            title={t('commissions:title')}
+            rightAction={
+              /* Botón visible solo en móviles/tablets pequeños junto al título, en desktop se muestra junto a las tabs */
+              <div className="lg:hidden">
+                <SingleButtonNoClipPath
+                  size="default"
+                  className="rounded-xl font-urbanist-medium h-[42px] px-4 text-base leading-[20px]"
+                  onClick={handleRequestAllClaims}
+                  disabled={isRequestingClaims || isLoadingTotal}
+                >
+                  {isRequestingClaims || isLoadingTotal ? (
+                    <>
+                      <Spinner className="size-4 text-black" />
+                      <span>{isLoadingTotal ? t('commissions:button.loading') : t('commissions:button.requesting')}</span>
+                    </>
+                  ) : (
+                    t('commissions:button.requestEarnings')
+                  )}
+                </SingleButtonNoClipPath>
+              </div>
+            }
           />
 
           {/* Tabs - Debajo del label Comisiones */}
@@ -276,8 +398,8 @@ const Commissions: React.FC = () => {
                   tabHeight={55}
                 />
               </div>
-              {/* Botón Solicitar ganancias - Alineado a la derecha y justo sobre la línea */}
-              <div className="absolute bottom-0 right-0" style={{ marginBottom: '-1px' }}>
+              {/* Botón Solicitar ganancias - Solo visible en desktop, alineado a la derecha y justo sobre la línea */}
+              <div className="hidden lg:block absolute bottom-0 right-0" style={{ marginBottom: '-1px' }}>
                 <SingleButtonNoClipPath
                   size="default"
                   className="rounded-xl font-urbanist-medium h-[42px] px-4 text-base leading-[20px]"

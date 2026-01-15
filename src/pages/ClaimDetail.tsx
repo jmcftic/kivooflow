@@ -26,10 +26,12 @@ const ClaimDetail: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
 
   // Obtener el modelo del usuario
+  // staleTime Infinity ya que los datos se guardan en localStorage y solo cambian al login/logout
+  // La función getAvailableMlmModels ya maneja su propio cache en localStorage
   const { data: availableModelsData } = useQuery({
     queryKey: ['availableMlmModels'],
-    queryFn: getAvailableMlmModels,
-    staleTime: 5 * 60 * 1000,
+    queryFn: () => getAvailableMlmModels(), // Envolver para compatibilidad con React Query
+    staleTime: Infinity, // Los datos solo cambian en login/logout, así que nunca se consideran stale
   });
 
   useEffect(() => {

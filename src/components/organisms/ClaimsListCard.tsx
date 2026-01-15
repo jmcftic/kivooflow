@@ -13,6 +13,7 @@ import { formatCurrencyWithThreeDecimals } from "@/lib/utils";
 interface ClaimsListCardProps {
   className?: string;
   activeTab?: 'b2c' | 'b2b' | 'b2t' | null;
+  pageSize?: number; // Agregar prop opcional para pageSize
 }
 
 // Mapear Order del backend al formato esperado
@@ -36,40 +37,40 @@ const mapOrder = (order: Order): MappedOrder => {
   };
 };
 
-// Función para obtener órdenes de la API con paginación
-const fetchOrders = async ({ 
-  pageParam = 1,
-  claimType
-}: { 
-  pageParam: number;
-  claimType?: 'B2C' | 'B2B';
-}): Promise<{ data: MappedOrder[], nextPage: number | null, totalPages: number }> => {
-  const pageSize = 10;
-  // Filtrar por estados "pending" y "paid" (órdenes pendientes y pagadas)
-  const response = await getOrders({ 
-    page: pageParam, 
-    pageSize, 
-    status: ['pending', 'paid'],
-    claimType
-  });
-  
-  const mappedData = response.data.items.map(mapOrder);
-  const hasMore = pageParam < response.data.totalPages;
-  
-  return {
-    data: mappedData,
-    nextPage: hasMore ? pageParam + 1 : null,
-    totalPages: response.data.totalPages,
-  };
-};
-
-const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeTab = null }) => {
+const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeTab = null, pageSize = 50 }) => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation(['claims', 'common']);
 
   // Convertir activeTab a claimType (b2c -> B2C, b2b -> B2B)
   // Nota: B2T no está soportado en órdenes según la documentación
   const claimType = activeTab && activeTab !== 'b2t' ? (activeTab.toUpperCase() as 'B2C' | 'B2B') : undefined;
+
+  // Función para obtener órdenes de la API con paginación
+  const fetchOrders = async ({ 
+    pageParam = 1,
+    claimType
+  }: { 
+    pageParam: number;
+    claimType?: 'B2C' | 'B2B';
+  }): Promise<{ data: MappedOrder[], nextPage: number | null, totalPages: number }> => {
+    // Usar el pageSize del prop, con valor por defecto de 50
+    // Filtrar por estados "pending" y "paid" (órdenes pendientes y pagadas)
+    const response = await getOrders({ 
+      page: pageParam, 
+      pageSize, 
+      status: ['pending', 'paid'],
+      claimType
+    });
+    
+    const mappedData = response.data.items.map(mapOrder);
+    const hasMore = pageParam < response.data.totalPages;
+    
+    return {
+      data: mappedData,
+      nextPage: hasMore ? pageParam + 1 : null,
+      totalPages: response.data.totalPages,
+    };
+  };
 
   const {
     data,
@@ -80,7 +81,7 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeT
     isLoading,
     isFetching,
   } = useInfiniteQuery({
-    queryKey: ['orders', activeTab],
+    queryKey: ['orders', activeTab, pageSize], // Incluir pageSize en la queryKey para que se actualice cuando cambie
     queryFn: ({ pageParam = 1 }) => fetchOrders({ 
       pageParam: pageParam as number,
       claimType
@@ -156,9 +157,9 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeT
   return (
     <div className={`w-full ${className}`}>
       <div className="w-full flex flex-col">
-        {/* Headers de tabla - estilo Network */}
-        <div className="w-full mb-3">
-          <div className="w-full flex items-center px-6">
+        {/* Headers de tabla - estilo Network - Solo visible en desktop */}
+        <div className="w-full mb-3 hidden md:block">
+          <div className="w-full flex items-center px-4 md:px-6">
             <div className="flex-1 grid grid-cols-4 gap-4 h-10 items-center text-xs text-white">
               <div className="flex items-center justify-center gap-1">{t('claims:table.headers.date')} <OrderArrows /></div>
               <div className="flex items-center justify-center gap-1">{t('claims:table.headers.amount')} <OrderArrows /></div>
@@ -189,8 +190,49 @@ const ClaimsListCard: React.FC<ClaimsListCardProps> = ({ className = "", activeT
               <>
                 {/* Tabla de órdenes - estilo Network */}
                 {allOrders.map((order: MappedOrder) => (
-                  <InfoBanner key={order.id} className="w-full h-16" backgroundColor="#212020">
-                    <div className="w-full flex items-center px-6 py-2">
+                  <InfoBanner key={order.id} className="w-full h-auto md:h-16 md:min-h-[64px]" backgroundColor="#212020">
+                    {/* Layout móvil: cada campo en su propia row */}
+                    <div className="flex flex-col md:hidden gap-2 w-full px-4 py-4">
+                      {/* Fecha */}
+                      <div className="flex flex-row items-center justify-between w-full py-1.5">
+                        <span className="text-[#CBCACA] text-xs">{t('claims:table.headers.date')}</span>
+                        <span className="text-white text-sm font-medium">{formatFecha(order.fecha)}</span>
+                      </div>
+                      {/* Monto */}
+                      <div className="flex flex-row items-center justify-between w-full py-1.5">
+                        <span className="text-[#CBCACA] text-xs">{t('claims:table.headers.amount')}</span>
+                        <div className="flex flex-col items-end">
+                          <span className="text-white text-sm font-medium">{formatMonto(order.monto)}</span>
+                          {order.originalOrder.netAmount !== null && order.originalOrder.netAmount !== undefined && (
+                            <span className="text-xs text-white/60 mt-1">
+                              {t('claims:cards.net')}: {formatCurrencyWithThreeDecimals(order.originalOrder.netAmount)} USDT
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {/* Estado con badge */}
+                      <div className="flex flex-row items-center justify-between w-full py-1.5">
+                        <span className="text-[#CBCACA] text-xs">{t('claims:table.headers.status')}</span>
+                        <Badge 
+                          variant={getEstadoBadgeVariant(order.estado)}
+                          className="text-xs"
+                        >
+                          {getEstadoLabel(order.estado)}
+                        </Badge>
+                      </div>
+                      {/* Acciones */}
+                      <div className="flex flex-row items-center justify-center w-full py-1.5">
+                        <button
+                          onClick={() => handleVerDetalle(order.id)}
+                          className="text-[#FFF100] hover:text-[#E6D900] transition-colors cursor-pointer text-sm"
+                        >
+                          {t('claims:table.labels.details')}
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Layout desktop: grid de 4 columnas - misma estructura que headers */}
+                    <div className="hidden md:flex w-full items-center px-4 md:px-6 py-2">
                       <div className="flex-1 grid grid-cols-4 gap-4 items-center text-sm text-white">
                         {/* Fecha */}
                         <div className="flex items-center justify-center">

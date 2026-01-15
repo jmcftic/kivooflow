@@ -9,6 +9,7 @@ import {
 } from "../types";
 import i18n from "../i18n/config";
 import flagIconsService from "../utils/flagIcons";
+import { getAvailableMlmModels } from "./network";
 
 class AuthService {
   // Login user
@@ -83,6 +84,13 @@ class AuthService {
     // Cargar iconos de banderas después de iniciar sesión (usando singleton)
     flagIconsService.loadIcons().catch((error: any) => {
       console.error('[Auth] Error al cargar iconos de banderas:', error);
+    });
+
+    // Cargar y guardar availableMlmModels en localStorage para optimizar
+    // Esto asegura que solo se llame al API una vez al inicio de sesión
+    getAvailableMlmModels().catch((error: any) => {
+      console.error('[Auth] Error al cargar availableMlmModels:', error);
+      // No es crítico, continuar con el login incluso si falla
     });
     
     return loginData;
@@ -225,6 +233,7 @@ class AuthService {
     apiService.setToken(null);
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
+    localStorage.removeItem("availableMlmModels");
   }
 
   // Get current user profile from API (async)

@@ -11,7 +11,7 @@ interface NetworkPaginationBarProps {
   totalPages?: number; // Prop opcional para usar totalPages del backend cuando esté disponible
 }
 
-const allowedLimits = [10, 20, 50] as const;
+const allowedLimits = [50, 100] as const;
 
 const NetworkPaginationBar: React.FC<NetworkPaginationBarProps> = ({ totalItems, currentPage, usersLimit, onChangePage, onChangeLimit, totalPages: backendTotalPages }) => {
   const effectiveLimit = allowedLimits.includes(usersLimit as (typeof allowedLimits)[number]) ? usersLimit : allowedLimits[0];
