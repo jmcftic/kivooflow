@@ -10,6 +10,7 @@ import ErrorModal from '../components/atoms/ErrorModal';
 import SuccessModal from '../components/molecules/SuccessModal';
 import { getTestingUser, resetUserClaims, TestingUserResponse } from '../services/network';
 import { useTranslation } from 'react-i18next';
+import { API_BASE_URL } from '../constants/api';
 
 const Testing: React.FC = () => {
   const { t } = useTranslation('navigation');
@@ -22,6 +23,10 @@ const Testing: React.FC = () => {
   const [successModalOpen, setSuccessModalOpen] = useState(false);
 
   const TESTING_USER_ID = 62;
+  
+  // Verificar si estamos en producción (deshabilitar botón en producción)
+  const PRODUCTION_API_URL = 'https://kivoo.kivooapp.co';
+  const isProduction = API_BASE_URL === PRODUCTION_API_URL;
 
   useEffect(() => {
     loadTestingUser();
@@ -128,9 +133,10 @@ const Testing: React.FC = () => {
                   <div className="ml-4">
                     <Button
                       onClick={handleResetClaims}
-                      disabled={isResetting || isLoading || !user}
+                      disabled={isResetting || isLoading || !user || isProduction}
                       variant="yellow"
                       size="lg"
+                      title={isProduction ? 'Esta función está deshabilitada en producción' : ''}
                     >
                       {isResetting ? (
                         <>
