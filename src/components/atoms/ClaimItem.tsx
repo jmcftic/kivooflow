@@ -159,6 +159,9 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
       } else if (tipoLower === 'leader_markup' || tipoLower === 'leader_retention') {
         badgeText = t('claims:item.commissionTypes.companyCommission');
         badgeVariant = 'red';
+      } else if (tipoLower === 'b2b_commission') {
+        badgeText = t('claims:item.commissionTypes.b2bCommission');
+        badgeVariant = 'yellow';
       } else if (tipoLower === 'retroactive') {
         badgeText = t('claims:item.commissionTypes.retroactive');
         badgeVariant = 'yellow';

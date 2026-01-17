@@ -147,6 +147,12 @@ const mapClaim = (claim: Claim, t: (key: string) => string): MappedClaim => {
     }
   }
 
+  const calculationDetails = claim.calculationDetails as any;
+  const source = calculationDetails?.source;
+  const normalizedSource = typeof source === 'string' ? source.trim().toLowerCase() : '';
+  const normalizedCommissionType = claim.commissionType?.trim();
+  const derivedCommissionType = normalizedCommissionType || (normalizedSource === 'b2b_commission' ? 'b2b_commission' : undefined);
+
   return {
     id: `CLM-${String(claim.id).padStart(3, '0')}`,
     fecha: claim.createdAt,
@@ -155,7 +161,7 @@ const mapClaim = (claim: Claim, t: (key: string) => string): MappedClaim => {
     monto,
     nivel,
     originalClaim: claim,
-    commissionType: claim.commissionType,
+    commissionType: derivedCommissionType,
     userEmail,
     usuarioValue,
     usuarioLabel,

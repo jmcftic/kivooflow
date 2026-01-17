@@ -61,6 +61,7 @@
       "level2": "Nivel 2",
       "level3": "Nivel 3",
       "companyCommission": "Comisión Empresa",
+      "b2bCommission": "Volumen Empresa",
       "retroactive": "Retroactiva"
     },
     "actions": {
@@ -90,7 +91,7 @@
       "level2": "Nivel 2",
       "level3": "Nivel 3",
       "companyCommission": "Comisión Empresa",
-      "b2bCommission": "Comisión B2B",
+      "b2bCommission": "Volumen Empresa",
       "retroactive": "Retroactiva"
     }
   }
