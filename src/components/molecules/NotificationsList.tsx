@@ -5,7 +5,7 @@ import { getUserNotifications, markNotificationAsRead, markAllNotificationsAsRea
 import { KfNotification } from '@/types/network';
 import { Spinner } from '@/components/ui/spinner';
 import NotificationDetailModal from './NotificationDetailModal';
-import { translateNotificationKey } from '@/utils/notificationTranslator';
+import { translateNotificationKey, translateNotification } from '@/utils/notificationTranslator';
 
 interface NotificationsListProps {
   onClose?: () => void;
@@ -36,7 +36,7 @@ const NotificationsList: React.FC<NotificationsListProps> = ({ onClose, onUnread
 
   const notifications = notificationsData?.data?.notifications || [];
   const unreadCount = notificationsData?.data?.unreadCount || 0;
-  
+
   // Mostrar spinner si está cargando inicialmente (isLoading) o haciendo fetch sin datos previos válidos
   // También mostrar spinner si está haciendo refetch y aún no tenemos datos confirmados
   const hasData = notificationsData && notificationsData.data;
@@ -63,7 +63,7 @@ const NotificationsList: React.FC<NotificationsListProps> = ({ onClose, onUnread
     // Abrir el modal con la notificación seleccionada
     setSelectedNotification(notification);
     setIsModalOpen(true);
-    
+
     // Si la notificación no está leída, marcarla como leída
     if (!notification.isRead) {
       await handleMarkAsRead(notification.id);
@@ -89,7 +89,7 @@ const NotificationsList: React.FC<NotificationsListProps> = ({ onClose, onUnread
     if (diffInSeconds < 3600) return t('notifications:time.minutesAgo', { count: Math.floor(diffInSeconds / 60) });
     if (diffInSeconds < 86400) return t('notifications:time.hoursAgo', { count: Math.floor(diffInSeconds / 3600) });
     if (diffInSeconds < 604800) return t('notifications:time.daysAgo', { count: Math.floor(diffInSeconds / 86400) });
-    
+
     // Usar locale según el idioma
     const locale = i18n.language === 'en' ? 'en-US' : 'es-ES';
     return date.toLocaleDateString(locale, {
@@ -161,32 +161,38 @@ const NotificationsList: React.FC<NotificationsListProps> = ({ onClose, onUnread
 
         {/* Lista de notificaciones */}
         <div className="flex flex-col gap-2 w-full">
-          {notifications.map((notification: KfNotification) => (
-            <div
-              key={notification.id}
-              className={`relative p-3 rounded-lg border-l-4 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer ${
-                notification.isRead ? 'opacity-60' : ''
-              } ${getNotificationColor(notification.type)}`}
-              onClick={() => handleNotificationClick(notification)}
-            >
-              <div className="flex items-start justify-between gap-2 w-full">
-                <div className="flex-1 min-w-0 overflow-hidden">
-                  <h4 className="text-sm font-semibold text-white mb-1 break-words">
-                    {translateNotificationKey(notification.title)}
-                  </h4>
-                  <p className="text-xs text-white/70 mb-2 line-clamp-2 break-words">
-                    {translateNotificationKey(notification.body || notification.message)}
-                  </p>
-                  <span className="text-xs text-white/50 break-words">
-                    {formatDate(notification.createdAt)}
-                  </span>
+          {notifications.map((notification: KfNotification) => {
+            const translated = translateNotification({
+              title: notification.title,
+              body: notification.body || notification.message,
+            });
+
+            return (
+              <div
+                key={notification.id}
+                className={`relative p-3 rounded-lg border-l-4 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer ${notification.isRead ? 'opacity-60' : ''
+                  } ${getNotificationColor(notification.type)}`}
+                onClick={() => handleNotificationClick(notification)}
+              >
+                <div className="flex items-start justify-between gap-2 w-full">
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <h4 className="text-sm font-semibold text-white mb-1 break-words">
+                      {translated.title}
+                    </h4>
+                    <p className="text-xs text-white/70 mb-2 line-clamp-2 break-words">
+                      {translated.body}
+                    </p>
+                    <span className="text-xs text-white/50 break-words">
+                      {formatDate(notification.createdAt)}
+                    </span>
+                  </div>
+                  {!notification.isRead && (
+                    <div className="w-2 h-2 rounded-full bg-[#FFF100] flex-shrink-0 mt-1" />
+                  )}
                 </div>
-                {!notification.isRead && (
-                  <div className="w-2 h-2 rounded-full bg-[#FFF100] flex-shrink-0 mt-1" />
-                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

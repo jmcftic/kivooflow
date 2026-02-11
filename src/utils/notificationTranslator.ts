@@ -21,6 +21,7 @@ import i18n from '../i18n/config';
  */
 export function translateNotificationKey(
   key: string | null | undefined,
+  metadata: Record<string, any> = {},
   namespace: string = 'backendNetwork'
 ): string {
   // Si no hay clave, retornar string vacío
@@ -28,34 +29,40 @@ export function translateNotificationKey(
     return '';
   }
 
-  // Si la clave contiene un punto, probablemente es una clave de traducción
+  // Si la clave contiene espacios, es texto ya redactado (no es una clave técnica)
+  // Ej: "Tu energía se multiplica ✨" o "5.92 USDT..."
+  if (key.includes(' ')) {
+    return key;
+  }
+
+  // Si no tiene espacios pero contiene un punto, probablemente es una clave de traducción técnica
   // Ejemplo: "network.NOTIFICATION_CLAIM_ALL_COMPLETED_TITLE"
   if (key.includes('.')) {
     try {
       // Remover el prefijo del namespace (ej: "network." o "auth.")
       const cleanKey = key.replace(/^(network|auth|cards|claim-orders)\./, '');
-      
+
       // Intentar primero buscar directamente en ERRORS (donde están las notificaciones)
       const errorsKey = `ERRORS.${cleanKey}`;
-      const errorsAttempt = i18n.t(errorsKey, { ns: namespace });
-      if (errorsAttempt !== errorsKey) {
+      const errorsAttempt = i18n.t(errorsKey, { ns: namespace, ...metadata });
+      if (errorsAttempt !== errorsKey && errorsAttempt !== '') {
         return errorsAttempt;
       }
-      
+
       // Si no está en ERRORS, buscar en SUCCESS
       const successKey = `SUCCESS.${cleanKey}`;
-      const successAttempt = i18n.t(successKey, { ns: namespace });
-      if (successAttempt !== successKey) {
+      const successAttempt = i18n.t(successKey, { ns: namespace, ...metadata });
+      if (successAttempt !== successKey && successAttempt !== '') {
         return successAttempt;
       }
-      
+
       // Si no está en ninguna estructura, intentar directamente
-      const directAttempt = i18n.t(cleanKey, { ns: namespace });
-      if (directAttempt !== cleanKey) {
+      const directAttempt = i18n.t(cleanKey, { ns: namespace, ...metadata });
+      if (directAttempt !== cleanKey && directAttempt !== '') {
         return directAttempt;
       }
-      
-      // Si no se encuentra, devolver la clave original
+
+      // Si no se encuentra o devuelve vacío, devolver la clave original
       return key;
     } catch (error) {
       console.warn(`Error translating notification key: ${key}`, error);
@@ -63,7 +70,7 @@ export function translateNotificationKey(
     }
   }
 
-  // Si no contiene punto, asumir que ya está traducido
+  // Si no contiene punto ni espacios, devolver tal cual (o intentar traducir si se prefiere)
   return key;
 }
 
@@ -73,16 +80,20 @@ export function translateNotificationKey(
  * @param notification - Objeto de notificación con title y body
  * @returns Objeto de notificación con title y body traducidos
  */
-export function translateNotification(notification: {
-  title?: string | null;
-  body?: string | null;
-}): {
+export function translateNotification(
+  notification: {
+    title?: string | null;
+    body?: string | null;
+    metadata?: Record<string, any> | null;
+  }
+): {
   title: string;
   body: string;
 } {
+  const meta = notification.metadata || {};
   return {
-    title: translateNotificationKey(notification.title),
-    body: translateNotificationKey(notification.body),
+    title: translateNotificationKey(notification.title, meta),
+    body: translateNotificationKey(notification.body, meta),
   };
 }
 

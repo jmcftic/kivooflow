@@ -450,8 +450,8 @@ export interface OrderClaimItem {
 }
 
 // Tipo unión para calculationDetails que puede ser de mlm_transaction o b2c_from_b2b_commission
-export type OrderClaimCalculationDetails = 
-  | MlmTransactionOrderCalculationDetails 
+export type OrderClaimCalculationDetails =
+  | MlmTransactionOrderCalculationDetails
   | B2BCommissionOrderCalculationDetails;
 
 // CalculationDetails para mlm_transaction en órdenes
@@ -539,6 +539,7 @@ export interface KfNotification {
   body?: string; // Algunas notificaciones pueden tener body en lugar de message
   type?: 'info' | 'success' | 'warning' | 'error';
   isRead: boolean;
+  metadata?: Record<string, any>; // Datos adicionales para traducción/interpolación
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;

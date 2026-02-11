@@ -2,6 +2,8 @@ import React, { ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import AlertIcon from "../atoms/AlertIcon";
 import Button from "../atoms/Button";
@@ -28,7 +30,7 @@ export interface InfoModalProps {
   buttonClassName?: string; // Clases adicionales para el botón
   buttonContainerClassName?: string; // Clases adicionales para el contenedor del botón
   // Altura personalizada
-  customHeight?: string; // Altura personalizada del modal (ej: "h-[450px] lg:h-[480px]")
+  customHeight?: string; // Altura personalizada del modal (ej: "h-[405px] lg:h-[405px]")
 }
 
 const InfoModal: React.FC<InfoModalProps> = ({
@@ -68,59 +70,63 @@ const InfoModal: React.FC<InfoModalProps> = ({
     'font-bold',
     'leading-tight',
     'mb-2 sm:mb-3',
-    'text-center'
+    'text-center',
+    'px-2 w-full break-words overflow-wrap-anywhere'
   ].join(' ');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 max-w-[500px] bg-transparent border-0 shadow-none sm:max-w-[500px]">
+      <DialogContent
+        className="p-0 max-w-[500px] bg-transparent border-0 shadow-none sm:max-w-[500px] outline-none"
+        aria-describedby="info-modal-description"
+      >
+        {/* Accesibilidad: Título y descripción ocultos para Radix */}
+        <div className="sr-only">
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription id="info-modal-description">{message}</DialogDescription>
+        </div>
+
         <FoldedCard
           className={`w-full max-w-[500px] ${customHeight || 'h-[405px] lg:h-[405px]'}`}
           gradientColor="#FFF100"
           backgroundColor="#212020"
           variant="md"
         >
-          {/* Contenido centrado */}
-          <div className="relative z-10 h-full flex flex-col items-center justify-between px-4 sm:px-6 pt-8 sm:pt-12 pb-6 sm:pb-12 w-full max-w-full overflow-visible">
-            {/* Ilustración, icono personalizado o icono por defecto */}
-            {showIllustration ? (
-              <div className="mb-4 sm:mb-8 flex-shrink-0">
-                <img 
-                  src={illustrationSrc} 
-                  alt="" 
-                  className="w-full max-w-[250px] sm:max-w-[300px] h-auto"
-                />
-              </div>
-            ) : showCustomIcon ? (
-              <div className="mb-4 sm:mb-8 flex-shrink-0">
-                {icon}
-              </div>
-            ) : showDefaultIcon ? (
-              <div className="mb-2 sm:mb-3 flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 relative">
-                {/* Fondo amarillo con YellowFoldedCardMinibackground */}
-                <div className="absolute inset-0">
-                  <YellowFoldedCardMinibackground width={56} height={56} className="w-full h-full" />
-                </div>
-                
-                {/* Icono de alerta centrado */}
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center z-10">
-                  <AlertIcon width={48} height={48} />
-                </div>
-              </div>
-            ) : null}
+          {/* Contenido principal */}
+          <div className="relative z-10 h-full flex flex-col items-center px-4 sm:px-8 py-10 w-full">
 
-            {/* Texto principal */}
-            <h2 className={`${titleClasses} px-2 w-full break-words overflow-wrap-anywhere`}>
+            {/* Icono / Ilustración */}
+            <div className="mb-6 flex-shrink-0">
+              {showIllustration ? (
+                <img src={illustrationSrc} alt="" className="max-w-[200px] h-auto" />
+              ) : showCustomIcon ? (
+                icon
+              ) : (
+                <div className="w-14 h-14 relative">
+                  <div className="absolute inset-0">
+                    <YellowFoldedCardMinibackground width={56} height={56} className="w-full h-full" />
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <AlertIcon width={48} height={48} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Título Visual */}
+            <h2 className={`${titleClasses} mb-4`}>
               {title}
             </h2>
 
-            {/* Subtexto blanco */}
-            <p className="text-white text-xs sm:text-sm mb-4 sm:mb-5 text-center px-2 w-full break-words overflow-wrap-anywhere">
-              {message}
-            </p>
+            {/* Mensaje / Cuerpo - Forzado Blanco y Normal */}
+            <div className="flex-1 w-full overflow-y-auto mb-8 px-2 custom-scrollbar text-center">
+              <p className="text-white !text-white text-sm sm:text-base font-normal !font-normal leading-relaxed opacity-100">
+                {message}
+              </p>
+            </div>
 
-            {/* Botón con margen inferior responsive */}
-            <div className={`w-full px-2 flex-shrink-0 ${buttonContainerClassName}`}>
+            {/* Botón */}
+            <div className={`w-full flex-shrink-0 ${buttonContainerClassName}`}>
               <Button
                 variant={buttonVariant}
                 size={buttonSize}

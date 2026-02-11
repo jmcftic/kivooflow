@@ -107,12 +107,12 @@ export async function getAvailableMlmModels(forceRefresh: boolean = false): Prom
       if (cachedStr) {
         const cached = JSON.parse(cachedStr);
         // Validar que tiene la estructura esperada
-        if (cached && typeof cached === 'object' && 
-            typeof cached.user_id === 'number' && 
-            typeof cached.my_model === 'string' &&
-            typeof cached.show_b2c_tab === 'boolean' &&
-            typeof cached.show_b2t_tab === 'boolean' &&
-            typeof cached.show_b2b_tab === 'boolean') {
+        if (cached && typeof cached === 'object' &&
+          typeof cached.user_id === 'number' &&
+          typeof cached.my_model === 'string' &&
+          typeof cached.show_b2c_tab === 'boolean' &&
+          typeof cached.show_b2t_tab === 'boolean' &&
+          typeof cached.show_b2b_tab === 'boolean') {
           return cached as AvailableMlmModelsData;
         }
       }
@@ -156,12 +156,12 @@ function normalizeLeader(row: any): NetworkLeaderOwnedToB2C {
 
   // Manejar team cuando viene como objeto anidado o como campos directos
   const team = row?.team ?? {};
-  const teamId = row?.teamId != null 
-    ? Number(row?.teamId) 
-    : row?.team_id != null 
-      ? Number(row?.team_id) 
-      : team?.id != null 
-        ? Number(team.id) 
+  const teamId = row?.teamId != null
+    ? Number(row?.teamId)
+    : row?.team_id != null
+      ? Number(row?.team_id)
+      : team?.id != null
+        ? Number(team.id)
         : null;
   const teamName = row?.teamName ?? row?.team_name ?? team?.name ?? null;
   const teamBannerUrl = row?.teamBannerUrl ?? row?.team_banner_url ?? team?.bannerUrl ?? null;
@@ -270,10 +270,10 @@ export async function getB2BLeadersOwnedToB2C({ limit = 20, offset = 0 }: GetNet
   );
 
   const result = normalizeLeadersResult(res as unknown as NetworkLeadersResponse, 'B2B', limit, offset);
-  
+
   // No pre-cargar detalles de equipos automáticamente
   // Los detalles se cargarán solo cuando el usuario haga clic en "Ver detalle"
-  
+
   return result;
 }
 
@@ -298,23 +298,23 @@ export async function getLeaderByUserId(userId: number, type: 'B2B' | 'B2T'): Pr
   // Buscar en la lista de líderes (puede requerir múltiples páginas si hay muchos líderes)
   let offset = 0;
   const limit = 100; // Obtener un número razonable de líderes por página
-  
+
   while (true) {
-    const result = type === 'B2B' 
+    const result = type === 'B2B'
       ? await getB2BLeadersOwnedToB2C({ limit, offset })
       : await getB2TLeadersOwnedToB2C({ limit, offset });
-    
+
     // Buscar el líder por userId
     const leader = result.leaders.find(l => l.userId === userId);
     if (leader) {
       return leader;
     }
-    
+
     // Si no hay más páginas, no se encontró el líder
     if (!result.pagination.hasNextPage) {
       return null;
     }
-    
+
     // Continuar en la siguiente página
     offset += limit;
   }
@@ -328,12 +328,12 @@ export async function getLeaderByUserId(userId: number, type: 'B2B' | 'B2T'): Pr
  */
 export async function getTeamDetails(teamId: number): Promise<TeamDetailsData | null> {
   const endpoint = apiService.buildEndpoint(API_ENDPOINTS.NETWORK.TEAM_DETAILS, { teamId });
-  
+
   try {
     const res = await apiService.get<TeamDetailsResponse>(endpoint);
     const payload: any = res;
     const data = payload?.data ?? payload;
-    
+
     return {
       teamName: data?.teamName ?? '',
       level: data?.level ?? 0,
@@ -523,7 +523,7 @@ export async function claimMlmTransaction(request: ClaimMlmTransactionRequest): 
 export async function requestAllClaims(claimType?: 'mlm_transactions' | 'b2c_commissions'): Promise<RequestAllClaimsResponse> {
   // Construir los parámetros de query si se proporciona claimType
   const queryParams = claimType ? `?claimType=${claimType}` : '';
-  
+
   const res = await apiService.post<RequestAllClaimsResponse>(
     `${API_ENDPOINTS.NETWORK.REQUEST_ALL_CLAIMS}${queryParams}`,
     {},
@@ -552,7 +552,7 @@ export async function getTotalToClaimInUSDT(claimType?: 'mlm_transactions' | 'b2
   if (claimType) {
     query.claimType = claimType;
   }
-  
+
   const res = await apiService.get<TotalToClaimInUSDTResponse>(
     API_ENDPOINTS.NETWORK.TOTAL_USDT,
     query,
@@ -587,11 +587,11 @@ export interface GetOrdersParams {
   claimType?: 'B2C' | 'B2B';
 }
 
-export async function getOrders({ 
-  page = 1, 
-  pageSize = 10, 
-  status, 
-  claimType 
+export async function getOrders({
+  page = 1,
+  pageSize = 10,
+  status,
+  claimType
 }: GetOrdersParams = {}): Promise<OrdersResponse> {
   const query: Record<string, string | string[]> = {
     page: page.toString(),
@@ -634,10 +634,10 @@ export interface GetOrderClaimsParams {
   status?: string | string[];
 }
 
-export async function getOrderClaims({ 
-  orderId, 
-  claimType, 
-  status 
+export async function getOrderClaims({
+  orderId,
+  claimType,
+  status
 }: GetOrderClaimsParams): Promise<OrderClaimsResponse> {
   const query: Record<string, string | string[]> = {};
 
@@ -750,8 +750,10 @@ export async function getUserNotifications({
         userId: notif.userId ?? 0,
         title: notif.title ?? '',
         message: notif.message ?? '',
+        body: notif.body ?? '',
         type: notif.type as 'info' | 'success' | 'warning' | 'error' | undefined,
         isRead: notif.isRead ?? false,
+        metadata: notif.metadata ?? {},
         createdAt: notif.createdAt ?? new Date().toISOString(),
         updatedAt: notif.updatedAt ?? new Date().toISOString(),
         deletedAt: notif.deletedAt ?? null,
@@ -779,8 +781,10 @@ export async function markNotificationAsRead(notificationId: number): Promise<Ma
       userId: data?.userId ?? 0,
       title: data?.title ?? '',
       message: data?.message ?? '',
+      body: data?.body ?? '',
       type: data?.type as 'info' | 'success' | 'warning' | 'error' | undefined,
       isRead: data?.isRead ?? true,
+      metadata: data?.metadata ?? {},
       createdAt: data?.createdAt ?? new Date().toISOString(),
       updatedAt: data?.updatedAt ?? new Date().toISOString(),
       deletedAt: data?.deletedAt ?? null,
