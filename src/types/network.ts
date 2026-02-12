@@ -15,6 +15,7 @@ export interface NetworkUser {
   has_descendants?: boolean;
   comisiones_generadas?: number;
   volumen?: number;
+  profileIconUrl?: string | null;
 }
 
 export interface NetworkLevel {
@@ -53,6 +54,7 @@ export interface DescendantSubtreeUser {
   totalDescendants: number;
   levelInSubtree: number;
   comisiones_generadas?: number;
+  profileIconUrl?: string | null;
 }
 
 export interface DescendantSubtreeSummary {
@@ -88,6 +90,7 @@ export interface B2CNetworkUser {
   has_descendants: boolean;
   comisiones_generadas?: number;
   volumen?: number;
+  profileIconUrl?: string | null;
 }
 
 export interface B2CNetworkResponse {

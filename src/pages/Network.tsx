@@ -96,12 +96,12 @@ const Network: React.FC = () => {
   const showNetworkLoader = useMinimumLoading(networkLoading || isChangingTab, 3000);
   const showLeadersLoader = useMinimumLoading(leadersLoading, 3000);
   const showLoader = showNetworkLoader || showLeadersLoader;
-  
+
   // Usuario B2B en tab B2B no tiene límite de profundidad
   const hasDepthLimit = useMemo(() => {
     return !(userModel === 'b2b' && activeTab === 'b2b');
   }, [userModel, activeTab]);
-  
+
   const maxDepth = useMemo(() => {
     return hasDepthLimit ? 3 : 999; // 999 como valor alto para representar sin límite
   }, [hasDepthLimit]);
@@ -148,13 +148,13 @@ const Network: React.FC = () => {
     const fetchAvailableModels = async () => {
       try {
         const data = await getAvailableMlmModels();
-        
+
         // Establecer el modelo del usuario desde el endpoint
         const normalizedModel = data.my_model?.trim().toLowerCase();
         if (normalizedModel === 'b2c' || normalizedModel === 'b2b' || normalizedModel === 'b2t') {
           setUserModel(normalizedModel as NetworkTabId);
         }
-        
+
         // Establecer qué tabs están disponibles basándose en la respuesta del endpoint
         setTabAvailability({
           b2c: data.show_b2c_tab,
@@ -164,7 +164,7 @@ const Network: React.FC = () => {
 
         // Establecer el tab activo inicial si no se ha establecido aún
         if (!hasSetInitialTabRef.current) {
-          const initialTab = 
+          const initialTab =
             (data.show_b2c_tab && 'b2c') ||
             (data.show_b2b_tab && 'b2b') ||
             (data.show_b2t_tab && 'b2t') ||
@@ -198,7 +198,7 @@ const Network: React.FC = () => {
   }, [tabAvailability, activeTab]);
 
   // Resetear página cuando cambia el nivel o el tab
-  useEffect(() => { 
+  useEffect(() => {
     setCurrentPage(1);
     setB2cPagination(null);
   }, [activeLevel, activeTab]);
@@ -232,21 +232,21 @@ const Network: React.FC = () => {
       if (subtreeMode) {
         return;
       }
-      
+
       // Esperar a que se haya obtenido el modelo del usuario desde el endpoint available-model
       // para evitar ejecutar el endpoint incorrecto (getNetwork) antes de saber el tipo de usuario
       if (!hasFetchedAvailableModelsRef.current || !userModel) {
         setNetworkLoading(true);
         return;
       }
-      
+
       // Detectar si es solo un cambio de paginación (usersLimit o usersOffset)
-      const isOnlyPaginationChange = 
-        prevTabRef.current === activeTab && 
+      const isOnlyPaginationChange =
+        prevTabRef.current === activeTab &&
         prevLevelRef.current === activeLevel &&
         prevTabRef.current !== null &&
         prevLevelRef.current !== null;
-      
+
       try {
         // Solo activar el loader si no es un cambio de paginación
         if (!isOnlyPaginationChange) {
@@ -256,7 +256,7 @@ const Network: React.FC = () => {
         // Usuario B2C: tab B2C usa excluding, tabs B2B/B2T usan owned
         // Usuario B2B: tab B2B usa single-level
         // Usuario B2T: tab B2T usa single-level
-        
+
         // Usuario B2C en tab B2C: usar excluding
         if (userModel === 'b2c' && activeTab === 'b2c') {
           setLeadersLoading(false);
@@ -289,16 +289,17 @@ const Network: React.FC = () => {
                 direct_referrals: u.direct_referrals,
                 total_descendants_of_user: u.total_descendants_of_user,
                 has_descendants: u.has_descendants,
-                comisiones_generadas: typeof u.comisiones_generadas === 'number' 
-                  ? u.comisiones_generadas 
-                  : (typeof u.comisiones_generadas === 'string' 
-                      ? parseFloat(u.comisiones_generadas) || 0 
-                      : (u.comisiones_generadas ?? 0)),
-                volumen: typeof (u as any).volumen === 'number' 
-                  ? (u as any).volumen 
-                  : (typeof (u as any).volumen === 'string' 
-                      ? parseFloat((u as any).volumen) || 0 
-                      : ((u as any).volumen ?? 0)),
+                comisiones_generadas: typeof u.comisiones_generadas === 'number'
+                  ? u.comisiones_generadas
+                  : (typeof u.comisiones_generadas === 'string'
+                    ? parseFloat(u.comisiones_generadas) || 0
+                    : (u.comisiones_generadas ?? 0)),
+                volumen: typeof (u as any).volumen === 'number'
+                  ? (u as any).volumen
+                  : (typeof (u as any).volumen === 'string'
+                    ? parseFloat((u as any).volumen) || 0
+                    : ((u as any).volumen ?? 0)),
+                profileIconUrl: u.profileIconUrl || (u as any).profile_icon_url || null,
               })),
             };
             setLevels([b2cLevel]);
@@ -317,7 +318,7 @@ const Network: React.FC = () => {
             setParentErrors({});
             setNetworkLoading(false);
           }
-        } 
+        }
         // Usuario B2C en tabs B2B/B2T: usar owned
         else if (isLeaderTab && tabAvailability[activeTab]) {
           const leaderTab = activeTab as LeaderTab;
@@ -335,12 +336,12 @@ const Network: React.FC = () => {
           setParentErrors({});
 
           // Detectar si es solo un cambio de paginación
-          const isOnlyPaginationChange = 
-            prevTabRef.current === activeTab && 
+          const isOnlyPaginationChange =
+            prevTabRef.current === activeTab &&
             prevLevelRef.current === activeLevel &&
             prevTabRef.current !== null &&
             prevLevelRef.current !== null;
-          
+
           // Solo activar el loader si no es un cambio de paginación
           if (!isOnlyPaginationChange) {
             setLeadersLoading(true);
@@ -365,7 +366,7 @@ const Network: React.FC = () => {
           }));
           setLeadersLoading(false);
           setNetworkLoading(false);
-        } 
+        }
         // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
         else if ((userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
           setLeadersLoading(false);
@@ -400,6 +401,7 @@ const Network: React.FC = () => {
                 has_descendants: u.has_descendants,
                 comisiones_generadas: u.comisiones_generadas,
                 volumen: (u as any).volumen ?? 0,
+                profileIconUrl: u.profileIconUrl || (u as any).profile_icon_url || null,
               })),
             };
             setLevels([singleLevel]);
@@ -418,7 +420,7 @@ const Network: React.FC = () => {
             setParentErrors({});
             setNetworkLoading(false);
           }
-        } 
+        }
         // Fallback: usar el endpoint original para otros casos (no debería ejecutarse normalmente)
         else {
           console.warn('Usando endpoint fallback getNetwork - esto no debería ocurrir si userModel está establecido correctamente', { userModel, activeTab });
@@ -458,7 +460,7 @@ const Network: React.FC = () => {
       } finally {
         setNetworkLoading(false);
       }
-      
+
       // Actualizar refs después de cargar
       prevTabRef.current = activeTab;
       prevLevelRef.current = activeLevel;
@@ -486,19 +488,19 @@ const Network: React.FC = () => {
             setAllSubtreeUsers([]);
             return;
           }
-          
+
           // Si es la primera página o no tenemos todos los usuarios cargados, cargar todos
           let allDirectUsers = allSubtreeUsers;
           if (subtreePage === 1 || allSubtreeUsers.length === 0) {
             allDirectUsers = [];
             let offset = 0;
             const limit = 100;
-            
+
             // Cargar todas las páginas para obtener todos los hijos directos
             while (true) {
               // Usar excluding para B2C, single-level para B2B/B2T
-              const fetchFn = (userModel === 'b2c' && activeTab === 'b2c') 
-                ? getB2CNetworkExcludingB2BB2T 
+              const fetchFn = (userModel === 'b2c' && activeTab === 'b2c')
+                ? getB2CNetworkExcludingB2BB2T
                 : getSingleLevelNetwork;
               const res = await fetchFn({
                 level: childrenLevel,
@@ -507,23 +509,23 @@ const Network: React.FC = () => {
               });
               const data = res?.data;
               if (!data || data.users.length === 0) break;
-              
+
               // Filtrar solo los hijos directos del usuario raíz
               const directChildren = data.users.filter((u: any) => u.direct_parent_id === subtreeRootId);
               allDirectUsers.push(...directChildren);
-              
+
               if (!data.pagination.hasNextPage) break;
               offset += limit;
             }
-            
+
             setAllSubtreeUsers(allDirectUsers);
           }
-          
+
           // Paginar client-side
           const startIndex = (subtreePage - 1) * usersLimit;
           const endIndex = startIndex + usersLimit;
           const pageUsers = allDirectUsers.slice(startIndex, endIndex);
-          
+
           const users = pageUsers.map((u: any) => ({
             id: u.user_id,
             name: u.user_full_name || u.user_email,
@@ -536,8 +538,9 @@ const Network: React.FC = () => {
             totalDescendants: u.total_descendants_of_user || 0,
             hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
             volumen: u.volumen ?? 0,
+            profileIconUrl: u.profileIconUrl || (u as any).profile_icon_url || null,
           }));
-          
+
           setSubtreeUsers(users);
           setSubtreeTotal(allDirectUsers.length);
         } else {
@@ -546,34 +549,34 @@ const Network: React.FC = () => {
           const allDirectUsers: any[] = [];
           let backendOffset = 0;
           const backendLimit = usersLimit * 3; // Pedir más usuarios del backend para asegurar obtener suficientes de nivel 1
-          
+
           // Calcular el rango de usuarios que necesitamos para esta página del frontend
           const startIndex = (subtreePage - 1) * usersLimit;
           const endIndex = startIndex + usersLimit;
-          
+
           // Hacer llamadas al backend hasta que tengamos suficientes usuarios de nivel 1
           while (allDirectUsers.length < endIndex) {
-            const res = await getDescendantSubtree({ 
-              descendantId: subtreeRootId, 
-              maxDepth: 3, 
-              limit: backendLimit, 
-              offset: backendOffset 
+            const res = await getDescendantSubtree({
+              descendantId: subtreeRootId,
+              maxDepth: 3,
+              limit: backendLimit,
+              offset: backendOffset
             });
             const sdata: any = (res as any)?.data ?? res;
             const users = sdata?.users || [];
-            
+
             if (users.length === 0) break; // No hay más usuarios en el backend
-            
+
             // Filtrar solo usuarios de nivel 1 y agregar a la lista acumulada
             const directUsers = users.filter((u: any) => (u.levelInSubtree ?? 1) === 1);
             allDirectUsers.push(...directUsers);
-            
+
             // Si recibimos menos usuarios que el límite solicitado, no hay más
             if (users.length < backendLimit) break;
-            
+
             backendOffset += backendLimit;
           }
-          
+
           // Extraer solo los usuarios de nivel 1 para esta página del frontend
           const pageDirectUsers = allDirectUsers.slice(startIndex, endIndex);
           const users = pageDirectUsers.map((u: any) => {
@@ -589,9 +592,10 @@ const Network: React.FC = () => {
               totalDescendants: u.totalDescendants || 0,
               hasDescendants: u.hasDescendants ?? (u.totalDescendants || 0) > 0,
               volumen: u.volumen ?? 0,
+              profileIconUrl: u.profileIconUrl || (u as any).profile_icon_url || null,
             };
           });
-          
+
           setSubtreeUsers(users);
           // El total es el número real de usuarios de nivel 1 que encontramos
           setSubtreeTotal(allDirectUsers.length);
@@ -614,8 +618,8 @@ const Network: React.FC = () => {
     return leaderState.leaders.map((leader) => {
       const depth = Math.min(leader.depth || 1, 3);
       // Para B2B, usar teamName en lugar de email/nombre
-      const displayName = (activeTab === 'b2b' && leader.teamName) 
-        ? leader.teamName 
+      const displayName = (activeTab === 'b2b' && leader.teamName)
+        ? leader.teamName
         : (leader.fullName || leader.email);
       return {
         id: leader.userId,
@@ -626,7 +630,7 @@ const Network: React.FC = () => {
         authLevel: depth,
         totalDescendants: 0,
         leader,
-        profileIconUrl: leader.profileIconUrl || undefined, // Para mostrar el icono, convertir null a undefined
+        profileIconUrl: leader.profileIconUrl || undefined,
         comisionesGeneradas: leader.comisiones_generadas,
         volumen: (leader as any).volumen ?? 0,
       };
@@ -651,6 +655,7 @@ const Network: React.FC = () => {
         hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
         comisionesGeneradas: u.comisiones_generadas ?? 0,
         volumen: (u as any).volumen ?? 0,
+        profileIconUrl: u.profileIconUrl || undefined,
       }))
     );
   }, [isLeaderTab, leaderItems, levels]);
@@ -671,6 +676,7 @@ const Network: React.FC = () => {
         authLevel: u.authLevel,
         totalDescendants: u.totalDescendants || 0,
         hasDescendants: (u as any).hasDescendants ?? (u.totalDescendants || 0) > 0,
+        profileIconUrl: (u as any).profileIconUrl || undefined,
       }));
     }
 
@@ -732,17 +738,17 @@ const Network: React.FC = () => {
         if (hasDepthLimit && nextLevel > 3) {
           return;
         }
-        
+
         // Cargar usuarios del nivel siguiente
         const allChildren: any[] = [];
         let offset = 0;
         const limit = 100; // Cargar en lotes grandes para encontrar todos los hijos
-        
+
         // Hacer múltiples llamadas hasta encontrar todos los hijos o no haya más usuarios
         while (true) {
           // Usar excluding para B2C, single-level para B2B/B2T
-          const fetchFn = (userModel === 'b2c' && activeTab === 'b2c') 
-            ? getB2CNetworkExcludingB2BB2T 
+          const fetchFn = (userModel === 'b2c' && activeTab === 'b2c')
+            ? getB2CNetworkExcludingB2BB2T
             : getSingleLevelNetwork;
           const res = await fetchFn({
             level: nextLevel,
@@ -751,20 +757,20 @@ const Network: React.FC = () => {
           });
           const data = res?.data;
           if (!data || data.users.length === 0) break;
-          
+
           // Filtrar solo los hijos directos del usuario padre
           const directChildren = data.users.filter((u: any) => u.direct_parent_id === parentUserId);
           allChildren.push(...directChildren);
-          
+
           // Si no hay más páginas o ya encontramos suficientes, salir
           if (!data.pagination.hasNextPage || allChildren.length >= usersLimit) break;
-          
+
           offset += limit;
         }
-        
+
         // Guardar todos los hijos encontrados
         setAllChildrenByParent(prev => ({ ...prev, [parentUserId]: allChildren }));
-        
+
         // Tomar solo los primeros usuarios según el límite
         const pageChildren = allChildren.slice(0, usersLimit);
         const users = pageChildren.map((u: any) => ({
@@ -781,7 +787,7 @@ const Network: React.FC = () => {
           comisionesGeneradas: u.comisiones_generadas ?? 0,
           volumen: u.volumen ?? 0,
         }));
-        
+
         setChildrenByParent(prev => ({ ...prev, [parentUserId]: users }));
         const hasMore = allChildren.length > usersLimit;
         setParentOffsets(prev => ({ ...prev, [parentUserId]: users.length }));
@@ -855,7 +861,7 @@ const Network: React.FC = () => {
     try {
       const currentOffset = parentOffsets[parentId] ?? 0;
       setParentLoading(prev => ({ ...prev, [parentId]: true }));
-      
+
       // Usuario B2C en tab B2C: usar excluding
       // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
       if ((userModel === 'b2c' && activeTab === 'b2c') || (userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
@@ -863,11 +869,11 @@ const Network: React.FC = () => {
         if (hasDepthLimit && nextLevel > 3) {
           return;
         }
-        
+
         // Verificar si ya tenemos todos los hijos cargados en caché
         const cachedAllChildren = allChildrenByParent[parentId];
         const existing = childrenByParent[parentId] || [];
-        
+
         if (cachedAllChildren && cachedAllChildren.length > 0) {
           // Ya tenemos todos los hijos cargados, solo mostrar más
           const nextBatch = cachedAllChildren.slice(existing.length, existing.length + usersLimit);
@@ -885,7 +891,7 @@ const Network: React.FC = () => {
             comisionesGeneradas: u.comisiones_generadas ?? 0,
             volumen: u.volumen ?? 0,
           }));
-          
+
           setChildrenByParent(prev => {
             const existing = prev[parentId] || [];
             const existingIds = new Set(existing.map((c: any) => c.id));
@@ -893,7 +899,7 @@ const Network: React.FC = () => {
             newChildren.forEach((c: any) => { if (!existingIds.has(c.id)) merged.push(c); });
             return { ...prev, [parentId]: merged };
           });
-          
+
           const noNewUsers = newChildren.length === 0;
           const hasMore = existing.length + newChildren.length < cachedAllChildren.length;
           setParentOffsets(prev => ({ ...prev, [parentId]: existing.length + newChildren.length }));
@@ -909,12 +915,12 @@ const Network: React.FC = () => {
           const allChildren: any[] = [];
           let offset = 0;
           const limit = 100; // Cargar en lotes grandes para encontrar todos los hijos
-          
+
           // Hacer múltiples llamadas hasta encontrar todos los hijos
           while (true) {
             // Usar excluding para B2C, single-level para B2B/B2T
-            const fetchFn = (userModel === 'b2c' && activeTab === 'b2c') 
-              ? getB2CNetworkExcludingB2BB2T 
+            const fetchFn = (userModel === 'b2c' && activeTab === 'b2c')
+              ? getB2CNetworkExcludingB2BB2T
               : getSingleLevelNetwork;
             const res = await fetchFn({
               level: nextLevel,
@@ -923,27 +929,27 @@ const Network: React.FC = () => {
             });
             const data = res?.data;
             if (!data || data.users.length === 0) break;
-            
+
             // Filtrar solo los hijos directos del usuario padre
             const directChildren = data.users.filter((u: any) => u.direct_parent_id === parentId);
             allChildren.push(...directChildren);
-            
+
             // Si no hay más páginas, salir
             if (!data.pagination.hasNextPage) break;
-            
+
             offset += limit;
           }
-          
+
           // Guardar todos los hijos encontrados en caché
           setAllChildrenByParent(prev => ({ ...prev, [parentId]: allChildren }));
-          
+
           // Tomar los siguientes usuarios que aún no están cargados
           const remainingChildren = allChildren.filter((u: any) => {
             const existingIds = new Set(existing.map((c: any) => c.id));
             return !existingIds.has(u.user_id);
           });
           const pageChildren = remainingChildren.slice(0, usersLimit);
-          
+
           const newChildren = pageChildren.map((u: any) => ({
             id: u.user_id,
             name: u.user_full_name || u.user_email,
@@ -958,7 +964,7 @@ const Network: React.FC = () => {
             comisionesGeneradas: u.comisiones_generadas ?? 0,
             volumen: u.volumen ?? 0,
           }));
-          
+
           setChildrenByParent(prev => {
             const existing = prev[parentId] || [];
             const existingIds = new Set(existing.map((c: any) => c.id));
@@ -966,7 +972,7 @@ const Network: React.FC = () => {
             newChildren.forEach((c: any) => { if (!existingIds.has(c.id)) merged.push(c); });
             return { ...prev, [parentId]: merged };
           });
-          
+
           const noNewUsers = newChildren.length === 0;
           const hasMore = existing.length + newChildren.length < allChildren.length;
           setParentOffsets(prev => ({ ...prev, [parentId]: existing.length + newChildren.length }));
@@ -1047,13 +1053,13 @@ const Network: React.FC = () => {
       // Buscar el usuario en la lista actual para obtener su información
       const lookupDataset = subtreeMode ? baseItems : allLevelItems;
       let userItem = lookupDataset.find(item => item.id === userId);
-      
+
       // Si no se encuentra en el dataset principal, buscar en childrenByParent
       if (!userItem) {
         const allChildren = Object.values(childrenByParent).flat();
         userItem = allChildren.find(item => item.id === userId);
       }
-      
+
       if (!userItem) {
         return;
       }
@@ -1065,30 +1071,30 @@ const Network: React.FC = () => {
       if (!hasDescendants) {
         return;
       }
-      
+
       // Usuario B2C en tab B2C: usar excluding
       // Usuario B2B en tab B2B o Usuario B2T en tab B2T: usar single-level
       let loadedWithSingleLevel = false;
-      
+
       if ((userModel === 'b2c' && activeTab === 'b2c') || (userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) {
         const nextLevel = userLevel + 1;
-        
+
         // Si hay límite de profundidad y el siguiente nivel excede el límite, aún así intentar cargar
         // pero mostrar los usuarios como nivel 3 (limitado)
         const levelToFetch = nextLevel;
         const displayLevel = hasDepthLimit && nextLevel > 3 ? 3 : nextLevel;
-        
+
         // Usar excluding para B2C, single-level para B2B/B2T
-        const fetchFn = (userModel === 'b2c' && activeTab === 'b2c') 
-          ? getB2CNetworkExcludingB2BB2T 
+        const fetchFn = (userModel === 'b2c' && activeTab === 'b2c')
+          ? getB2CNetworkExcludingB2BB2T
           : getSingleLevelNetwork;
-        
+
         try {
           // Cargar usuarios del nivel siguiente - hacer múltiples llamadas para encontrar todos los hijos
           const allDirectUsers: any[] = [];
           let offset = 0;
           const limit = 100; // Cargar en lotes grandes para encontrar todos los hijos
-          
+
           // Hacer múltiples llamadas hasta encontrar todos los hijos o no haya más usuarios
           while (true) {
             const res = await fetchFn({
@@ -1098,14 +1104,14 @@ const Network: React.FC = () => {
             });
             const data = res?.data;
             if (!data || data.users.length === 0) break;
-            
+
             // Filtrar solo los hijos directos del usuario
             const directChildren = data.users.filter((u: any) => u.direct_parent_id === userId);
             allDirectUsers.push(...directChildren);
-            
+
             // Si no hay más páginas, salir
             if (!data.pagination.hasNextPage) break;
-            
+
             offset += limit;
           }
           if (allDirectUsers.length > 0) {
@@ -1122,11 +1128,12 @@ const Network: React.FC = () => {
               hasDescendants: u.has_descendants ?? (u.total_descendants_of_user || 0) > 0,
               comisionesGeneradas: u.comisiones_generadas,
               volumen: u.volumen ?? 0,
+              profileIconUrl: u.profileIconUrl || (u as any).profile_icon_url || null,
             }));
-            
+
             // Tomar solo los primeros usuarios según el límite para la primera página
             const pageUsers = users.slice(0, usersLimit);
-            
+
             skipNextSubtreeFetchRef.current = true;
             setSubtreeMode(true);
             setSubtreeRootId(userId);
@@ -1146,7 +1153,7 @@ const Network: React.FC = () => {
           console.error('Error obteniendo nivel, intentando con subtree:', error);
         }
       }
-      
+
       // Si no se pudo cargar con single-level o es otro caso, usar subtree
       if (!loadedWithSingleLevel) {
         // Para otros tabs, usar subtree
@@ -1155,40 +1162,40 @@ const Network: React.FC = () => {
         let backendOffset = 0;
         const backendLimit = usersLimit * 3; // Pedir más usuarios del backend para asegurar obtener suficientes de nivel 1
         let firstData: any = null;
-        
+
         // Hacer llamadas al backend hasta que tengamos suficientes usuarios de nivel 1 para la primera página
         while (allDirectUsers.length < usersLimit) {
-          const res = await getDescendantSubtree({ 
-            descendantId: userId, 
-            maxDepth: maxDepth, 
-            limit: backendLimit, 
-            offset: backendOffset 
+          const res = await getDescendantSubtree({
+            descendantId: userId,
+            maxDepth: maxDepth,
+            limit: backendLimit,
+            offset: backendOffset
           });
           const data: any = (res as any)?.data ?? res;
           const users = data?.users || [];
-          
+
           // Guardar la primera respuesta para obtener información del nivel
           if (!firstData) {
             firstData = data;
           }
-          
+
           if (users.length === 0) break; // No hay más usuarios en el backend
-          
+
           // Filtrar solo usuarios de nivel 1 y agregar a la lista acumulada
           const directUsers = users.filter((u: any) => (u.levelInSubtree ?? 1) === 1);
           allDirectUsers.push(...directUsers);
-          
+
           // Si recibimos menos usuarios que el límite solicitado, no hay más
           if (users.length < backendLimit) break;
-          
+
           backendOffset += backendLimit;
         }
-        
+
         const requesterLevel = typeof firstData?.requesterLevelToDescendant === 'number' && firstData?.requesterLevelToDescendant > 0
           ? firstData?.requesterLevelToDescendant
           : userLevel;
         const rootLevel = hasDepthLimit ? Math.min(3, requesterLevel) : requesterLevel;
-        
+
         // Tomar solo los primeros usuarios de nivel 1 para la primera página
         const pageUsers = allDirectUsers.slice(0, usersLimit);
         const users = pageUsers.map((u: any) => {
@@ -1207,7 +1214,7 @@ const Network: React.FC = () => {
             volumen: u.volumen ?? 0,
           };
         });
-        
+
         skipNextSubtreeFetchRef.current = true;
         setSubtreeMode(true);
         setSubtreeRootId(userId);
@@ -1304,7 +1311,7 @@ const Network: React.FC = () => {
     setAllChildrenByParent({});
     setParentExhausted({});
     setParentErrors({});
-      setParentErrors({});
+    setParentErrors({});
   }, []);
 
   useEffect(() => {
@@ -1354,11 +1361,11 @@ const Network: React.FC = () => {
     if (((userModel === 'b2c' && activeTab === 'b2c') || (userModel === 'b2b' && activeTab === 'b2b') || (userModel === 'b2t' && activeTab === 'b2t')) && b2cPagination) {
       return b2cPagination.totalUsers;
     }
-    
+
     // Para otros tabs, usar la lógica original
     const lvl1 = levels.find(l => l.level === activeLevel);
     if (!lvl1) return 0;
-    
+
     // Si has_more es true, sabemos que hay más usuarios
     if (lvl1.has_more_users_in_level) {
       // Estimamos: usuarios mostrados + al menos una página completa más
@@ -1366,7 +1373,7 @@ const Network: React.FC = () => {
       // Usamos el máximo entre el total reportado y nuestra estimación
       return Math.max(lvl1.total_users_in_level || 0, estimated);
     }
-    
+
     // Si no hay más (has_more = false) pero el total reportado es menor que usuarios mostrados,
     // o si usuarios mostrados alcanzan exactamente el límite, puede haber más usuarios
     // En ese caso, estimamos que hay al menos una página más
@@ -1376,7 +1383,7 @@ const Network: React.FC = () => {
       const estimated = lvl1.users.length + usersLimit;
       return Math.max(lvl1.total_users_in_level || 0, estimated);
     }
-    
+
     // Si no hay más y no alcanzamos el límite, usamos el máximo entre usuarios mostrados y total reportado
     return Math.max(lvl1.users.length, lvl1.total_users_in_level || lvl1.users.length);
   }, [isLeaderTab, leaderState, leaderItems, levels, usersLimit, activeTab, activeLevel, b2cPagination]);
@@ -1405,7 +1412,7 @@ const Network: React.FC = () => {
           {/* Breadcrumb cuando está en modo subárbol - debajo del título amarillo */}
           {subtreeMode && (
             <div className="mb-0 flex items-center text-white text-sm">
-              <button 
+              <button
                 onClick={handleBackToNetwork}
                 className="text-white hover:opacity-80 transition-opacity"
               >
@@ -1420,17 +1427,17 @@ const Network: React.FC = () => {
 
           {/* Navbar con tabs B2C, B2B, B2T - solo mostrar cuando NO está en modo subárbol */}
           {!subtreeMode && (
-            <NetworkTabs 
-              activeTab={activeTab} 
-              onTabChange={setActiveTab} 
-              availableTabs={tabAvailability} 
+            <NetworkTabs
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              availableTabs={tabAvailability}
             />
           )}
 
           {/* Línea divisoria debajo de los tabs - solo cuando NO está en modo subárbol */}
           {!subtreeMode && (
             <div className="mt-4">
-              <div 
+              <div
                 className="w-full h-[1px] flex-none"
                 style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
               />
@@ -1440,20 +1447,20 @@ const Network: React.FC = () => {
           {/* Mini Banners cuando está en modo subárbol - 20px de separación desde el breadcrumb */}
           {subtreeMode && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mb-6" style={{ marginTop: '20px' }}>
-              <MiniBaner 
+              <MiniBaner
                 className="h-[90px] md:h-[100px] lg:h-[110px]"
                 icon={<MoneyIcon size={24} />}
                 detail="0"
                 subtitle={t('network:stats.activeReferrals')}
                 showDollarSign={false}
               />
-              <MiniBaner 
+              <MiniBaner
                 className="h-[90px] md:h-[100px] lg:h-[110px]"
                 icon={<MoneyIcon size={24} />}
                 detail="0.00"
                 subtitle={t('network:stats.lastMonthCommissions')}
               />
-              <MiniBaner 
+              <MiniBaner
                 className="h-[90px] md:h-[100px] lg:h-[110px]"
                 icon={<MoneyIcon size={24} />}
                 detail="0.00"
@@ -1485,8 +1492,8 @@ const Network: React.FC = () => {
                   {leadersError}
                 </div>
               ) : displayedItems.length > 0 ? (
-                <NetworkTable 
-                  items={displayedItems} 
+                <NetworkTable
+                  items={displayedItems}
                   activeTab={activeTab}
                   activeLevel={activeLevel}
                   onToggleExpand={handleToggleExpand}
@@ -1522,21 +1529,21 @@ const Network: React.FC = () => {
           {/* Paginación al fondo fija dentro del área de contenido */}
           <div className="pt-3 pb-6">
             {subtreeMode ? (
-              <NetworkPaginationBar 
-                totalItems={subtreeTotal} 
+              <NetworkPaginationBar
+                totalItems={subtreeTotal}
                 currentPage={subtreePage}
                 usersLimit={usersLimit}
                 onChangePage={setSubtreePage}
                 onChangeLimit={(n) => { setUsersLimit(n); setSubtreePage(1); }}
               />
             ) : (
-              <NetworkPaginationBar 
-                totalItems={hasSearch ? displayedItems.length : totalItemsLevel1} 
+              <NetworkPaginationBar
+                totalItems={hasSearch ? displayedItems.length : totalItemsLevel1}
                 currentPage={currentPage}
                 usersLimit={usersLimit}
                 totalPages={
-                  isLeaderTab 
-                    ? leaderState?.pagination?.totalPages 
+                  isLeaderTab
+                    ? leaderState?.pagination?.totalPages
                     : b2cPagination?.totalPages
                 }
                 onChangePage={setCurrentPage}

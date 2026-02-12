@@ -38,6 +38,8 @@
       "id": "ID",
       "email": "Correo",
       "date": "Fecha",
+      "initialDate": "Fecha inicial",
+      "finalDate": "Fecha final",
       "concept": "Concepto",
       "card": "Tarjeta",
       "company": "Empresa",
@@ -96,4 +98,3 @@
     }
   }
 }
-
