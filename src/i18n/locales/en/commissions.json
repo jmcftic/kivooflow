@@ -66,6 +66,16 @@
       "message": "At the moment, there are no commissions available to claim. If this is an error, please contact the support channel so we can follow up.",
       "continue": "Continue"
     },
+    "noDefaultCard": {
+      "title": "NO DEFAULT CARD",
+      "message": "You must have a card marked as favorite or default to be able to receive your commissions.",
+      "continue": "Got it"
+    },
+    "insufficientAmount": {
+      "title": "INSUFFICIENT AMOUNT",
+      "message": "The minimum amount to make a commission request is 1 USDT.",
+      "continue": "Got it"
+    },
     "claimSuccess": {
       "subtext": "Your claim is in the approval process",
       "understood": "Understood"
@@ -120,4 +130,3 @@
     }
   }
 }
-

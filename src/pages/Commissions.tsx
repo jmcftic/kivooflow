@@ -23,6 +23,8 @@ import ErrorModal from '@/components/atoms/ErrorModal';
 import ClaimSuccessModal from '@/components/molecules/ClaimSuccessModal';
 import NoCardsModal from '@/components/molecules/NoCardsModal';
 import NoClaimsModal from '@/components/molecules/NoClaimsModal';
+import NoDefaultCardModal from '@/components/molecules/NoDefaultCardModal';
+import InsufficientAmountModal from '@/components/molecules/InsufficientAmountModal';
 import ClaimAllInProgressModal from '@/components/molecules/ClaimAllInProgressModal';
 import ClaimAllScreen from '@/components/organisms/ClaimAllScreen';
 import { useMinimumLoading } from '../hooks/useMinimumLoading';
@@ -38,7 +40,7 @@ const Commissions: React.FC = () => {
   const queryClient = useQueryClient();
   const { startPolling, claimAllInProgress } = useClaimAllPollingContext();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   // Usar la misma query de React Query que CommissionsListCard para evitar duplicados
   // staleTime Infinity ya que los datos se guardan en localStorage y solo cambian al login/logout
   // La función getAvailableMlmModels ya maneja su propio cache en localStorage
@@ -52,8 +54,8 @@ const Commissions: React.FC = () => {
   const urlPage = parseInt(searchParams.get('page') || '1', 10);
   const urlPageSizeRaw = parseInt(searchParams.get('pageSize') || String(DEFAULT_PAGE_SIZE), 10);
   // Validar que el pageSize esté en las opciones permitidas, si no, usar el valor por defecto
-  const urlPageSize = ALLOWED_PAGE_SIZES.includes(urlPageSizeRaw as typeof ALLOWED_PAGE_SIZES[number]) 
-    ? urlPageSizeRaw 
+  const urlPageSize = ALLOWED_PAGE_SIZES.includes(urlPageSizeRaw as typeof ALLOWED_PAGE_SIZES[number])
+    ? urlPageSizeRaw
     : DEFAULT_PAGE_SIZE;
   const urlStatus = searchParams.get('status') || 'available';
   const urlClaimType = searchParams.get('claimType') as 'B2C' | 'B2B' | 'B2T' | null;
@@ -96,10 +98,13 @@ const Commissions: React.FC = () => {
   const [errorModalMessage, setErrorModalMessage] = useState('');
   const [noCardsModalOpen, setNoCardsModalOpen] = useState(false);
   const [noClaimableModalOpen, setNoClaimableModalOpen] = useState(false);
+  const [noDefaultCardModalOpen, setNoDefaultCardModalOpen] = useState(false);
+  const [insufficientAmountModalOpen, setInsufficientAmountModalOpen] = useState(false);
+  const [insufficientAmountMessage, setInsufficientAmountMessage] = useState('');
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [claimAllInProgressModalOpen, setClaimAllInProgressModalOpen] = useState(false);
-  
+
   // Referencia para evitar loops infinitos entre URL y estado
   const isUpdatingFromStateRef = useRef(false);
   const hasInitializedRef = useRef(false);
@@ -128,17 +133,17 @@ const Commissions: React.FC = () => {
   // Inicializar desde URL solo una vez al montar el componente
   useEffect(() => {
     if (hasInitializedRef.current) return;
-    
+
     const urlPage = parseInt(searchParams.get('page') || '1', 10);
     const urlPageSizeRaw = parseInt(searchParams.get('pageSize') || String(DEFAULT_PAGE_SIZE), 10);
-    const urlPageSize = ALLOWED_PAGE_SIZES.includes(urlPageSizeRaw as typeof ALLOWED_PAGE_SIZES[number]) 
-      ? urlPageSizeRaw 
+    const urlPageSize = ALLOWED_PAGE_SIZES.includes(urlPageSizeRaw as typeof ALLOWED_PAGE_SIZES[number])
+      ? urlPageSizeRaw
       : DEFAULT_PAGE_SIZE;
-    
+
     // Actualizar el estado con los valores de la URL
     setCurrentPage(urlPage);
     setPageSize(urlPageSize);
-    
+
     // Si el pageSize de la URL es inválido, corregir la URL
     if (!ALLOWED_PAGE_SIZES.includes(urlPageSizeRaw as typeof ALLOWED_PAGE_SIZES[number])) {
       isUpdatingFromStateRef.current = true;
@@ -156,7 +161,7 @@ const Commissions: React.FC = () => {
       }
       setSearchParams(newSearchParams, { replace: true });
     }
-    
+
     hasInitializedRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Solo ejecutar una vez al montar
@@ -167,13 +172,13 @@ const Commissions: React.FC = () => {
     if (!hasInitializedRef.current) {
       return;
     }
-    
+
     // Si estamos actualizando desde el estado, resetear el flag y salir
     if (isUpdatingFromStateRef.current) {
       isUpdatingFromStateRef.current = false;
       return;
     }
-    
+
     // Crear nuevos searchParams desde la URL actual
     const currentSearchParams = new URLSearchParams(window.location.search);
     const currentUrlPage = parseInt(currentSearchParams.get('page') || '1', 10);
@@ -181,7 +186,7 @@ const Commissions: React.FC = () => {
     const currentUrlPageSize = ALLOWED_PAGE_SIZES.includes(currentUrlPageSizeRaw as typeof ALLOWED_PAGE_SIZES[number])
       ? currentUrlPageSizeRaw
       : DEFAULT_PAGE_SIZE;
-    
+
     // Solo actualizar si hay diferencia entre estado y URL
     if (currentPage !== currentUrlPage || pageSize !== currentUrlPageSize) {
       isUpdatingFromStateRef.current = true;
@@ -189,7 +194,7 @@ const Commissions: React.FC = () => {
       newSearchParams.set('page', currentPage.toString());
       newSearchParams.set('pageSize', pageSize.toString());
       newSearchParams.set('status', 'available');
-      
+
       // Agregar claimType según el tab activo
       if (activeTab) {
         const claimTypeMap: Record<CommissionTabId, string> = {
@@ -199,7 +204,7 @@ const Commissions: React.FC = () => {
         };
         newSearchParams.set('claimType', claimTypeMap[activeTab]);
       }
-      
+
       setSearchParams(newSearchParams, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -239,10 +244,10 @@ const Commissions: React.FC = () => {
       // - Si usuario es B2B:
       //   - Solo tiene tab B2B: claimType='mlm_transactions'
       let claimType: 'mlm_transactions' | 'b2c_commissions' | undefined = undefined;
-      
+
       if (availableModelsData) {
         const userModel = availableModelsData.my_model?.trim().toUpperCase();
-        
+
         if (userModel === 'B2C') {
           // Usuario B2C
           if (activeTab === 'b2c') {
@@ -255,60 +260,84 @@ const Commissions: React.FC = () => {
           claimType = 'mlm_transactions';
         }
       }
-      
+
       // Primero verificar que hay tarjetas disponibles
       const tarjetasResponse = await getMisTarjetas();
-      const tarjetasActivas = tarjetasResponse.cards.filter(
+      const tarjetas = tarjetasResponse.cards || [];
+
+      const tarjetasActivas = tarjetas.filter(
         (card) => card.cardStatus === "ACTIVA"
       );
-      
-      // Si no hay tarjetas activas, obtener el email del usuario antes de mostrar el modal
+
+      // 1. Existencia de Tarjetas: Debe tener al menos una tarjeta registrada.
+      if (tarjetas.length === 0) {
+        setNoCardsModalOpen(true);
+        setIsLoadingTotal(false);
+        return;
+      }
+
+      // 2. Tarjeta Predeterminada: Debe tener una tarjeta marcada como favorita/default.
+      const hasDefaultCard = tarjetas.some(card => card.isDefault);
+      if (!hasDefaultCard) {
+        setNoDefaultCardModalOpen(true);
+        setIsLoadingTotal(false);
+        return;
+      }
+
+      // Si no hay tarjetas activas (pero hay registradas), mostrar el modal de soporte
       if (tarjetasActivas.length === 0) {
         try {
-          // Obtener el email del usuario para el mensaje de WhatsApp (con claimType si está disponible)
+          // Obtener el email del usuario para el mensaje de WhatsApp
           const response = await getTotalToClaimInUSDT(claimType);
           setUserEmail(response.data.userEmail);
         } catch (emailError) {
-          // Si falla obtener el email, continuar sin él
           console.warn('No se pudo obtener el email del usuario:', emailError);
         }
         setNoCardsModalOpen(true);
         setIsLoadingTotal(false);
         return;
       }
-      
-      // Si hay tarjetas, obtener el total a reclamar en USDT (con claimType si está disponible)
+
+      // 3. Monto Mínimo: La suma total debe ser >= 1 USDT.
       const response = await getTotalToClaimInUSDT(claimType);
-      
-      // Validar que el total no sea 0
-      if (response.data.totalInUSDT === 0) {
-        setNoClaimableModalOpen(true);
+
+      // Validar monto mínimo de 1 USDT
+      if (response.data.totalInUSDT < 1) {
+        setInsufficientAmountModalOpen(true);
         setIsLoadingTotal(false);
         return;
       }
-      
+
       // Guardar los datos del total
       setTotalToClaimData(response.data);
       // Guardar el email del usuario para el mensaje de WhatsApp
       setUserEmail(response.data.userEmail);
-      
+
       // Guardar el claimType para pasarlo a ClaimAllScreen
       setClaimType(claimType);
-      
+
       // Mostrar la pantalla completa con el SVG
       setShowClaimAllScreen(true);
     } catch (error: any) {
       console.error('Error obteniendo total a reclamar:', error);
       const errorMessage = error?.message || error?.response?.data?.message || 'Ocurrió un error al obtener el total a reclamar. Por favor, intenta nuevamente.';
       const messageLower = errorMessage.toLowerCase();
-      
-      // Verificar si el error es porque el total es 0 o no hay comisiones disponibles
+
+      // Verificar si el error es porque el monto es insuficiente o no hay comisiones
       if (
         messageLower.includes('total es 0') ||
         messageLower.includes('no hay comisiones disponibles') ||
-        messageLower.includes('no puedes reclamar comisiones porque el total es 0')
+        messageLower.includes('no puedes reclamar comisiones porque el total es 0') ||
+        messageLower.includes('monto mínimo') ||
+        messageLower.includes('1 usdt')
       ) {
-        setNoClaimableModalOpen(true);
+        // Si el mensaje es específicamente sobre el monto mínimo de 1 USDT
+        if (messageLower.includes('monto mínimo') || messageLower.includes('1 usdt')) {
+          setInsufficientAmountMessage(errorMessage);
+          setInsufficientAmountModalOpen(true);
+        } else {
+          setNoClaimableModalOpen(true);
+        }
       } else {
         setErrorModalMessage(errorMessage);
         setErrorModalOpen(true);
@@ -355,7 +384,7 @@ const Commissions: React.FC = () => {
         {/* Área scrolleable con padding */}
         <div className="flex-1 min-h-0 overflow-y-auto pl-6 pr-6 pb-8" style={{ paddingBottom: '84px' }}>
           {/* Navbar responsivo */}
-          <DashboardNavbar 
+          <DashboardNavbar
             title={t('commissions:title')}
             rightAction={
               /* Botón visible solo en móviles/tablets pequeños junto al título, en desktop se muestra junto a las tabs */
@@ -418,7 +447,7 @@ const Commissions: React.FC = () => {
               </div>
               {/* Línea divisoria pegada al bottom del div de las tabs */}
               <div className="absolute bottom-0 left-0 right-0">
-                <div 
+                <div
                   className="w-full h-[1px]"
                   style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
                 />
@@ -433,20 +462,20 @@ const Commissions: React.FC = () => {
               const countDigits = (num: number): number => {
                 return Math.floor(num).toString().replace(/\./g, '').length;
               };
-              
+
               // Calcular si alguna de las 3 cards tiene más de 6 cifras
               const totalCommissions = summary && typeof summary.totalCommissions === 'number' ? summary.totalCommissions : 0;
               const gainsFromRecharges = summary && typeof summary.gainsFromRecharges === 'number' ? summary.gainsFromRecharges : 0;
               const gainsFromCards = summary && typeof summary.gainsFromCards === 'number' ? summary.gainsFromCards : 0;
-              
-              const hasMoreThan6Digits = 
-                countDigits(totalCommissions) > 6 || 
-                countDigits(gainsFromRecharges) > 6 || 
+
+              const hasMoreThan6Digits =
+                countDigits(totalCommissions) > 6 ||
+                countDigits(gainsFromRecharges) > 6 ||
                 countDigits(gainsFromCards) > 6;
-              
+
               // Forzar tamaño pequeño si alguna tiene más de 6 cifras
               const forceSmallFont = hasMoreThan6Digits;
-              
+
               return (
                 <>
                   <div className="w-full md:flex-1 min-w-0">
@@ -487,8 +516,8 @@ const Commissions: React.FC = () => {
           {/* Contenido de Comisiones */}
           {activeTab && (
             <div className="relative z-20 mt-6">
-              <CommissionsListCard 
-                activeTab={activeTab} 
+              <CommissionsListCard
+                activeTab={activeTab}
                 currentPage={currentPage}
                 pageSize={pageSize}
                 onSummaryChange={setSummary}
@@ -545,6 +574,22 @@ const Commissions: React.FC = () => {
         onOpenChange={setNoClaimableModalOpen}
       />
 
+      {/* Modal de no hay tarjeta predeterminada */}
+      <NoDefaultCardModal
+        open={noDefaultCardModalOpen}
+        onOpenChange={setNoDefaultCardModalOpen}
+      />
+
+      {/* Modal de monto insuficiente */}
+      <InsufficientAmountModal
+        open={insufficientAmountModalOpen}
+        onOpenChange={(open) => {
+          setInsufficientAmountModalOpen(open);
+          if (!open) setInsufficientAmountMessage('');
+        }}
+        message={insufficientAmountMessage}
+      />
+
       {/* Modal de error */}
       <ErrorModal
         isOpen={errorModalOpen}
@@ -573,7 +618,7 @@ const Commissions: React.FC = () => {
 
       {/* Pantalla completa de Claim All */}
       {showClaimAllScreen && (
-        <ClaimAllScreen 
+        <ClaimAllScreen
           onBack={handleBackFromClaimAllScreen}
           totalInUSDT={totalToClaimData?.totalInUSDT || 0}
           onError={(message: string) => {
