@@ -21,27 +21,6 @@ interface B2BCommissionDetailModalProps {
   isSubmitting?: boolean;
 }
 
-const formatDate = (value?: string) => {
-  if (!value) return "—";
-  
-  // Si la fecha viene en formato "YYYY-MM-DD" (sin hora), parsearla directamente
-  // para evitar problemas de zona horaria con new Date()
-  const dateOnlyMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (dateOnlyMatch) {
-    const [, year, month, day] = dateOnlyMatch;
-    return `${day}/${month}/${year}`;
-  }
-  
-  // Si viene con hora, usar métodos UTC
-  const date = new Date(value);
-  if (isNaN(date.getTime())) return "—";
-  
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  return `${day}/${month}/${year}`;
-};
-
 const formatCurrency = (value?: number) => {
   if (value === undefined || value === null) return "USDT 0";
   return `USDT ${formatCurrencyWithThreeDecimals(value)}`;
@@ -65,8 +44,33 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
   onConfirm,
   isSubmitting = false,
 }) => {
-  const { t } = useTranslation(['commissions', 'claims', 'common']);
-  
+  const { t, i18n } = useTranslation(['commissions', 'claims', 'common']);
+
+  const formatDate = (value?: string) => {
+    if (!value) return "—";
+
+    try {
+      const date = new Date(value);
+      if (isNaN(date.getTime())) return "—";
+
+      // Determinar si debemos usar UTC para evitar saltos de día por zona horaria.
+      const shouldShowUTC = /^\d{4}-\d{2}-\d{2}$/.test(value) ||
+        value.includes('T00:00:00') ||
+        value.includes('T23:59:59');
+
+      // Usar locale según el idioma
+      const locale = i18n.language === 'en' ? 'en-US' : 'es-ES';
+      return date.toLocaleDateString(locale, {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: shouldShowUTC ? 'UTC' : undefined
+      });
+    } catch {
+      return "—";
+    }
+  };
+
   if (!commission) return null;
 
   const {
@@ -84,7 +88,7 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
   // Función para obtener el badge de nivel
   const getLevelBadge = () => {
     if (level === undefined || level === null) return null;
-    
+
     let badgeText = '';
     let badgeVariant: 'yellow' | 'green' | 'blue' | 'red' | 'default' = 'default';
 
@@ -103,7 +107,7 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
     }
 
     return (
-      <Badge 
+      <Badge
         variant={badgeVariant}
         className="text-xs"
       >
@@ -127,7 +131,7 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
               {t('commissions:modals.b2bCommissionDetail.dateRange')}
             </p>
             <p className="text-white font-semibold text-sm">
-              {periodStartDate && periodEndDate 
+              {periodStartDate && periodEndDate
                 ? `${formatDate(periodStartDate)} - ${formatDate(periodEndDate)}`
                 : "—"}
             </p>
@@ -176,7 +180,7 @@ const B2BCommissionDetailModal: React.FC<B2BCommissionDetailModalProps> = ({
               </p>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div className="p-4 bg-[#2A2A2A] rounded-lg">
               <p className="text-[#CBCACA] text-xs mb-1">{t('commissions:modals.b2bCommissionDetail.transactions')}</p>

@@ -52,7 +52,7 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
   const finalActionLabel = actionLabel || defaultActionLabel;
 
   // Formatear fecha a formato local
-  const formatFecha = (fechaStr: string) => {
+  const formatFecha = (fechaStr: string, isUTC = false) => {
     if (!fechaStr || fechaStr === 'N/A') {
       return 'N/A';
     }
@@ -65,12 +65,24 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
         return 'N/A';
       }
 
+      // Determinar si debemos usar UTC para evitar saltos de día por zona horaria.
+      // Usamos UTC si:
+      // 1. Se solicita explícitamente (isUTC)
+      // 2. Es una cadena de fecha pura sin hora (YYYY-MM-DD)
+      // 3. Representa medianoche UTC (común en inicios de periodo)
+      // 4. Representa el último milisegundo del día UTC (común en fines de periodo)
+      const shouldShowUTC = isUTC ||
+        /^\d{4}-\d{2}-\d{2}$/.test(fechaStr) ||
+        fechaStr.includes('T00:00:00') ||
+        fechaStr.includes('T23:59:59');
+
       // Usar locale según el idioma
       const locale = i18n.language === 'en' ? 'en-US' : 'es-ES';
       const formatted = date.toLocaleDateString(locale, {
         day: '2-digit',
         month: '2-digit',
-        year: 'numeric'
+        year: 'numeric',
+        timeZone: shouldShowUTC ? 'UTC' : undefined
       });
 
       // Verificar que el resultado no sea "Invalid Date"
@@ -315,11 +327,11 @@ const ClaimItem: FunctionComponent<ClaimItemType> = ({
           <>
             <div className="flex flex-row md:flex-col items-center md:items-center justify-between md:justify-center w-full md:w-auto py-2 md:py-0 md:h-full">
               <span className="text-[#CBCACA] text-xs md:mb-1">{t('claims:item.labels.initialDate')}</span>
-              <span className="text-white text-sm font-medium md:mb-1">{formatFecha(periodStartDate)}</span>
+              <span className="text-white text-sm font-medium md:mb-1">{formatFecha(periodStartDate, true)}</span>
             </div>
             <div className="flex flex-row md:flex-col items-center md:items-center justify-between md:justify-center w-full md:w-auto py-2 md:py-0 md:h-full">
               <span className="text-[#CBCACA] text-xs md:mb-1">{t('claims:item.labels.finalDate')}</span>
-              <span className="text-white text-sm font-medium md:mb-1">{formatFecha(periodEndDate)}</span>
+              <span className="text-white text-sm font-medium md:mb-1">{formatFecha(periodEndDate, true)}</span>
             </div>
           </>
         ) : (
