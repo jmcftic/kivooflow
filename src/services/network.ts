@@ -99,6 +99,20 @@ export async function getB2CNetworkExcludingB2BB2T({ level = 1, limit = 10, offs
 
 const AVAILABLE_MLM_MODELS_STORAGE_KEY = 'availableMlmModels';
 
+/** Obtiene el user_id del usuario actual desde localStorage (sin depender de authService para evitar ciclos) */
+function getCurrentUserIdFromStorage(): number | null {
+  try {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return null;
+    const user = JSON.parse(userStr);
+    const id = user?.id ?? user?.user_id;
+    if (id == null) return null;
+    return typeof id === 'number' ? id : parseInt(String(id), 10);
+  } catch {
+    return null;
+  }
+}
+
 export async function getAvailableMlmModels(forceRefresh: boolean = false): Promise<AvailableMlmModelsData> {
   // Primero verificar localStorage (a menos que se fuerce la actualización)
   if (!forceRefresh) {
@@ -106,14 +120,21 @@ export async function getAvailableMlmModels(forceRefresh: boolean = false): Prom
       const cachedStr = localStorage.getItem(AVAILABLE_MLM_MODELS_STORAGE_KEY);
       if (cachedStr) {
         const cached = JSON.parse(cachedStr);
-        // Validar que tiene la estructura esperada
+        // Validar estructura y que el cache pertenece al usuario actual
+        const currentUserId = getCurrentUserIdFromStorage();
+        const cacheBelongsToCurrentUser = currentUserId != null && cached?.user_id === currentUserId;
         if (cached && typeof cached === 'object' &&
           typeof cached.user_id === 'number' &&
           typeof cached.my_model === 'string' &&
           typeof cached.show_b2c_tab === 'boolean' &&
           typeof cached.show_b2t_tab === 'boolean' &&
-          typeof cached.show_b2b_tab === 'boolean') {
+          typeof cached.show_b2b_tab === 'boolean' &&
+          cacheBelongsToCurrentUser) {
           return cached as AvailableMlmModelsData;
+        }
+        // Si el cache es de otro usuario, eliminarlo para evitar confusiones
+        if (cached?.user_id != null && currentUserId != null && cached.user_id !== currentUserId) {
+          localStorage.removeItem(AVAILABLE_MLM_MODELS_STORAGE_KEY);
         }
       }
     } catch (error) {

@@ -52,6 +52,9 @@ class AuthService {
     apiService.setToken(loginData.access_token);
     localStorage.setItem("refresh_token", loginData.refresh_token);
     
+    // Limpiar cache de modelos para evitar datos de un usuario anterior
+    localStorage.removeItem("availableMlmModels");
+    
     // Store user data with all important information
     localStorage.setItem("user", JSON.stringify(loginData.user));
     

@@ -117,6 +117,8 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
   const showActivityColumn = !(activeTab === 'b2b' && userModel?.toLowerCase() !== 'b2b');
   // Mostrar columna Nombre cuando es B2C en tab B2C o B2B en tab B2B
   const showNameColumn = (activeTab === 'b2c' && userModel?.toLowerCase() === 'b2c') || (activeTab === 'b2b' && userModel?.toLowerCase() === 'b2b');
+  // Mostrar icono de empresa (con logo Kivoo de fallback) solo cuando B2C ve tab B2B (empresas referidas), no para B2B viendo sus usuarios
+  const showCompanyIcon = activeTab === 'b2b' && userModel?.toLowerCase() === 'b2c';
   // Calcular número de columnas: base 5 (email, fecha, nivel, volumen, acciones) + actividad (condicional) + nombre (condicional)
   // Usar clases específicas de Tailwind para grid-cols
   let gridCols = 'grid-cols-5'; // Base: email, fecha, nivel, volumen, acciones
@@ -214,7 +216,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                         }}
                       />
                     )}
-                    {activeTab === 'b2b' && (
+                    {showCompanyIcon && (
                       <CompanyIcon url={item.profileIconUrl} size={24} />
                     )}
                     <span className="text-white text-sm font-medium truncate" title={item.email || item.name}>
@@ -313,8 +315,8 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                         }}
                       />
                     )}
-                    {/* Mostrar icono si es tab B2B */}
-                    {activeTab === 'b2b' && (
+                    {/* Mostrar icono si es tab B2B (solo B2C viendo empresas referidas) */}
+                    {showCompanyIcon && (
                       <CompanyIcon url={item.profileIconUrl} size={32} />
                     )}
                     <span
@@ -420,7 +422,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                     }}
                                   />
                                 )}
-                                {activeTab === 'b2b' && (
+                                {showCompanyIcon && (
                                   <CompanyIcon url={child.profileIconUrl} size={24} />
                                 )}
                                 <span className="text-white text-sm font-medium truncate" title={child.email || `${child.name}@email.com`}>
@@ -496,7 +498,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                     }}
                                   />
                                 )}
-                                {activeTab === 'b2b' && (
+                                {showCompanyIcon && (
                                   <CompanyIcon url={child.profileIconUrl} size={32} />
                                 )}
                                 <span
@@ -581,7 +583,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                                 }}
                                               />
                                             )}
-                                            {activeTab === 'b2b' && (
+                                            {showCompanyIcon && (
                                               <CompanyIcon url={grand.profileIconUrl} size={24} />
                                             )}
                                             <span className="text-white text-sm font-medium truncate" title={grand.email || `${grand.name}@email.com`}>
@@ -657,7 +659,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                                 }}
                                               />
                                             )}
-                                            {activeTab === 'b2b' && (
+                                            {showCompanyIcon && (
                                               <CompanyIcon url={grand.profileIconUrl} size={32} />
                                             )}
                                             <span
@@ -740,7 +742,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                                           }}
                                                         />
                                                       )}
-                                                      {activeTab === 'b2b' && (
+                                                      {showCompanyIcon && (
                                                         <CompanyIcon url={greatGrand.profileIconUrl} size={24} />
                                                       )}
                                                       <span className="text-white text-sm font-medium truncate" title={greatGrand.email || `${greatGrand.name}@email.com`}>
@@ -816,7 +818,7 @@ const NetworkTable: React.FC<NetworkTableProps> = ({ items, activeTab, activeLev
                                                           }}
                                                         />
                                                       )}
-                                                      {activeTab === 'b2b' && (
+                                                      {showCompanyIcon && (
                                                         <CompanyIcon url={greatGrand.profileIconUrl} size={32} />
                                                       )}
                                                       <span
